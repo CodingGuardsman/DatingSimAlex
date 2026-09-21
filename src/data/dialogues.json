@@ -95,7 +95,7 @@
       },
       "archive_scratch": {
         "speaker": null,
-        "text": "You notice something scratched into a wooden shelf: R.F.F. You take a picture with your phone. Then you spot a thin metal cabinet, locked. You reach underneath and pull out a USB drive.",
+        "text": "You notice something scratched into a wooden shelf: R.F.F. You take a picture with your phone. Then you spot a thin metal cabinet, locked. You reach underneath and pull out a USB drive. The drive is warm. It feels like it is breathing.",
         "expression": "curious",
         "choices": [
           {
@@ -1246,7 +1246,7 @@
       },
       "intro_rules2": {
         "speaker": null,
-        "text": "Every choice you make earns or loses trust with each girl. At the end, you choose which ending to pursue. But if you do not have enough trust with the girl you choose, you get a bad ending instead. There are no right answers. There are only consequences. Some truths are worth uncovering. Others are buried for a reason. Choose carefully.",
+        "text": "Every choice you make earns or loses trust with each girl. At the end, you choose which ending to pursue. Some choices can be un-made. Most cannot. But if you do not have enough trust with the girl you choose, you get a bad ending instead. There are no right answers. There are only consequences. Some truths are worth uncovering. Others are buried for a reason. Choose carefully.",
         "expression": "determined",
         "choices": [
           {
