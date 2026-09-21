@@ -1122,6 +1122,57 @@ if (!portraitPath) {
     }, 3000);
   }
 
+
+  /* ==================== SUBTLE HINT SYSTEM ==================== */
+
+  _showSubtleHint(text, duration) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:9995;background:rgba(10,8,16,0.85);color:#5a3a3a;padding:0.6rem 1rem;border:1px solid #3a1a1a;border-radius:2px;font-family:monospace;font-size:0.7rem;opacity:0;transition:opacity 2s;pointer-events:none;font-style:italic;max-width:60%;';
+    el.textContent = text;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => { el.style.opacity = '0.5'; });
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 2000); }, duration || 8000);
+  }
+
+  _startHintSystem() {
+    // Very subtle hints that appear only after significant play time
+    const hints = [
+      { text: 'Some files are not meant to be saved.', delay: 180000 },
+      { text: 'The archive has no delete button.', delay: 240000 },
+      { text: 'You can close the tab. But the archive remains.', delay: 300000 },
+      { text: 'Some truths are buried in the code.', delay: 360000 },
+      { text: 'The browser remembers everything.', delay: 420000 },
+      { text: 'Some doors only open from the outside.', delay: 480000 },
+      { text: 'The console knows what you did.', delay: 540000 },
+      { text: 'Deleting is not the same as forgetting.', delay: 600000 }
+    ];
+    
+    hints.forEach(h => {
+      setTimeout(() => {
+        if (this._hasCompletedGame() || this._getPlayTime() > 60) {
+          this._showSubtleHint(h.text, 6000);
+          if (Math.random() < 0.3) this._glitch(150);
+        }
+      }, h.delay);
+    });
+    
+    // After second playthrough, more direct hints
+    setInterval(() => {
+      if (this._hasCompletedGame() && this._getPlayTime() > 120) {
+        const secondHints = [
+          'The save file knows your name.',
+          'Try looking where the game keeps its memories.',
+          'Some things can be un-written.',
+          'The truth is in the data.',
+          'You can erase a choice. Not the consequence.'
+        ];
+        if (Math.random() < 0.15) {
+          this._showSubtleHint(secondHints[Math.floor(Math.random() * secondHints.length)], 5000);
+        }
+      }
+    }, 25000);
+  }
+
   _onStatChange(data) {
     // Can be used for floating text or animations
   }
