@@ -71,6 +71,7 @@ export class Game {
     this.sceneManager.registerScene("start_menu", V0StartMenuScene);
     this.sceneManager.registerScene("end_of_day", EndOfDayScene);
     this._bindGameEvents();
+this._checkSecondPlaythrough();
     this.isInitialized = true;
     console.log("[Game] Initialization complete.");
     await this._enterMainMenu();
@@ -88,6 +89,12 @@ export class Game {
     this.eventBus.subscribe(EVENTS.DIALOGUE_CONTINUE, () => {
       this.dialogueSystem.advance();
     });
+  }
+_checkSecondPlaythrough() {
+    const count = this.stateManager.getFlag("playthrough_count") || 0;
+    if (count >= 1) {
+      this.eventBus.emit("META_SECOND_PLAYTHROUGH", { count });
+    }
   }
 
   async _enterMainMenu() {
@@ -163,6 +170,8 @@ export class Game {
   }
 
   _showEnding(data) {
+this.stateManager.setFlag("completed", true);
+    this.stateManager.setFlag("playthrough_count", (this.stateManager.getFlag("playthrough_count") || 0) + 1);
     let chosenEnding = "ending_truth";
     if (this.stateManager.getFlag("flag_ending_maya")) chosenEnding = "ending_maya";
     else if (this.stateManager.getFlag("flag_ending_chloe")) chosenEnding = "ending_chloe";
