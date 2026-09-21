@@ -72,6 +72,8 @@ export class Game {
     this.sceneManager.registerScene("end_of_day", EndOfDayScene);
     this._bindGameEvents();
 this._checkSecondPlaythrough();
+    this._showInitialConsoleMessage();
+    this._showPostCompletionTutorial();
     this.isInitialized = true;
     console.log("[Game] Initialization complete.");
     await this._enterMainMenu();
