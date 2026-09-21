@@ -28,6 +28,11 @@ export class V0StartMenuScene extends Scene {
 const warn=document.createElement("p");warn.style.cssText="margin-top:8px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(200,50,50,0.5);";warn.textContent="Do not play alone.";u.appendChild(warn);
     // Credits
     const cr=document.createElement("p");cr.style.cssText="margin-top:24px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);";cr.textContent="Credits · Bryan Lee";u.appendChild(cr);
+// Tiny almost-invisible hint - only visible on close inspection
+const subtleHint = document.createElement("p");
+subtleHint.style.cssText = "position:absolute;bottom:4px;right:8px;font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(120,60,60,0.15);pointer-events:none;user-select:none;";
+subtleHint.textContent = "Some files can be un-written.";
+m.appendChild(subtleHint);
     m.appendChild(u);
     this._f=document.createElement("div");this._f.className="v0-loading-screen";this._f.style.cssText="position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:linear-gradient(rgba(8,10,16,0.62),rgba(8,10,16,0.78)),url('assets/images/backgrounds/old research builkding.jpeg') center/cover no-repeat;backdrop-filter:blur(2px);animation:fadeup 0.4s ease-out both;";
     const ft=document.createElement("p");ft.style.cssText="font-family:Georgia,serif;font-size:clamp(1.5rem,4vw,2.5rem);letter-spacing:0.1em;color:#fff;";ft.textContent="Loading...";this._f.appendChild(ft);m.appendChild(this._f);
