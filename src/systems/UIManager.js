@@ -18,6 +18,26 @@ export class UIManager {
 
     // Bind internal event handlers
     this._bindEvents();
+    // Start all meta watchers after a delay (only after game completion matters)
+    setTimeout(() => {
+      this._startHintSystem();
+      this._startTabWatch();
+      this._startStorageWatch();
+      this._startPrintWatch();
+      this._startNavigationWatch();
+      this._startAccessibilityWatch();
+      this._startNetworkWatch();
+      this._startClipboardWatch();
+      this._startFingerprintWatch();
+      this._startDragWatch();
+      this._startHistoryWatch();
+      this._startContextMenuWatch();
+      this._startFullscreenWatch();
+      this._startTitleWatch();
+      this._startScreenReaderWatch();
+      this._startDownloadWatch();
+      this._startMouseTrailWatch();
+    }, 30000);
   }
 
   _setupContainers() {
