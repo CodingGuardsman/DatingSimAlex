@@ -1,0 +1,31 @@
+{
+  "scenes": [
+    {
+      "id": "start_menu",
+      "name": "Main Menu",
+      "location": "none",
+      "background": "campus"
+    },
+    {
+      "id": "bedroom",
+      "name": "Dorm Room",
+      "location": "bedroom",
+      "background": "bedroom",
+      "timeOfDay": "morning"
+    },
+    {
+      "id": "campus",
+      "name": "Campus",
+      "location": "campus",
+      "background": "campus",
+      "timeOfDay": "afternoon"
+    },
+    {
+      "id": "end_of_day",
+      "name": "End of Day",
+      "location": "none",
+      "background": "campus",
+      "timeOfDay": "night"
+    }
+  ]
+}

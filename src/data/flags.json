@@ -1,0 +1,114 @@
+{
+  "flags": [
+    {
+      "name": "met_maya",
+      "description": "Player met Maya",
+      "default": false
+    },
+    {
+      "name": "met_chloe",
+      "description": "Player met Chloe",
+      "default": false
+    },
+    {
+      "name": "met_hana",
+      "description": "Player met Hana",
+      "default": false
+    },
+    {
+      "name": "found_note",
+      "description": "Player found the mysterious note",
+      "default": false
+    },
+    {
+      "name": "visited_library",
+      "description": "Player visited the library",
+      "default": false
+    },
+    {
+      "name": "visited_maya_lab",
+      "description": "Player visited Maya's lab",
+      "default": false
+    },
+    {
+      "name": "visited_chloe_office",
+      "description": "Player visited Chloe's office",
+      "default": false
+    },
+    {
+      "name": "visited_hana_studio",
+      "description": "Player visited Hana's studio",
+      "default": false
+    },
+    {
+      "name": "learned_richardson_truth",
+      "description": "Player learned Richardson's secret",
+      "default": false
+    },
+    {
+      "name": "learned_chloe_secret",
+      "description": "Player learned Chloe's secret",
+      "default": false
+    },
+    {
+      "name": "learned_hana_secret",
+      "description": "Player learned Hana's secret",
+      "default": false
+    },
+    {
+      "name": "learned_maya_secret",
+      "description": "Player learned Maya's secret",
+      "default": false
+    },
+    {
+      "name": "trusted_chloe",
+      "description": "Player chose to trust Chloe",
+      "default": false
+    },
+    {
+      "name": "trusted_hana",
+      "description": "Player chose to trust Hana",
+      "default": false
+    },
+    {
+      "name": "trusted_maya",
+      "description": "Player chose to trust Maya",
+      "default": false
+    },
+    {
+      "name": "exposed_truth",
+      "description": "Player exposed the truth publicly",
+      "default": false
+    },
+    {
+      "name": "chloe_relationship",
+      "description": "Chloe relationship level",
+      "default": 0
+    },
+    {
+      "name": "maya_relationship",
+      "description": "Maya relationship level",
+      "default": 0
+    },
+    {
+      "name": "hana_relationship",
+      "description": "Hana relationship level",
+      "default": 0
+    },
+    {
+      "name": "day",
+      "description": "Current day number",
+      "default": 1
+    },
+    {
+      "name": "richardson_dead",
+      "description": "Richardson is confirmed dead",
+      "default": true
+    },
+    {
+      "name": "election_week",
+      "description": "Student council election week",
+      "default": true
+    }
+  ]
+}

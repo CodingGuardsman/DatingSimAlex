@@ -1,0 +1,170 @@
+/* ==========================================================================
+   V0 Start Screen Animations - Extracted from v0 globals.css
+   ========================================================================== */
+
+/* Slow cinematic Ken Burns zoom + drift on the background */
+@keyframes kenburns {
+  0% {
+    transform: scale(1.08) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.16) translate3d(-1.5%, -1.2%, 0);
+  }
+  100% {
+    transform: scale(1.08) translate3d(0, 0, 0);
+  }
+}
+
+/* Gentle breathing brightness/contrast to feel 'alive' */
+@keyframes ambientlight {
+  0%,
+  100% {
+    filter: brightness(1) contrast(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.08) contrast(1.03) saturate(1.06);
+  }
+}
+
+/* Diagonal light rays drifting across the frame */
+@keyframes raysdrift {
+  0% {
+    transform: translate3d(-6%, -4%, 0) rotate(8deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(4%, 2%, 0) rotate(8deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate3d(-6%, -4%, 0) rotate(8deg);
+    opacity: 0.35;
+  }
+}
+
+/* Floating dust motes rising slowly */
+@keyframes floatmote {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-120px) translateX(var(--mote-drift, 12px)) scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* Title glow pulse */
+@keyframes titleglow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 12px rgba(120, 190, 255, 0.35),
+      0 0 30px rgba(90, 150, 255, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(150, 210, 255, 0.6),
+      0 0 48px rgba(110, 170, 255, 0.45),
+      0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* 'Press Start' pulse */
+@keyframes presspulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Occasional screen flicker like an old projector */
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0.04;
+  }
+  47% {
+    opacity: 0.04;
+  }
+  48% {
+    opacity: 0.14;
+  }
+  49% {
+    opacity: 0.03;
+  }
+  50% {
+    opacity: 0.12;
+  }
+  51% {
+    opacity: 0.05;
+  }
+}
+
+@keyframes fadeup {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation utility classes */
+.anim-kenburns {
+  animation: kenburns 26s ease-in-out infinite;
+}
+
+.anim-ambient {
+  animation: ambientlight 9s ease-in-out infinite;
+}
+
+.anim-rays {
+  animation: raysdrift 14s ease-in-out infinite;
+}
+
+.anim-mote {
+  animation: floatmote var(--mote-duration, 12s) linear var(--mote-delay, 0s) infinite;
+}
+
+.anim-titleglow {
+  animation: titleglow 4s ease-in-out infinite;
+}
+
+.anim-press {
+  animation: presspulse 1.6s ease-in-out infinite;
+}
+
+.anim-flicker {
+  animation: flicker 6s steps(1) infinite;
+}
+
+.anim-fadeup {
+  animation: fadeup 1.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-kenburns,
+  .anim-ambient,
+  .anim-rays,
+  .anim-mote,
+  .anim-titleglow,
+  .anim-press,
+  .anim-flicker {
+    animation: none !important;
+  }
+}

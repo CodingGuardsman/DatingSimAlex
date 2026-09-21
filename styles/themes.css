@@ -1,0 +1,7 @@
+/* Themes and visual tweaks */
+.theme-day { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.theme-night { background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 0%, #1a2a6c 100%); }
+.fade-enter { opacity: 0; }
+.fade-enter-active { opacity: 1; transition: opacity 0.5s ease; }
+.fade-exit { opacity: 1; }
+.fade-exit-active { opacity: 0; transition: opacity 0.5s ease; }

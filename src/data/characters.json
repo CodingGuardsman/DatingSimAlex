@@ -1,0 +1,80 @@
+{
+  "alex": {
+    "id": "alex",
+    "name": "Alex",
+    "age": 19,
+    "major": "Undeclared",
+    "personality": "Quiet, observant, haunted by what they have found",
+    "bio": "A university student who stumbled onto something they werent supposed to see. The note in the library changed everything.",
+    "romanceable": false,
+    "expressions": [
+      "neutral",
+      "worried",
+      "determined",
+      "sad",
+      "angry"
+    ],
+    "defaultExpression": "neutral",
+    "color": "#5c9ade"
+  },
+  "maya": {
+    "id": "maya",
+    "name": "Maya",
+    "age": 20,
+    "major": "Computer Science",
+    "personality": "Sharp, guarded, hides vulnerability behind technical mastery",
+    "bio": "Works the campus security surveillance system. Knows where every camera points and what every camera captured the night Richardson died.",
+    "romanceable": true,
+    "expressions": [
+      "neutral",
+      "smirk",
+      "worried",
+      "focused",
+      "afraid"
+    ],
+    "defaultExpression": "neutral",
+    "color": "#7b4aea",
+    "ethnicity": "South Asian",
+    "skinTone": "brown"
+  },
+  "chloe": {
+    "id": "chloe",
+    "name": "Chloe",
+    "age": 19,
+    "major": "Political Science",
+    "personality": "Charismatic, strategic, will sacrifice anything to win",
+    "bio": "Campus queen running for student body president. Her father bankrolls the universitys newest building. She knows everyones secrets and has dirt on everyone.",
+    "romanceable": true,
+    "expressions": [
+      "neutral",
+      "smiling",
+      "cold",
+      "determined",
+      "tears"
+    ],
+    "defaultExpression": "neutral",
+    "color": "#e94560",
+    "ethnicity": "Black",
+    "skinTone": "dark"
+  },
+  "hana": {
+    "id": "hana",
+    "name": "Hana",
+    "age": 21,
+    "major": "Visual Arts",
+    "personality": "Withdrawn, intense, communicates through art more than words",
+    "bio": "Richardons last prot\u00e9g\u00e9. Her latest exhibition features paintings that look like crime scenes. She knows what happened but she has been threatened to keep silent.",
+    "romanceable": true,
+    "expressions": [
+      "neutral",
+      "painting",
+      "shocked",
+      "quiet_cry",
+      "stoic"
+    ],
+    "defaultExpression": "neutral",
+    "color": "#52b4a9",
+    "ethnicity": "East Asian",
+    "skinTone": "yellow"
+  }
+}

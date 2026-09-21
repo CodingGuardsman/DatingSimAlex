@@ -1,0 +1,89 @@
+# 🌟 Anime Character Asset: Char_0078
+Bring your game to life with this high-quality, highly consistent anime character asset! Perfect for use in Visual Novels, RPGs, Dating Sims, or as a reference sheet for your 2D/3D development projects.
+This pack contains a fully designed character with multiple poses and facial expressions, ready to be dropped into your favorite game engine (Ren'Py, RPG Maker, Unity, Godot, etc.).
+
+---
+### 📦 PACK CONTENTS (Asset-ID: 49)
+* 🖼️ **Total Images:** 22 high-resolution files
+* 🧍‍♀️ **Character Poses:** 11 unique full-body poses (idle, action, back, side, etc.)
+* 😊 **Emotions & Expressions:** 9 detailed facial expressions (happy, sad, angry, surprised, etc.) for dynamic dialogues!
+* 🧽 **Clean Background:** Perfect for easy masking and immediate implementation.
+
+### 🧝‍♀️ CHARACTER PROFILE & PROMPT TAGS
+**Generation Tags / Character Details:**
+(masterpiece, best quality:1.2), (character reference sheet, model sheet of the SAME person:1.4), simple background, solo,clean reference sheet, clean background,, (masterpiece, best quality:1.2), (character reference sheet, model sheet of the SAME person:1.4), simple background, solo, (1woman:1.2), (young adult:1.2), (8 heads tall:1.2), (adult proportions:1.2), vampire bride, fangs, gothic, pale skin, (very tall:1.2), (amazonian build:1.2), powerful thighs, (delicate porcelain face:1.2), (doll-like features:1.1), (purple hair:1.1), (drill hair:1.2), pink eyes, (high school delinquent:1.1), modified long school skirt, loose tie, baseball bat, masterpiece, best quality, (shoujo manga style:1.2), sparkly eyes, soft shading, floral motifs, ethereal
+
+---
+### 📜 USAGE RIGHTS & LICENSE (Standard License)
+You are free to use and edit these images for any **commercial and non-commercial** project (Video Games, Videos, Artworks, Marketing, etc.).
+* **❌ NOT ALLOWED:** You may NOT resell, redistribute, or repackage the original image files (or slight modifications of them) as your own standalone asset.
+* **✅ CREDIT:** Don't forget to give credit! Please mention my itch.io or Patreon in your project's credits:
+* *Character Assets by studentspub (patreon.com/studentspub)*
+
+---
+### ✨ FEATURES
+* **Absolute Consistency:** Unlike standard AI generations, this character was created using an advanced, highly controlled workflow ensuring exact character consistency across all poses and expressions.
+* **Daily Releases:** I release new character designs regularly to build a massive library for indie devs!
+
+### 💬 SUPPORT & REQUESTS
+Is there a specific character archetype, outfit, or fantasy race you would like to see in the future? Leave a comment below and I'll be happy to add it to my to-do list!
+If you want to support my work and get exclusive early access to more character sheets, visit my **[Patreon](https://www.patreon.com/studentspub)**!
+
+
+============================================================
+      HIER UNTEN STARTET DER HTML-CODE FÜR ITCH.IO
+============================================================
+
+<div style="background-color: #1a1a1a; color: #e0e0e0; font-family: 'Georgia', serif; padding: 20px; border: 3px solid #8b6b22; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+  <div style="text-align: center; border-bottom: 2px dashed #8b6b22; padding-bottom: 15px; margin-bottom: 20px;">
+    <h1 style="color: #d4af37; font-size: 2.5em; text-transform: uppercase; letter-spacing: 2px; margin: 0;">🌟 Asset: Char_0078</h1>
+    <p style="font-style: italic; color: #a9a9a9; font-size: 1.2em;">High-Quality Reference Sheet for Game Devs & RPGs (ID: 49)</p>
+  </div>
+
+  <h2 style="color: #d4af37; text-align: center;">Pack Contents</h2>
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px; margin-bottom: 25px;">
+    
+    <div style="flex: 1; min-width: 150px; background: #222; border: 1px solid #444; padding: 15px; text-align: center; border-radius: 8px;">
+      <h3 style="color: #c0c0c0; margin-top: 0;">🖼️ Total Images</h3>
+      <p style="font-size: 1.1em; font-weight: bold; color: #fff; margin-bottom: 0;">22 Files</p>
+    </div>
+
+    <div style="flex: 1; min-width: 150px; background: #222; border: 1px solid #444; padding: 15px; text-align: center; border-radius: 8px;">
+      <h3 style="color: #c0c0c0; margin-top: 0;">🧍‍♀️ Poses</h3>
+      <p style="font-size: 1.1em; font-weight: bold; color: #fff; margin-bottom: 0;">11 Unique</p>
+    </div>
+
+    <div style="flex: 1; min-width: 150px; background: #222; border: 1px solid #444; padding: 15px; text-align: center; border-radius: 8px;">
+      <h3 style="color: #c0c0c0; margin-top: 0;">😊 Emotions</h3>
+      <p style="font-size: 1.1em; font-weight: bold; color: #fff; margin-bottom: 0;">9 Expressions</p>
+    </div>
+
+  </div>
+
+  <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; border-left: 5px solid #d4af37; margin-bottom: 20px;">
+    <h2 style="color: #d4af37; margin-top: 0;">Character Profile & Details</h2>
+    <p style="line-height: 1.6; color: #cccccc; font-style: italic;">
+      (masterpiece, best quality:1.2), (character reference sheet, model sheet of the SAME person:1.4), simple background, solo,clean reference sheet, clean background,, (masterpiece, best quality:1.2), (character reference sheet, model sheet of the SAME person:1.4), simple background, solo, (1woman:1.2), (young adult:1.2), (8 heads tall:1.2), (adult proportions:1.2), vampire bride, fangs, gothic, pale skin, (very tall:1.2), (amazonian build:1.2), powerful thighs, (delicate porcelain face:1.2), (doll-like features:1.1), (purple hair:1.1), (drill hair:1.2), pink eyes, (high school delinquent:1.1), modified long school skirt, loose tie, baseball bat, masterpiece, best quality, (shoujo manga style:1.2), sparkly eyes, soft shading, floral motifs, ethereal
+    </p>
+  </div>
+
+  <div style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; border-left: 5px solid #8b6b22; margin-bottom: 20px;">
+    <h2 style="color: #d4af37; margin-top: 0;">📜 Usage Rights & License</h2>
+    <p style="line-height: 1.6;">
+      You are free to use and edit these images for any <strong>commercial and non-commercial</strong> project (Video Games, Videos, Artworks, Marketing, etc.).<br><br>
+      <span style="color: #ff424d;">❌ NOT ALLOWED:</span> You may NOT resell, redistribute, or repackage the original image files (or slight modifications) as your own standalone asset.<br><br>
+      <span style="color: #4CAF50;">✅ CREDIT:</span> Please mention <em>"Character Assets by studentspub (patreon.com/studentspub)"</em> in your project's credits.
+    </p>
+  </div>
+
+  <div style="text-align: center; background: linear-gradient(135deg, #2b1414, #1a1a1a); padding: 20px; border-radius: 8px; border: 1px solid #8b6b22;">
+    <h3 style="color: #ff424d; margin-top: 0;">Support & Requests</h3>
+    <p style="line-height: 1.5; margin-bottom: 15px;">
+      Want to support my work and get exclusive early access to more character sheets? Join the Guild!
+    </p>
+    <a href="https://www.patreon.com/studentspub" target="_blank" style="display: inline-block; background-color: #ff424d; color: white; text-decoration: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; font-family: sans-serif; text-transform: uppercase; letter-spacing: 1px;">
+      To Patreon / Studentspub
+    </a>
+  </div>
+
+</div>

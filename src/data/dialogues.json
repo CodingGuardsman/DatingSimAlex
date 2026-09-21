@@ -1,0 +1,1264 @@
+{
+  "prologue": {
+    "start": "prologue_start",
+    "nodes": {
+      "note_examine": {
+        "speaker": null,
+        "text": "No name, no initials. But the paper is thick cream-colored with a faint watermark. Richardson was the universitys most respected professor. He was found dead in his office three days ago. The official report says suicide.",
+        "expression": "curious",
+        "choices": [
+          {
+            "text": "Go to the library again tomorrow.",
+            "effects": {},
+            "next": "day1_end"
+          },
+          {
+            "text": "Talk to someone on campus.",
+            "effects": {},
+            "next": "day1_end"
+          }
+        ],
+        "cg": "assets/images/characters/alex/move-the-character-to-a-library-scene--surrounded-.png"
+      },
+      "day1_end": {
+        "speaker": null,
+        "text": "You slip the note into your pocket. Tomorrow you will investigate. The world tilted off its axis.",
+        "expression": "determined",
+        "isEnd": true
+      },
+      "prologue_start": {
+        "speaker": null,
+        "text": "You found a note tucked inside a library book. The handwriting was rushed, urgent: Richardson knew. Monday night. The archive. If you care about the truth, come alone. Your hands are shaking.",
+        "expression": "curious",
+        "choices": [
+          {
+            "text": "Keep the note and investigate further.",
+            "effects": {
+              "flag_found_note": true
+            },
+            "next": "note_examine"
+          },
+          {
+            "text": "Someone left this. They know what happened.",
+            "effects": {},
+            "next": "note_examine"
+          }
+        ]
+      }
+    },
+    "background": "library"
+  },
+  "chapter1_archive": {
+    "start": "archive_start",
+    "nodes": {
+      "archive_start": {
+        "speaker": null,
+        "text": "The university archive is dark and quiet. You push the door open. Rows of old records fill the room. The door behind you slowly swings shut. Your footsteps echo in the silence.",
+        "expression": "scared",
+        "choices": [
+          {
+            "text": "Search the archive for clues.",
+            "effects": {
+              "flag_archive_searched": true
+            },
+            "next": "archive_log"
+          },
+          {
+            "text": "Leave now. This was a mistake.",
+            "effects": {},
+            "next": "archive_leave"
+          }
+        ]
+      },
+      "archive_leave": {
+        "speaker": null,
+        "text": "You head for the door. It wont open. You pull again. Nothing. The door suddenly swings open and you stumble backward into a figure standing in the corridor.",
+        "expression": "scared",
+        "next": "maya_meet"
+      },
+      "archive_log": {
+        "speaker": null,
+        "text": "You find an old desk with an archive access log. Most entries are ordinary. Then you see RICHARDSON, R. Date: three days ago. 11:42 PM. The night he died. Another entry: AUTHORIZED ACCESS VANCE, D. A section of the page has been torn away.",
+        "expression": "curious",
+        "choices": [
+          {
+            "text": "Vance? The art professor?",
+            "effects": {},
+            "next": "archive_scratch"
+          },
+          {
+            "text": "Someone removed this page. Why?",
+            "effects": {},
+            "next": "archive_scratch"
+          }
+        ]
+      },
+      "archive_scratch": {
+        "speaker": null,
+        "text": "You notice something scratched into a wooden shelf: R.F.F. You take a picture with your phone. Then you spot a thin metal cabinet, locked. You reach underneath and pull out a USB drive.",
+        "expression": "curious",
+        "choices": [
+          {
+            "text": "Put the USB in your pocket. This is important.",
+            "effects": {
+              "flag_usb_found": true
+            },
+            "next": "maya_meet"
+          },
+          {
+            "text": "Put it back. This is too dangerous.",
+            "effects": {},
+            "next": "maya_meet"
+          }
+        ]
+      },
+      "maya_meet": {
+        "speaker": "maya",
+        "text": "You are not supposed to be here.",
+        "expression": "smirk",
+        "choices": [
+          {
+            "text": "I could say the same thing about you.",
+            "effects": {
+              "flag_met_maya": true
+            },
+            "next": "maya_why_here"
+          },
+          {
+            "text": "Do I know you?",
+            "effects": {
+              "flag_met_maya": true
+            },
+            "next": "maya_why_here"
+          }
+        ]
+      },
+      "maya_why_here": {
+        "speaker": "maya",
+        "text": "Why are you here?",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "Long story. I dont have time for it.",
+            "effects": {},
+            "next": "maya_books"
+          },
+          {
+            "text": "I was looking for something.",
+            "effects": {},
+            "next": "maya_books"
+          }
+        ]
+      },
+      "maya_books": {
+        "speaker": "maya",
+        "text": "You answered too quickly. What were you looking for?",
+        "expression": "focused",
+        "choices": [
+          {
+            "text": "Books. In an archive. Its reasonable.",
+            "effects": {},
+            "next": "maya_id"
+          },
+          {
+            "text": "I found something. I think its important.",
+            "effects": {},
+            "next": "maya_id"
+          }
+        ]
+      },
+      "maya_id": {
+        "speaker": "maya",
+        "text": "You are terrible at lying. What is your name?",
+        "expression": "smirk",
+        "choices": [
+          {
+            "text": "Alex.",
+            "effects": {},
+            "next": "maya_knows"
+          },
+          {
+            "text": "Why do you need to know?",
+            "effects": {},
+            "next": "maya_knows"
+          }
+        ]
+      },
+      "maya_knows": {
+        "speaker": "maya",
+        "text": "I know who you are. You found something. I can tell because you keep touching your right pocket.",
+        "expression": "focused",
+        "choices": [
+          {
+            "text": "You are observant.",
+            "effects": {},
+            "next": "maya_work"
+          },
+          {
+            "text": "What do you know about Richardson?",
+            "effects": {},
+            "next": "maya_work"
+          }
+        ]
+      },
+      "maya_work": {
+        "speaker": "maya",
+        "text": "I maintain some of the surveillance infrastructure. I make sure the cameras are actually recording. Until someone dies.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "Did you see something that night?",
+            "effects": {},
+            "next": "maya_footage_info"
+          },
+          {
+            "text": "Can I trust you?",
+            "effects": {},
+            "next": "maya_footage_info"
+          }
+        ]
+      },
+      "maya_footage_info": {
+        "speaker": "maya",
+        "text": "I saw Richardson enter the archive at around 11:42 PM. Seven minutes later, someone else entered. They were wearing a mask. Richardson did not run. It looked like he knew them.",
+        "expression": "focused",
+        "choices": [
+          {
+            "text": "Who was it?",
+            "effects": {},
+            "next": "maya_camera"
+          },
+          {
+            "text": "Was it Vance?",
+            "effects": {},
+            "next": "maya_camera"
+          }
+        ],
+        "cg": "assets/images/characters/maksed figure.jpeg"
+      },
+      "maya_camera": {
+        "speaker": "maya",
+        "text": "The camera stopped recording for exactly six minutes. Someone manually disabled the feed. I have the original footage. But I have not given it to the university.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Why not?",
+            "effects": {},
+            "next": "maya_trust"
+          },
+          {
+            "text": "Can I see it?",
+            "effects": {},
+            "next": "maya_trust"
+          }
+        ]
+      },
+      "maya_trust": {
+        "speaker": "maya",
+        "text": "Because I do not know who I can trust. Do you trust the university?",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "I do not know.",
+            "effects": {},
+            "next": "maya_end"
+          },
+          {
+            "text": "I need to see the footage.",
+            "effects": {
+              "flag_maya_footage_seen": true
+            },
+            "next": "maya_end"
+          }
+        ]
+      },
+      "maya_end": {
+        "speaker": "maya",
+        "text": "That is the question, isnt it? Go home, Alex. If Richardson did not kill himself, who did?",
+        "expression": "determined",
+        "isEnd": true
+      }
+    },
+    "background": "archive"
+  },
+  "chapter2_maya": {
+    "start": "maya_meet2",
+    "nodes": {
+      "maya_meet2": {
+        "speaker": "maya",
+        "text": "You actually came.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "You told me to.",
+            "effects": {
+              "flag_met_maya": true
+            },
+            "next": "maya_close_door"
+          },
+          {
+            "text": "I could say the same thing about you.",
+            "effects": {
+              "flag_met_maya": true
+            },
+            "next": "maya_close_door"
+          }
+        ]
+      },
+      "maya_close_door": {
+        "speaker": "maya",
+        "text": "Close the door. Lock it.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Seriously?",
+            "effects": {},
+            "next": "maya_lock"
+          },
+          {
+            "text": "Okay.",
+            "effects": {},
+            "next": "maya_lock"
+          }
+        ]
+      },
+      "maya_lock": {
+        "speaker": null,
+        "text": "The door clicks shut. Maya finally turns toward you. She looks at the USB drive in your hand.",
+        "expression": "worried",
+        "next": "maya_usb"
+      },
+      "maya_usb": {
+        "speaker": "maya",
+        "text": "Give me the USB.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "How did you know I had it?",
+            "effects": {},
+            "next": "maya_usb_found"
+          },
+          {
+            "text": "Here. Take it.",
+            "effects": {
+              "flag_usb_given": true
+            },
+            "next": "maya_usb_found"
+          }
+        ]
+      },
+      "maya_usb_found": {
+        "speaker": "maya",
+        "text": "The USB wasnt there yesterday. I checked. After Richardson died, I searched the archive because I knew the official story was wrong.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "What is on it?",
+            "effects": {},
+            "next": "maya_usb_password"
+          },
+          {
+            "text": "You knew it was murder?",
+            "effects": {},
+            "next": "maya_usb_password"
+          }
+        ]
+      },
+      "maya_usb_password": {
+        "speaker": "maya",
+        "text": "I dont know. I havent opened it. I dont have the password. If someone put that drive there, they probably dont want us opening it.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Then why should we?",
+            "effects": {},
+            "next": "maya_footage_play"
+          },
+          {
+            "text": "Let me try to open it.",
+            "effects": {},
+            "next": "maya_footage_play"
+          }
+        ]
+      },
+      "maya_footage_play": {
+        "speaker": "maya",
+        "text": "Sit. I have the original footage. The universitys version was edited. Six minutes are missing. Watch the reflection, not Richardson.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Why the reflection?",
+            "effects": {},
+            "next": "maya_reflection"
+          },
+          {
+            "text": "Show me.",
+            "effects": {
+              "flag_maya_trust": 1
+            },
+            "next": "maya_reflection"
+          }
+        ],
+        "cg": "assets/images/characters/maksed figure.jpeg"
+      },
+      "maya_reflection": {
+        "speaker": null,
+        "text": "The timestamp reads 11:38 PM. Richardson enters. In the glass door beside the archive, another shape appears in the reflection. Someone is across the corridor. Richardson sees them. He goes inside anyway.",
+        "expression": "worried",
+        "next": "maya_zoom"
+      },
+      "maya_zoom": {
+        "speaker": "maya",
+        "text": "Zoom in on the access card. There is a symbol on it. The database entry for that card was deleted. Completely. Someone with administrator privileges did it.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Can you recover it?",
+            "effects": {},
+            "next": "maya_server_room"
+          },
+          {
+            "text": "Who has administrator access?",
+            "effects": {},
+            "next": "maya_server_room"
+          }
+        ],
+        "cg": "assets/images/characters/maksed figure.jpeg"
+      },
+      "maya_server_room": {
+        "speaker": "maya",
+        "text": "Not from here. The old server room under the administration building has backups. But its restricted. And whoever deleted that entry might notice if I start digging.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Then we go together.",
+            "effects": {
+              "flag_maya_plan": true
+            },
+            "next": "maya_richardson"
+          },
+          {
+            "text": "Be careful. Someone might be watching.",
+            "effects": {
+              "flag_maya_caution": true
+            },
+            "next": "maya_richardson"
+          }
+        ]
+      },
+      "maya_richardson": {
+        "speaker": "maya",
+        "text": "Richardson helped me get this job. He said I was good at finding things other people missed. You did not know him, so do not pretend you understand him.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Why are you helping me?",
+            "effects": {
+              "flag_maya_trust": 1
+            },
+            "next": "maya_tired"
+          },
+          {
+            "text": "What else do you know?",
+            "effects": {
+              "flag_maya_trust": 1
+            },
+            "next": "maya_tired"
+          }
+        ]
+      },
+      "maya_tired": {
+        "speaker": "maya",
+        "text": "Because I am tired of watching things happen and pretending I did not see them. The night Richardson died was not the first time someone accessed the archive after hours. There were three other incidents, all on Mondays.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "What happened to the other footage?",
+            "effects": {},
+            "next": "maya_monday"
+          },
+          {
+            "text": "Then someone is using the archive every Monday.",
+            "effects": {},
+            "next": "maya_monday"
+          }
+        ]
+      },
+      "maya_monday": {
+        "speaker": "maya",
+        "text": "The first two recordings are deleted. The third is corrupted. Only the fourth, Richardson's, is intact. A folder called MONDAY_ARCHIVE appeared beside the video. I did not create it. Whoever accessed my computer while you were sitting here knows about you now.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "What do we do?",
+            "effects": {
+              "flag_maya_trust": 1
+            },
+            "next": "maya_warning"
+          },
+          {
+            "text": "Leave now.",
+            "effects": {},
+            "next": "maya_warning"
+          }
+        ]
+      },
+      "maya_warning": {
+        "speaker": "maya",
+        "text": "Meet me here tomorrow after the election debate. Everyone will be watching the candidates. We will find out who used the archive before Richardson, and whether they were involved.",
+        "expression": "angry",
+        "choices": [
+          {
+            "text": "Its a plan.",
+            "effects": {
+              "flag_maya_plan": true
+            },
+            "next": "maya_threat"
+          },
+          {
+            "text": "Its a gamble. What if they were involved?",
+            "effects": {},
+            "next": "maya_threat"
+          }
+        ]
+      },
+      "maya_threat": {
+        "speaker": null,
+        "text": "Alex steps outside. The campus is silent. His phone vibrates. Three messages appear from an unknown number: STOP LOOKING INTO RICHARDSON. MAYA CANT PROTECT YOU. SHE COULDNT PROTECT HIM EITHER.",
+        "expression": "angry",
+        "isEnd": true
+      }
+    },
+    "background": "security"
+  },
+  "chapter3_chloe": {
+    "start": "chloe_meet",
+    "nodes": {
+      "chloe_meet": {
+        "speaker": "chloe",
+        "text": "Talking to my poster? That is flattering. Or strange.",
+        "expression": "smiling",
+        "choices": [
+          {
+            "text": "I was just looking.",
+            "effects": {
+              "flag_met_chloe": true
+            },
+            "next": "chloe_knows"
+          },
+          {
+            "text": "You are everywhere. It is hard to miss you.",
+            "effects": {
+              "flag_met_chloe": true
+            },
+            "next": "chloe_knows"
+          }
+        ]
+      },
+      "chloe_knows": {
+        "speaker": "chloe",
+        "text": "You asked about Richardson last semester. I remember you.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "You remember that?",
+            "effects": {},
+            "next": "chloe_campaign"
+          },
+          {
+            "text": "Why would you care?",
+            "effects": {},
+            "next": "chloe_campaign"
+          }
+        ]
+      },
+      "chloe_campaign": {
+        "speaker": "chloe",
+        "text": "I remember useful people. Come to the debate.",
+        "expression": "smiling",
+        "choices": [
+          {
+            "text": "I will.",
+            "effects": {
+              "flag_chloe_debate": true
+            },
+            "next": "chloe_office"
+          },
+          {
+            "text": "Maybe.",
+            "effects": {},
+            "next": "chloe_office"
+          }
+        ]
+      },
+      "chloe_office": {
+        "speaker": "chloe",
+        "text": "You came. Good. I was hoping you would.",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "I wanted to ask you something.",
+            "effects": {},
+            "next": "chloe_richardson"
+          },
+          {
+            "text": "About the election?",
+            "effects": {},
+            "next": "chloe_richardson"
+          }
+        ]
+      },
+      "chloe_richardson": {
+        "speaker": "chloe",
+        "text": "Richardson? Why are you asking about him?",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "People have been talking.",
+            "effects": {},
+            "next": "chloe_night"
+          },
+          {
+            "text": "Did you speak to him Monday night?",
+            "effects": {},
+            "next": "chloe_night"
+          }
+        ]
+      },
+      "chloe_night": {
+        "speaker": "chloe",
+        "text": "Not here. Too many people are listening.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Then tell me.",
+            "effects": {},
+            "next": "chloe_funding"
+          },
+          {
+            "text": "Why not here?",
+            "effects": {},
+            "next": "chloe_funding"
+          }
+        ]
+      },
+      "chloe_funding": {
+        "speaker": "chloe",
+        "text": "I talked to Richardson on Monday. We argued about research money. My father may be involved.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Hes funded the science building.",
+            "effects": {},
+            "next": "chloe_dangerous"
+          },
+          {
+            "text": "What did Richardson say?",
+            "effects": {},
+            "next": "chloe_dangerous"
+          }
+        ]
+      },
+      "chloe_dangerous": {
+        "speaker": "chloe",
+        "text": "These questions are dangerous. Richardson learned that too late.",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "Tell me the truth.",
+            "effects": {
+              "flag_chloe_pushed": true
+            },
+            "next": "chloe_father"
+          },
+          {
+            "text": "Back off.",
+            "effects": {},
+            "next": "chloe_father"
+          }
+        ]
+      },
+      "chloe_father": {
+        "speaker": "chloe",
+        "text": "My father is dangerous. Problems disappear when he gets involved.",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "What did Richardson have on him?",
+            "effects": {},
+            "next": "chloe_threat"
+          },
+          {
+            "text": "What does your father know?",
+            "effects": {
+              "flag_chloe_trust": 1
+            },
+            "next": "chloe_threat"
+          }
+        ]
+      },
+      "chloe_threat": {
+        "speaker": "chloe",
+        "text": "Someone threatened me. They told me to stop asking questions.",
+        "expression": "afraid",
+        "choices": [
+          {
+            "text": "What did they say?",
+            "effects": {},
+            "next": "chloe_richardson_quote"
+          },
+          {
+            "text": "Why did you tell me this?",
+            "effects": {},
+            "next": "chloe_richardson_quote"
+          }
+        ]
+      },
+      "chloe_richardson_quote": {
+        "speaker": "chloe",
+        "text": "Richardson told me not to trust my father. He was afraid of someone else.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Why didnt you report this?",
+            "effects": {},
+            "next": "chloe_perception"
+          },
+          {
+            "text": "Who should you be afraid of?",
+            "effects": {},
+            "next": "chloe_perception"
+          }
+        ]
+      },
+      "chloe_perception": {
+        "speaker": "chloe",
+        "text": "No one would believe me. They would say I was attacking my father.",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "Are you going to do something?",
+            "effects": {
+              "flag_chloe_trust": 1
+            },
+            "next": "chloe_tomorrow"
+          },
+          {
+            "text": "Why trust me?",
+            "effects": {
+              "flag_chloe_trust": 1
+            },
+            "next": "chloe_tomorrow"
+          }
+        ]
+      },
+      "chloe_tomorrow": {
+        "speaker": "chloe",
+        "text": "Help me find out what happened. Meet me tomorrow at six. Say you are helping my campaign.",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "I will be there.",
+            "effects": {
+              "flag_chloe_tomorrow": true
+            },
+            "next": "chloe_threat2"
+          },
+          {
+            "text": "This is too dangerous.",
+            "effects": {},
+            "next": "chloe_threat2"
+          }
+        ]
+      },
+      "chloe_threat2": {
+        "speaker": null,
+        "text": "Alex steps outside. The campaign lights are still on. One poster has been cut perfectly down the middle. Behind it, written on the wall: YOUR FATHER CANT PROTECT YOU FOREVER. His phone vibrates. Unknown number: ASK CHLOE WHAT HAPPENED IN THE ARCHIVE. The lights in Chloes room suddenly go dark.",
+        "expression": "panicked",
+        "isEnd": true
+      }
+    },
+    "background": "campaign"
+  },
+  "chapter4_hana": {
+    "start": "hana_meet",
+    "nodes": {
+      "hana_meet": {
+        "speaker": "hana",
+        "text": "Do not stand so close. The paint is wet.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "Sorry. I didnt notice.",
+            "effects": {
+              "flag_met_hana": true
+            },
+            "next": "hana_richardson_mention"
+          },
+          {
+            "text": "It doesnt look wet.",
+            "effects": {
+              "flag_met_hana": true,
+              "flag_hana_trust": 1
+            },
+            "next": "hana_richardson_mention"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_richardson_mention": {
+        "speaker": "hana",
+        "text": "Richardson mentioned you. He said you notice things.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "What did he say about me?",
+            "effects": {},
+            "next": "hana_paintings"
+          },
+          {
+            "text": "Why are you here?",
+            "effects": {},
+            "next": "hana_paintings"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_paintings": {
+        "speaker": "hana",
+        "text": "You looked at the paintings first. Most people look at me first. They want to know if I am strange.",
+        "expression": "intense",
+        "choices": [
+          {
+            "text": "Are these from your exhibition?",
+            "effects": {},
+            "next": "hana_exhibition"
+          },
+          {
+            "text": "What is the exhibition called?",
+            "effects": {},
+            "next": "hana_exhibition"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_exhibition": {
+        "speaker": "hana",
+        "text": "It is called After the Bell. It is about what happens after class.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "That corridor looks familiar.",
+            "effects": {
+              "flag_hana_trust": 1
+            },
+            "next": "hana_archive"
+          },
+          {
+            "text": "Did you paint the archive?",
+            "effects": {},
+            "next": "hana_archive"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_archive": {
+        "speaker": "hana",
+        "text": "I was outside the archive. Richardson asked me to bring him a folder. I did not look inside.",
+        "expression": "worried",
+        "choices": [
+          {
+            "text": "Did you see Richardson that night?",
+            "effects": {},
+            "next": "hana_vance"
+          },
+          {
+            "text": "What was in the folder?",
+            "effects": {},
+            "next": "hana_vance"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_vance": {
+        "speaker": "hana",
+        "text": "Vance was Richardson's mentor before he was yours. They argued about money. Vance knew Richardson was afraid.",
+        "expression": "intense",
+        "choices": [
+          {
+            "text": "Did Vance go with him?",
+            "effects": {},
+            "next": "hana_threat"
+          },
+          {
+            "text": "Were you at the archive?",
+            "effects": {},
+            "next": "hana_threat"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_threat": {
+        "speaker": "hana",
+        "text": "I promised Dr. Vance I would stay quiet. I was outside the archive. Richardson went inside and never came out.",
+        "expression": "sad",
+        "choices": [
+          {
+            "text": "What did you see?",
+            "effects": {},
+            "next": "hana_masked"
+          },
+          {
+            "text": "Why are you hiding this?",
+            "effects": {},
+            "next": "hana_masked"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_masked": {
+        "speaker": "hana",
+        "text": "A masked person left the archive with a folder. I hid nearby. Someone was waiting for them. They knew I was there.",
+        "expression": "panicked",
+        "choices": [
+          {
+            "text": "Who was waiting?",
+            "effects": {},
+            "next": "hana_photo"
+          },
+          {
+            "text": "They knew you were there?",
+            "effects": {},
+            "next": "hana_photo"
+          }
+        ],
+        "cg": "assets/images/characters/maksed figure.jpeg"
+      },
+      "hana_photo": {
+        "speaker": "hana",
+        "text": "I saw a photo of Richardson in the archive. Someone stood behind him. The person wore a signet ring. Chloe said it was connected to her father.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Who is behind Richardson?",
+            "effects": {},
+            "next": "hana_vance_reveal"
+          },
+          {
+            "text": "Why did Chloe let you in?",
+            "effects": {},
+            "next": "hana_vance_reveal"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_vance_reveal": {
+        "speaker": "hana",
+        "text": "Chloe let me into the research building. Vance was involved. Richardson knew it.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "What is in the research building?",
+            "effects": {},
+            "next": "hana_key"
+          },
+          {
+            "text": "Did you go there?",
+            "effects": {},
+            "next": "hana_key"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_key": {
+        "speaker": "hana",
+        "text": "The records showed where the money went. Then someone cleared the room. Chloe said her father would hurt me if I talked.",
+        "expression": "relieved",
+        "choices": [
+          {
+            "text": "Here. Take this key.",
+            "effects": {
+              "flag_hana_key": true
+            },
+            "next": "hana_threat2"
+          },
+          {
+            "text": "I should go.",
+            "effects": {},
+            "next": "hana_threat2"
+          }
+        ],
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      },
+      "hana_threat2": {
+        "speaker": null,
+        "text": "Alex stands outside the arts building with the key in his hand. His phone vibrates. Three messages: HANA TALKS TOO MUCH. THE KEY WONT HELP YOU. ASK HER WHO OPENED THE DOOR. A shadow moves behind the gallery window. The lights turn off.",
+        "expression": "panicked",
+        "isEnd": true,
+        "cg": "assets/images/characters/hana/painintg.jpeg"
+      }
+    },
+    "background": "gallery"
+  },
+  "day5_confrontation": {
+    "start": "confront_start",
+    "nodes": {
+      "confront_start": {
+        "speaker": null,
+        "text": "The old research building. Alex opens the rusted door with Hana key. Inside: old computers, filing cabinets, boxes of research papers. At the back, a single folder. Financial transfers. Research grants. University accounts. Private foundations. Three names: DR. VANCE, CHLOES FATHER, UNIVERSITY EXECUTIVE BOARD.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Read the folder carefully.",
+            "effects": {},
+            "next": "confront_maya"
+          },
+          {
+            "text": "Look around for more evidence.",
+            "effects": {},
+            "next": "confront_maya"
+          }
+        ],
+        "cg": "assets/images/characters/conmfrontiation.jpeg"
+      },
+      "confront_maya": {
+        "speaker": "maya",
+        "text": "You should not be here alone. How did you find me? Hana told me. Eventually.",
+        "expression": "focused",
+        "choices": [
+          {
+            "text": "Then Chloe is here too.",
+            "effects": {
+              "flag_ending_chloe": true
+            },
+            "next": "confront_chloe"
+          },
+          {
+            "text": "What does Hana know?",
+            "effects": {
+              "flag_ending_hana": true
+            },
+            "next": "confront_chloe"
+          }
+        ]
+      },
+      "confront_chloe": {
+        "speaker": "chloe",
+        "text": "Then I suppose there is no point pretending anymore. You knew. I knew some of it. Your father is in these records. Yes. Vance too. Yes. And Richardson found out. Yes. Then who killed him?",
+        "expression": "cold",
+        "choices": [
+          {
+            "text": "Hana knows. Ask her.",
+            "effects": {
+              "flag_ending_hana": true
+            },
+            "next": "confront_hana"
+          },
+          {
+            "text": "Maya, do you know?",
+            "effects": {
+              "flag_ending_maya": true
+            },
+            "next": "confront_hana"
+          }
+        ]
+      },
+      "confront_hana": {
+        "speaker": "hana",
+        "text": "I know. I saw them. The masked person wasnt the one who killed Richardson. The person who sent them. Vance. I heard them. I knew his voice. He used someone else because he did not want to be seen. The masked person was supposed to remove Richardsons evidence. They couldnt find everything. The USB. Thats why the cameras were disabled.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Then who was the masked person?",
+            "effects": {},
+            "next": "confront_trust"
+          },
+          {
+            "text": "Why did Richardson go to the archive?",
+            "effects": {},
+            "next": "confront_trust"
+          }
+        ]
+      },
+      "confront_trust": {
+        "speaker": "hana",
+        "text": "Because he thought he could trust someone. Chloe. You told him you would help? I tried. But you did not. My father found out. He told me to stay out of it. You listened. For one night. One night was enough. You think I do not know that?",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "We have enough. What do we do?",
+            "effects": {},
+            "next": "confront_choice"
+          },
+          {
+            "text": "Chloe, what do you want?",
+            "effects": {
+              "flag_ending_chloe": true
+            },
+            "next": "confront_choice"
+          }
+        ]
+      },
+      "confront_choice": {
+        "speaker": null,
+        "text": "We have the records. The footage. The paintings. The USB. The access logs. The photographs. We have enough. But Chloe says if we release everything, innocent people get destroyed too. We have three people. Three choices. One decision.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Release Mayas footage and expose Chloes father.",
+            "effects": {
+              "flag_ending_maya": true
+            },
+            "next": "ending_maya"
+          },
+          {
+            "text": "Help Chloe bury the scandal.",
+            "effects": {
+              "flag_ending_chloe": true
+            },
+            "next": "ending_chloe"
+          },
+          {
+            "text": "Let Hana reveal the truth through her exhibition.",
+            "effects": {
+              "flag_ending_hana": true
+            },
+            "next": "ending_hana"
+          },
+          {
+            "text": "Publish everything and expose everyone.",
+            "effects": {
+              "flag_ending_truth": true
+            },
+            "next": "ending_truth"
+          }
+        ]
+      },
+      "ending_maya": {
+        "speaker": null,
+        "text": "Maya uploads the footage. The university is engulfed in scandal. Chloes father is named as an accomplice. Dr. Vance is suspended. Maya loses her position. But Richardsons final night is no longer a secret. Someones finally watched the watchers. THE END.",
+        "expression": "neutral",
+        "isEnd": true
+      },
+      "ending_chloe": {
+        "speaker": null,
+        "text": "Chloe uses her fathers connections to bury the scandal. She wins the election. The university maintains the original explanation. Dr. Vance continues his career. Richardsons killer remains free. Some truths are buried because people are afraid of what happens when they are found. THE END.",
+        "expression": "neutral",
+        "isEnd": true
+      },
+      "ending_hana": {
+        "speaker": null,
+        "text": "Hana reveals everything through her art exhibition. The paintings spread far beyond the university. The investigation begins. But Hana disappears from campus before anyone can find her. She finally spoke. Then she disappeared before they could silence her again. THE END.",
+        "expression": "neutral",
+        "isEnd": true
+      },
+      "ending_truth": {
+        "speaker": null,
+        "text": "Alex publishes everything. The university descends into chaos. Maya loses her job. Chloe loses her campaign and her fathers protection. Hana becomes the center of the investigation. Alex becomes one of the people who exposed everything. No one escapes unchanged. And Richardsons final secret is no longer buried. But the truth had never promised to make anyone happy. It only promised to be the truth. THE END.",
+        "expression": "neutral",
+        "isEnd": true
+      }
+    },
+    "background": "research"
+  },
+  "intro": {
+    "start": "intro_start",
+    "nodes": {
+      "intro_start": {
+        "speaker": null,
+        "text": "AFTER CLASS - A Dark University Mystery Visual Novel",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "Read the intro",
+            "effects": {},
+            "next": "intro_rules"
+          },
+          {
+            "text": "Skip to the story",
+            "effects": {
+              "flag_skipped_intro": true
+            },
+            "next": null,
+            "isEnd": true
+          }
+        ]
+      },
+      "intro_rules": {
+        "speaker": null,
+        "text": "Three days ago, Dr. Richardson - the universitys most respected professor - was found dead in his office. The official report says suicide. But you found a note hidden in a library book that says otherwise. Richardson knew. Monday night. The archive. If you care about the truth, come alone.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Continue",
+            "effects": {},
+            "next": "intro_chars"
+          }
+        ]
+      },
+      "intro_chars": {
+        "speaker": null,
+        "text": "You will meet three girls, each holding part of the truth. Nobody tells the whole story. Nobody is completely trustworthy.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "Tell me about them",
+            "effects": {},
+            "next": "intro_maya_info"
+          }
+        ]
+      },
+      "intro_maya_info": {
+        "speaker": "maya",
+        "text": "I work campus security. I have footage from the night Richardson died. I saw a masked figure follow him into the archive. But I have not shown it to anyone. I am guarded, analytical, and I do not trust easily. You will have to earn my cooperation.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "And the others?",
+            "effects": {},
+            "next": "intro_chloe_info"
+          }
+        ]
+      },
+      "intro_chloe_info": {
+        "speaker": "chloe",
+        "text": "I am running for student body president. My father funds the universitys newest building. I received a threatening phone call the night Richardson died. I know more than I am saying. I am charismatic, strategic, and I will protect my family at all costs. Do not assume I am your ally.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "And the last one?",
+            "effects": {},
+            "next": "intro_hana_info"
+          }
+        ]
+      },
+      "intro_hana_info": {
+        "speaker": "hana",
+        "text": "Richardson was my mentor. I was near the archive that night. I saw something I cannot forget. My paintings tell the story my mouth cannot. I have been threatened into silence. I communicate through my art more than my words. I am withdrawn, intense, and I have seen things no one should see.",
+        "expression": "neutral",
+        "choices": [
+          {
+            "text": "I understand",
+            "effects": {},
+            "next": "intro_rules2"
+          }
+        ]
+      },
+      "intro_rules2": {
+        "speaker": null,
+        "text": "Every choice you make earns or loses trust with each girl. At the end, you choose which ending to pursue. But if you do not have enough trust with the girl you choose, you get a bad ending instead. There are no right answers. There are only consequences. Some truths are worth uncovering. Others are buried for a reason. Choose carefully.",
+        "expression": "determined",
+        "choices": [
+          {
+            "text": "Begin the investigation",
+            "effects": {},
+            "isEnd": true,
+            "next": null
+          }
+        ],
+        "isEnd": true
+      }
+    },
+    "background": "university"
+  }
+}
