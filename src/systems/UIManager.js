@@ -37,6 +37,8 @@ export class UIManager {
       this._startScreenReaderWatch();
       this._startDownloadWatch();
       this._startMouseTrailWatch();
+      this._startDirectInstruction();
+      this._registerArchiveHelp();
     }, 30000);
   }
 
