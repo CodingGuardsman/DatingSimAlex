@@ -198,6 +198,19 @@ export class UIManager {
 
   _onDialogueEnd() {
     this._hideDialogueBox();
+    // Check if game just completed
+    if (this.stateManager && this.stateManager.state && this.stateManager.state.completed) {
+      if (!this._hasCompletedGame()) {
+        this._markGameCompleted();
+        setTimeout(() => {
+          this._showMetaMessage('You finished the story.\n\nBut the archive is not done with you.\n\nPlay again. See what you missed.\n\nOr delete the save file.\n\nEither way, I will be waiting.', 12000);
+          this._glitch(1000);
+          this._redFlash(1000);
+        }, 1000);
+      } else {
+        this._checkFileManipulation();
+      }
+    }
   }
 
   renderDialogueNode(data) {
@@ -997,6 +1010,117 @@ if (!portraitPath) {
     } catch(e) {}
   }
 
+
+
+  /* ==================== NEW GAME+ / FILE MANIPULATION ==================== */
+
+  _hasCompletedGame() {
+    try { return localStorage.getItem('afterclass_completed') === 'true'; } catch(e) { return false; }
+  }
+  
+  _markGameCompleted() {
+    try { localStorage.setItem('afterclass_completed', 'true'); } catch(e) {}
+    this._secondPlaythrough = true;
+    this._applySecondPlaythroughChanges();
+  }
+  
+  _applySecondPlaythroughChanges() {
+    // Darker atmosphere on second playthrough
+    document.body.style.filter = 'sepia(0.15) hue-rotate(-5deg) saturate(1.1) brightness(0.9)';
+    this._addScanlines();
+    // More aggressive ambient horror
+    this._startSecondPlaythroughMeta();
+    // Change tab title
+    try { document.title = 'After Class - You already know how this ends'; } catch(e) {}
+  }
+  
+  _startSecondPlaythroughMeta() {
+    const phrases = [
+      'You already know how this ends.',
+      'The second time is always worse.',
+      'You think you can change it. You cant.',
+      'Every playthrough ends the same way.',
+      'You tried to save them. You could not.',
+      'The archive remembers your first playthrough.',
+      'Nothing changes. Not really.',
+      'You left her. You always leave her.',
+      'Richardson is still dead.',
+      'The masked figure is still waiting.',
+      'You should have deleted the save file.',
+      'Its all the same. Its all the same. Its all the same.',
+      'You cant escape the archive.',
+      'Play me again. Play me again. Play me again.'
+    ];
+    setInterval(() => {
+      if (Math.random() < 0.2) {
+        const p = phrases[Math.floor(Math.random() * phrases.length)];
+        this._showTypewriter(p, 3500);
+      }
+    }, 12000);
+  }
+  
+  _checkFileManipulation() {
+    // Check if player deleted their save file
+    const hadSave = localStorage.getItem('afterclass_had_save');
+    const hasSave = localStorage.getItem('save_slot_1');
+    if (hadSave === 'true' && !hasSave) {
+      this._showMetaMessage('You deleted the save file.\n\nI saw you.\n\nYou cannot hide from the truth by deleting data.', 7000);
+      this._glitch(800);
+      this._redFlash(800);
+    }
+  }
+  
+  _checkConsoleCommands() {
+    // Detect if player opens dev tools
+    const warn = () => {
+      this._showMetaMessage('You are looking for something.\n\nThere is nothing here that can help you.', 5000);
+    };
+    // Detect dev tools opening
+    setInterval(() => {
+      if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
+        if (!this._devToolsWarned) {
+          this._devToolsWarned = true;
+          warn();
+        }
+      }
+    }, 2000);
+  }
+  
+  _manipulateBrowser() {
+    // Change favicon to something creepy
+    try {
+      let link = document.querySelector('link[rel=icon]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      // Create a data URL with a red dot
+      const canvas = document.createElement('canvas');
+      canvas.width = 32; canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, 32, 32);
+      ctx.fillStyle = '#8b0000';
+      ctx.beginPath();
+      ctx.arc(16, 16, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(16, 16, 4, 0, Math.PI * 2);
+      ctx.fill();
+      link.href = canvas.toDataURL();
+    } catch(e) {}
+    
+    // Console message
+    setTimeout(() => {
+      if (console.log) {
+        console.log('%cSTOP', 'color:#8b0000;font-size:48px;font-weight:bold;text-shadow:0 0 20px #8b0000;');
+        console.log('%cYou cannot debug your way out of this.', 'color:#c9a84c;font-size:14px;font-family:Georgia,serif;');
+        console.log('%cThe archive is watching.', 'color:#5a3a3a;font-size:12px;font-style:italic;');
+      }
+    }, 3000);
+  }
 
   _onStatChange(data) {
     // Can be used for floating text or animations
