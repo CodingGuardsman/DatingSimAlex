@@ -12,7 +12,7 @@ import { StatSystem } from "./systems/StatSystem.js";
 import { RelationshipSystem } from "./systems/RelationshipSystem.js";
 import { DialogueSystem } from "./systems/DialogueSystem.js";
 import { UIManager } from "./systems/UIManager.js";
-import { SceneManager } from "./systems/sceneManager.js";
+import { SceneManager } from "./systems/SceneManager.js";
 import { CharacterFactory } from "./characters/CharacterFactory.js";
 import { V0StartMenuScene } from "./scenes/V0StartMenuScene.js";
 import { EndOfDayScene } from "./scenes/EndOfDayScene.js";
