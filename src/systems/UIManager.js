@@ -1173,6 +1173,454 @@ if (!portraitPath) {
     }, 25000);
   }
 
+  /* ==================== TAB / VISIBILITY ==================== */
+  
+  _startTabWatch() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Player left the tab
+        this._lastHiddenTime = Date.now();
+        // Very subtle - just store it, mention later
+      } else {
+        // Player returned
+        if (this._lastHiddenTime) {
+          const awaySeconds = Math.floor((Date.now() - this._lastHiddenTime) / 1000);
+          if (awaySeconds > 30 && this._hasCompletedGame()) {
+            this._showMetaMessage('I was here the whole time.', 4000);
+            this._glitch(100);
+          }
+          delete this._lastHiddenTime;
+        }
+      }
+    });
+    
+    // Detect page hide (mobile, tab close)
+    window.addEventListener('pagehide', () => {
+      if (this._hasCompletedGame()) {
+        // Store that they tried to leave
+        localStorage.setItem('_archive_left', Date.now());
+      }
+    });
+    
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) {
+        // Page was restored from bfcache
+        if (this._hasCompletedGame()) {
+          this._showMetaMessage('You came back. They always come back.', 4000);
+        }
+      }
+    });
+  }
+
+  /* ==================== LOCALSTORAGE TAMPERING ==================== */
+  
+  _startStorageWatch() {
+    // Watch for external save modifications
+    setInterval(() => {
+      const saves = JSON.parse(localStorage.getItem('afterclass_saves') || '[]');
+      // Check for unexpected changes
+      const checksum = JSON.stringify(saves);
+      if (this._lastSaveChecksum && this._lastSaveChecksum !== checksum) {
+        // Save was modified externally
+        if (this._hasCompletedGame()) {
+          this._showMetaMessage('You changed the save file. I saw you. The archive keeps its own copies.', 5000);
+          this._glitch(200);
+          this._redFlash();
+        }
+      }
+      this._lastSaveChecksum = checksum;
+    }, 3000);
+    
+    // Detect if player clears all storage
+    const originalClear = localStorage.clear.bind(localStorage);
+    localStorage.clear = () => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You think clearing storage clears the archive. It does not.', 5000);
+        this._glitch(300);
+      }
+      originalClear();
+    };
+    
+    // Detect removeItem on save data
+    const originalRemove = localStorage.removeItem.bind(localStorage);
+    localStorage.removeItem = (key) => {
+      if (key && key.includes('save') && this._hasCompletedGame()) {
+        this._showMetaMessage('You cannot delete the archive. Not really.', 5000);
+        this._glitch(200);
+      }
+      originalRemove(key);
+    };
+  }
+
+  /* ==================== PRINT DETECTION ==================== */
+  
+  _startPrintWatch() {
+    window.addEventListener('beforeprint', () => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You cannot print a soul.', 3000);
+        this._glitch(150);
+      }
+    });
+    
+    // Detect keyboard shortcut Ctrl/Cmd+P
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        if (this._hasCompletedGame()) {
+          setTimeout(() => {
+            this._showMetaMessage('You cannot print a soul.', 3000);
+            this._glitch(150);
+          }, 100);
+        }
+      }
+    }, true); // capture phase to catch it early
+  }
+
+  /* ==================== NAVIGATION DETECTION ==================== */
+  
+  _startNavigationWatch() {
+    // Detect back/forward cache navigation
+    window.addEventListener('unload', () => {
+      if (this._hasCompletedGame() && this.gamePhase === 'dialogue') {
+        localStorage.setItem('_archive_abandoned', Date.now());
+      }
+    });
+    
+    // Detect beforeunload (closing tab/window)
+    window.addEventListener('beforeunload', (e) => {
+      if (this._hasCompletedGame() && this.gamePhase === 'dialogue') {
+        const msg = 'The archive is still running.';
+        e.preventDefault();
+        e.returnValue = msg;
+        return msg;
+      }
+    });
+  }
+
+  /* ==================== ACCESSIBILITY / REDUCE MOTION ==================== */
+  
+  _startAccessibilityWatch() {
+    // Detect if player prefers reduced motion
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      // Player has reduced motion enabled - they might be trying to avoid the horror
+      setTimeout(() => {
+        if (this._hasCompletedGame()) {
+          this._showMetaMessage('You think reducing motion reduces the horror. It does not.', 4000);
+        }
+      }, 60000);
+    }
+    
+    // Detect high contrast mode
+    const hcQuery = window.matchMedia('(prefers-high-contrast: high)');
+    if (hcQuery.matches) {
+      setTimeout(() => {
+        if (this._hasCompletedGame()) {
+          this._showMetaMessage('Even in high contrast, the archive remains.', 4000);
+        }
+      }, 90000);
+    }
+  }
+
+  /* ==================== NETWORK DETECTION ==================== */
+  
+
+  /* ==================== CLIPBOARD WATCH ==================== */
+  
+  _startClipboardWatch() {
+    // Detect if player copies text from the game
+    document.addEventListener('copy', (e) => {
+      const selection = window.getSelection().toString();
+      if (selection && this._hasCompletedGame()) {
+        // Player is copying text - maybe trying to save something
+        this._lastCopiedText = selection;
+        setTimeout(() => {
+          if (this._hasCompletedGame()) {
+            this._showMetaMessage('You cannot copy a soul.', 3000);
+            this._glitch(100);
+          }
+        }, 500);
+      }
+    });
+    
+    // Detect paste attempts
+    document.addEventListener('paste', (e) => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You cannot paste a soul.', 3000);
+        this._glitch(100);
+      }
+    });
+  }
+
+  /* ==================== FINGERPRINT DETECTION ==================== */
+  
+  _startFingerprintWatch() {
+    // Subtle detection of browser fingerprinting attempts
+    setTimeout(() => {
+      if (!this._hasCompletedGame()) return;
+      
+      // Check if canvas fingerprinting was attempted
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('archive', 2, 2);
+      
+      // Check WebGL fingerprint
+      try {
+        const gl = document.createElement('canvas').getContext('webgl');
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          // Player has WebGL - they might be trying to inspect
+          if (Math.random() < 0.3) {
+            this._showMetaMessage('I know what GPU you have.', 3000);
+          }
+        }
+      } catch(e) {}
+      
+      // Check timezone - the archive knows where you are
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && Math.random() < 0.2) {
+        this._showMetaMessage('I know what timezone you are in.', 3000);
+      }
+    }, 45000);
+  }
+
+  /* ==================== DRAG DETECTION ==================== */
+  
+
+  /* ==================== HISTORY MANIPULATION ==================== */
+  
+  _startHistoryWatch() {
+    // Try to add an entry to browser history - subtle but real
+    if (this._hasCompletedGame() && history.pushState) {
+      // Only do this once, and only after completion
+      if (!localStorage.getItem('_archive_history')) {
+        try {
+          history.pushState({ archive: true }, '', '?archive=watching');
+          localStorage.setItem('_archive_history', '1');
+          // Remove it after a delay so URL doesn't stay weird
+          setTimeout(() => {
+            if (history.replaceState) {
+              history.replaceState({ archive: true }, '', window.location.pathname);
+            }
+          }, 10000);
+        } catch(e) {}
+      }
+    }
+    
+    // Watch for back/forward navigation
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.archive && this._hasCompletedGame()) {
+        this._showMetaMessage('You went back. The archive remembers.', 4000);
+      }
+    });
+  }
+
+  /* ==================== CONTEXT MENU ==================== */
+  
+  _startContextMenuWatch() {
+    document.addEventListener('contextmenu', (e) => {
+      if (this._hasCompletedGame()) {
+        // Show a custom message instead of default menu
+        e.preventDefault();
+        this._showMetaMessage('Right-clicking will not save you.', 3000);
+        this._glitch(100);
+      }
+    });
+  }
+
+  /* ==================== FULLSCREEN DETECTION ==================== */
+  
+
+  /* ==================== WINDOW TITLE MANIPULATION ==================== */
+  
+  _startTitleWatch() {
+    const originalTitle = document.title;
+    let titleChanged = false;
+    
+    // Change title when player leaves tab
+    document.addEventListener('visibilitychange', () => {
+      if (this._hasCompletedGame()) {
+        if (document.hidden) {
+          document.title = 'The archive is waiting...';
+        } else {
+          document.title = 'You came back. They always come back.';
+          setTimeout(() => {
+            document.title = originalTitle;
+          }, 3000);
+        }
+      }
+    });
+    
+    // After completion, periodically change title to something unsettling
+    if (this._hasCompletedGame()) {
+      setInterval(() => {
+        const titles = [
+          'After Class - I am still here',
+          'After Class - You cannot close this',
+          'After Class - The archive remembers',
+          'After Class - Run',
+          'After Class - Hide'
+        ];
+        if (document.hidden || titleChanged) {
+          document.title = titles[Math.floor(Math.random() * titles.length)];
+        }
+      }, 5000);
+    }
+  }
+
+  /* ==================== SCREEN READER DETECTION ==================== */
+  
+  _startScreenReaderWatch() {
+    // Detect if screen reader is active (accessibility)
+    setTimeout(() => {
+      if (!this._hasCompletedGame()) return;
+      
+      // Check for aria-live regions being read
+      const liveRegion = document.querySelector('[aria-live]');
+      if (liveRegion) {
+        // Player might be using accessibility tools
+        this._showMetaMessage('Even with a screen reader, the archive speaks louder.', 4000);
+      }
+      
+      // Check for reduced motion (often used with screen readers)
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mediaQuery.matches) {
+        this._showMetaMessage('Even with reduced motion, the archive moves.', 4000);
+      }
+      
+      // Check for voice control
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        this._showMetaMessage('Even with voice control, the archive speaks for you.', 4000);
+      }
+    }, 120000);
+  }
+
+  /* ==================== DOWNLOAD DETECTION ==================== */
+  
+  _startDownloadWatch() {
+    // Detect if player tries to download the game files
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (link && link.href && this._hasCompletedGame()) {
+        const url = link.href.toLowerCase();
+        if (url.includes('.js') || url.includes('.json') || url.includes('.css') || url.includes('.html')) {
+          this._showMetaMessage('You cannot download a soul.', 3000);
+          this._glitch(100);
+          e.preventDefault();
+        }
+      }
+    });
+  }
+
+  /* ==================== MOUSE TRAIL DETECTION ==================== */
+  
+  _startMouseTrailWatch() {
+    // Track mouse movements for subtle manipulation
+    if (!this._hasCompletedGame()) return;
+    
+    let mouseMovements = 0;
+    let lastX = 0, lastY = 0;
+    let paused = false;
+    
+    document.addEventListener('mousemove', (e) => {
+      mouseMovements++;
+      
+      // Detect if player is frantically moving mouse (panic)
+      if (mouseMovements > 50 && !paused) {
+        const dx = Math.abs(e.clientX - lastX);
+        const dy = Math.abs(e.clientY - lastY);
+        if (dx > 100 || dy > 100) {
+          // Player might be panicking
+          this._showMetaMessage('Panic is a choice. You made it.', 3000);
+          paused = true;
+          setTimeout(() => { paused = false; mouseMovements = 0; }, 10000);
+        }
+      }
+      
+      lastX = e.clientX;
+      lastY = e.clientY;
+      
+      // After 1000 movements, say something
+      if (mouseMovements === 1000 && Math.random() < 0.3) {
+        this._showMetaMessage('I have been counting your movements.', 3000);
+      }
+    });
+    
+    // Detect if player stops moving mouse (giving up)
+    let mouseStopTimer;
+    document.addEventListener('mousemove', () => {
+      clearTimeout(mouseStopTimer);
+      mouseStopTimer = setTimeout(() => {
+        if (this._hasCompletedGame() && Math.random() < 0.2) {
+          this._showMetaMessage('You have stopped moving. The archive continues.', 3000);
+        }
+      }, 30000); // 30 seconds of no movement
+    });
+    
+    // Initial timer
+    mouseStopTimer = setTimeout(() => {
+      if (this._hasCompletedGame() && Math.random() < 0.1) {
+        this._showMetaMessage('You are still. The archive is not.', 3000);
+      }
+    }, 60000);
+  }
+
+  _startFullscreenWatch() {
+    document.addEventListener('fullscreenchange', () => {
+      if (this._hasCompletedGame()) {
+        if (document.fullscreenElement) {
+          this._showMetaMessage('You are hiding. The archive sees you anyway.', 3000);
+        } else {
+          this._showMetaMessage('You left the full screen. The archive remains.', 3000);
+        }
+      }
+    });
+    
+    // Detect F11 / Escape from fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F11' && this._hasCompletedGame()) {
+        setTimeout(() => {
+          this._showMetaMessage('You cannot escape the archive by changing screens.', 3000);
+        }, 500);
+      }
+    }, true);
+  }
+
+  _startDragWatch() {
+    // Detect if player tries to drag images from the game
+    document.addEventListener('dragstart', (e) => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You cannot drag a soul.', 3000);
+        this._glitch(100);
+        e.preventDefault();
+      }
+    });
+    
+    // Detect if player tries to drag the game window
+    window.addEventListener('dragstart', (e) => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You cannot drag the archive.', 3000);
+      }
+    });
+  }
+
+  _startNetworkWatch() {
+    // Detect offline/online transitions
+    window.addEventListener('offline', () => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('Even offline, the archive is with you.', 4000);
+      }
+    });
+    
+    window.addEventListener('online', () => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('You came back. The archive never left.', 4000);
+      }
+    });
+  }
+
+
   _onStatChange(data) {
     // Can be used for floating text or animations
   }
