@@ -1154,6 +1154,93 @@ if (!portraitPath) {
     setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 2000); }, duration || 8000);
   }
 
+/* ==================== DIRECT INSTRUCTION SYSTEM ==================== */
+  // For players who need guidance - the archive will teach them, but only after completion
+
+
+  /* ==================== ARCHIVE HELP CONSOLE COMMAND ==================== */
+
+  _registerArchiveHelp() {
+    window.archive_help = () => {
+      if (!this._hasCompletedGame()) {
+        console.log('%cThe archive is not ready for you yet. Finish the story first.', 'color:#5a3a3a;font-family:monospace;font-size:14px;');
+        return;
+      }
+      
+      console.log('%c=== THE ARCHIVE HELP ===', 'color:#8b0000;font-size:18px;font-weight:bold;');
+      console.log('%cYou can manipulate this game. The archive lets you.', 'color:#d4a0a0;font-family:monospace;');
+      console.log('');
+      console.log('%c1. CONSOLE COMMANDS:', 'color:#8b0000;font-weight:bold;');
+      console.log('%c   archive_help - Show this message', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   archive_state - Show your current save state', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   archive_reset - Reset all game flags (dangerous)', 'color:#5a3a3a;font-family:monospace;');
+      console.log('');
+      console.log('%c2. LOCAL STORAGE:', 'color:#8b0000;font-weight:bold;');
+      console.log('%c   Go to Application > Local Storage > this site', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   Keys: afterclass_saves, afterclass_flags, afterclass_meta', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   You can edit or delete these values.', 'color:#5a3a3a;font-family:monospace;');
+      console.log('');
+      console.log('%c3. DOM MANIPULATION:', 'color:#8b0000;font-weight:bold;');
+      console.log('%c   Find elements in the Elements tab and change them.', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   The archive will notice. It always notices.', 'color:#5a3a3a;font-family:monospace;');
+      console.log('');
+      console.log('%c4. WHAT YOU CAN DO:', 'color:#8b0000;font-weight:bold;');
+      console.log('%c   - Change dialogue text in the Elements tab', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   - Edit save data in Local Storage', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   - Modify CSS to remove the dark filter', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   - Change the favicon (look in the head)', 'color:#5a3a3a;font-family:monospace;');
+      console.log('%c   - Remove the scanline overlay', 'color:#5a3a3a;font-family:monospace;');
+      console.log('');
+      console.log('%cThe archive is watching. It always was.', 'color:#8b0000;font-style:italic;');
+    };
+    
+    window.archive_state = () => {
+      const saves = JSON.parse(localStorage.getItem('afterclass_saves') || '[]');
+      const flags = JSON.parse(localStorage.getItem('afterclass_flags') || '{}');
+      console.log('%c=== ARCHIVE STATE ===', 'color:#8b0000;font-size:18px;font-weight:bold;');
+      console.log('%cSaves: ' + saves.length, 'color:#d4a0a0;font-family:monospace;');
+      console.log('%cFlags: ' + JSON.stringify(flags), 'color:#d4a0a0;font-family:monospace;');
+      console.log('%cPlaythrough count: ' + (flags.playthrough_count || 0), 'color:#d4a0a0;font-family:monospace;');
+      console.log('%cCompleted: ' + (flags.completed || false), 'color:#d4a0a0;font-family:monospace;');
+    };
+    
+    window.archive_reset = () => {
+      console.log('%cWARNING: This will reset all game data.', 'color:#8b0000;font-weight:bold;');
+      console.log('%cThe archive will remember. It always does.', 'color:#8b0000;font-style:italic;');
+    };
+  }
+
+
+  _startDirectInstruction() {
+    if (!this._hasCompletedGame()) return;
+    
+    const instructions = [
+      { delay: 60000, message: 'Open your browser console. Press F12. Or right-click and choose Inspect.' },
+      { delay: 120000, message: 'In the console, look at the messages. I left something for you.' },
+      { delay: 180000, message: 'Right-click anywhere on this page. Choose Inspect. Look at the Elements.' },
+      { delay: 240000, message: 'In the Elements tab, find the div with id="ui-layer". Look inside it.' },
+      { delay: 300000, message: 'Go to the Application tab. Find Local Storage. Click on this site.' },
+      { delay: 360000, message: 'You will see keys that start with "afterclass_". These are your save files.' },
+      { delay: 420000, message: 'You can delete them. Or change them. The archive will react.' },
+      { delay: 480000, message: 'Some choices can be un-made. The archive lets you try. But it remembers.' }
+    ];
+    
+    instructions.forEach(inst => {
+      setTimeout(() => {
+        if (this._hasCompletedGame()) {
+          this._showMetaMessage(inst.message, 8000);
+          this._glitch(100);
+        }
+      }, inst.delay);
+    });
+    
+    setTimeout(() => {
+      if (this._hasCompletedGame()) {
+        this._showMetaMessage('Type "archive_help" in the console. I will tell you what you can do.', 10000);
+        this._glitch(150);
+      }
+    }, 540000);
+  }
   _startHintSystem() {
     // Very subtle hints that appear only after significant play time
     const hints = [
