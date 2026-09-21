@@ -638,6 +638,7 @@ if (!portraitPath) {
       campaign: "assets/images/backgrounds/campaign_office.jpeg",
       gallery: "assets/images/backgrounds/gallery.jpeg",
       research: "assets/images/backgrounds/research_building.jpeg",
+      old_research: "assets/images/backgrounds/old research builkding.jpeg",
       default: "assets/images/backgrounds/classroom-hero.jpg"
     };
     bg.src = backgroundAssets[bgId] || backgroundAssets["default"] || this._createBackgroundDataUrl(bgId);
