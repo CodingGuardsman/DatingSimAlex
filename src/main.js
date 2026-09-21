@@ -23,6 +23,7 @@ export class Game {
     this._bgAudio = null;
     window.gameInstance = this;
     this.sceneLayer = document.getElementById("scene-layer");
+    this.uiLayer = document.getElementById("ui-layer");
     this._startBgMusic();
     this.eventBus = new EventBus();
     this.stateManager = new StateManager(this.eventBus);
@@ -166,9 +167,9 @@ _checkSecondPlaythrough() {
       });
     } else if (dialogueId === "day5_confrontation") {
       this._showEnding(data);
-    } else if (dialogueId.startsWith("epilogue")) {
-      // Epilogue is done - go back to main menu
-      // The girls have spoken. The archive is waiting.
+    } else if (dialogueId === "epilogue") {
+      // Epilogue dialogue finished - go back to main menu
+      this._enterMainMenu();
     }
   }
 
@@ -214,19 +215,19 @@ this.stateManager.setFlag("completed", true);
     requestAnimationFrame(() => { overlay.style.opacity = "1"; });
     overlay.querySelector("button").addEventListener("click", () => {
       overlay.remove();
+      // Clear the scene layer before starting epilogue
+      if (this.sceneLayer) this.sceneLayer.innerHTML = "";
       this._startEpilogue();
-      window.gameInstance._enterMainMenu();
+      // Don't go to main menu yet - wait for epilogue to finish
     });
   }
 
   _startEpilogue() {
     // After the ending, the girls speak to the player directly
     // They tell them what they can do - but in their own creepy way
-    setTimeout(() => {
-      if (this.dialogueSystem && this.dialogueData) {
-        this.dialogueSystem.startDialogue("epilogue_start");
-      }
-    }, 2000);
+    if (this.dialogueSystem && this.dialogueData) {
+      this.dialogueSystem.startDialogue("epilogue");
+    }
   }
 
   _showTransition(text, callback) {
