@@ -72,8 +72,6 @@ export class Game {
     this.sceneManager.registerScene("end_of_day", EndOfDayScene);
     this._bindGameEvents();
 this._checkSecondPlaythrough();
-    this._showInitialConsoleMessage();
-    this._showPostCompletionTutorial();
     this.isInitialized = true;
     console.log("[Game] Initialization complete.");
     await this._enterMainMenu();
@@ -168,6 +166,9 @@ _checkSecondPlaythrough() {
       });
     } else if (dialogueId === "day5_confrontation") {
       this._showEnding(data);
+    } else if (dialogueId.startsWith("epilogue")) {
+      // Epilogue is done - go back to main menu
+      // The girls have spoken. The archive is waiting.
     }
   }
 
@@ -213,8 +214,19 @@ this.stateManager.setFlag("completed", true);
     requestAnimationFrame(() => { overlay.style.opacity = "1"; });
     overlay.querySelector("button").addEventListener("click", () => {
       overlay.remove();
+      this._startEpilogue();
       window.gameInstance._enterMainMenu();
     });
+  }
+
+  _startEpilogue() {
+    // After the ending, the girls speak to the player directly
+    // They tell them what they can do - but in their own creepy way
+    setTimeout(() => {
+      if (this.dialogueSystem && this.dialogueData) {
+        this.dialogueSystem.startDialogue("epilogue_start");
+      }
+    }, 2000);
   }
 
   _showTransition(text, callback) {
