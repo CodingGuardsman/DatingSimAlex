@@ -12,6 +12,15 @@ export class UIManager {
     this.uiLayer = document.getElementById("ui-layer");
     this.dialogueContainer = document.getElementById("dialogue-box-container");
     this.currentView = null;
+    this.dialogueSfx = {
+      alex: "assets/audio/sfx/ElevenLabs_2026-09-21T18_46_36_Roger - Laid-Back, Casual, Resonant_pre_sp100_s50_sb75_se0_b_m2.mp3",
+      maya: "assets/audio/sfx/ElevenLabs_2026-09-21T18_50_04_Tessa - Influencer Girl_pvc_sp100_s100_sb75_se26_b_m2.mp3",
+      chloe: "assets/audio/sfx/ElevenLabs_2026-09-21T18_50_20_Lyan - Female Genuine Casual Ads_pvc_sp116_s18_sb88_se79_b_m2.mp3",
+      hana: "assets/audio/sfx/ElevenLabs_2026-09-21T18_50_32_Lyan - Female Genuine Casual Ads_pvc_sp116_s18_sb88_se79_b_m2.mp3"
+    };
+    this.lastDialogueSfxAt = 0;
+    this.dialogueSfxChance = 0.18;
+    this.dialogueSfxCooldown = 1800;
 
     // Create sub-containers
     this._setupContainers();
@@ -74,6 +83,7 @@ export class UIManager {
 
   _onDialogueAdvance(data) {
     if (!data || !data.node) return;
+    this._maybePlayDialogueSfx(data);
     if (data.background) {
       this.renderBackground(data.background);
     }
@@ -85,6 +95,20 @@ export class UIManager {
       if (existing) existing.remove();
     }
     this.renderDialogueNode(data);
+  }
+
+  _maybePlayDialogueSfx(data) {
+    const speaker = data.speaker || "alex";
+    const source = this.dialogueSfx[speaker];
+    const now = Date.now();
+    if (!source || now - this.lastDialogueSfxAt < this.dialogueSfxCooldown || Math.random() > this.dialogueSfxChance) {
+      return;
+    }
+
+    const sound = new Audio(source);
+    sound.volume = 0.28;
+    sound.play().catch(() => {});
+    this.lastDialogueSfxAt = now;
   }
 
   _onDialogueEnd() {
