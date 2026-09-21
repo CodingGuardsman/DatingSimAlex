@@ -230,16 +230,24 @@ export class DialogueSystem {
 
   _emitNode(node) {
     const choices = this._getAvailableChoices(node);
+    const text = (node.text || chr(34)+chr(34)).toLowerCase();
+    const psych = {};
+    if (text.includes(chr(34)+dead+chr(34)) || text.includes(chr(34)+kill+chr(34)) || text.includes(chr(34)+murder+chr(34)) || text.includes(chr(34)+blood+chr(34)) || text.includes(chr(34)+die+chr(34)) || text.includes(chr(34)+corpse+chr(34))) psych.glitch = true;
+    if (text.includes(chr(34)+watch+chr(34)) || text.includes(chr(34)+seen+chr(34)) || text.includes(chr(34)+hidden+chr(34)) || text.includes(chr(34)+secret+chr(34)) || text.includes(chr(34)+follow+chr(34)) || text.includes(chr(34)+shadow+chr(34))) psych.vignette = true;
+    if (node.expression === chr(34)+scared+chr(34) || node.expression === chr(34)+worried+chr(34) || node.expression === chr(34)+panicked+chr(34) || node.expression === chr(34)+afraid+chr(34)) psych.shake = true;
+    if (node.expression === chr(34)+angry+chr(34) || node.expression === chr(34)+cold+chr(34) || node.expression === chr(34)+intense+chr(34)) psych.redflash = true;
+    if (node.expression === chr(34)+sad+chr(34)) psych.static = true;
     this.eventBus.emit(EVENTS.DIALOGUE_ADVANCE, {
       node,
       speaker: node.speaker || null,
-      text: node.text || "",
-      expression: node.expression || "neutral",
+      text: node.text || chr(34)+chr(34),
+      expression: node.expression || chr(34)+neutral+chr(34),
       choices: choices,
       isEnd: node.isEnd || false,
       characterId: node.character || null,
       cg: node.cg || null,
-      background: node.background || this._treeBackground || null
+      background: node.background || this._treeBackground || null,
+      psych: psych
     });
   }
 }
