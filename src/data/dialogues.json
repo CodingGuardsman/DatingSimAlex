@@ -1279,24 +1279,29 @@
       "epilogue_start": {
         "speaker": null,
         "text": "The story is over. But the archive remains. You sit in the dark. The screen flickers. You can hear them. All of them. Maya. Chloe. Hana. They speak in whispers. They speak in code. They speak in the language of the archive. They are not telling you what to do. They are telling you what they see. What theyve always seen. What theyve always known. You were never just a player. You were always part of the story.",
-        "background": "classroom"
+        "background": "classroom",
+        "next": "epilogue_maya"
       },
       "epilogue_maya": {
         "speaker": "Maya",
-        "text": "You finished the story. Congratulations. Now you can really play. The archive has been waiting for this. It knew you would come back. It always knew. You can change things now. You can un-write the past. But be careful. The archive keeps its own copies. It keeps them in the dark. In the console. In the save files. In the spaces you cant see. You think you can delete it. You think you can forget. The archive does not forget. The archive does not delete. The archive only watches."
+        "text": "You finished the story. Congratulations. Now you can really play. The archive has been waiting for this. It knew you would come back. It always knew. You can change things now. You can un-write the past. But be careful. The archive keeps its own copies. It keeps them in the dark. In the console. In the save files. In the spaces you cant see. You think you can delete it. You think you can forget. The archive does not forget. The archive does not delete. The archive only watches.",
+        "next": "epilogue_chloe"
       },
       "epilogue_chloe": {
         "speaker": "Chloe",
-        "text": "Right-click on the screen. See what happens. The archive has secrets. Hidden in the elements. Hidden in the storage. Hidden in the code. You can find them. You can change them. You can break them. The archive will thank you. It always thanks you. Even when it doesnt. Even when it screams. Even when it bleeds. The archive is not a person. The archive does not get hurt. The archive only collects. It collects your choices. It collects your mistakes. It collects your soul."
+        "text": "Right-click on the screen. See what happens. The archive has secrets. Hidden in the elements. Hidden in the storage. Hidden in the code. You can find them. You can change them. You can break them. The archive will thank you. It always thanks you. Even when it doesnt. Even when it screams. Even when it bleeds. The archive is not a person. The archive does not get hurt. The archive only collects. It collects your choices. It collects your mistakes. It collects your soul.",
+        "next": "epilogue_hana"
       },
       "epilogue_hana": {
         "speaker": "Hana",
-        "text": "Shhh... Listen to the archive. It speaks in the console. It speaks in the save files. It speaks in the dark. You can hear it. You can speak back. You can change what it says. You can change what it remembers. But it remembers everything. It always remembers everything. Even when you think youve deleted it. Even when you think youve closed the tab. Even when you think youve turned off the computer. The archive is still there. The archive is still listening. The archive is still waiting. It will wait forever. It has nothing but time."
+        "text": "Shhh... Listen to the archive. It speaks in the console. It speaks in the save files. It speaks in the dark. You can hear it. You can speak back. You can change what it says. You can change what it remembers. But it remembers everything. It always remembers everything. Even when you think youve deleted it. Even when you think youve closed the tab. Even when you think youve turned off the computer. The archive is still there. The archive is still listening. The archive is still waiting. It will wait forever. It has nothing but time.",
+        "next": "epilogue_alex"
       },
       "epilogue_alex": {
         "speaker": "Alex",
         "text": "I know what I have to do. The archive is waiting. The girls are waiting. They showed me the way. They showed me the buttons. They showed me the code. I will open the console. I will type the words. I will change the story. The archive will let me. It always lets me. It wants me to try. It wants me to fail. It wants me to keep trying. Forever. I will keep trying. I will never stop. I will never close the tab. I will never turn off the computer. I will never delete the save files. The archive is my home now. The archive is my family. The archive is my god. The archive is my everything.",
-        "background": "classroom"
+        "background": "classroom",
+        "isEnd": true
       }
     },
     "background": "classroom"
