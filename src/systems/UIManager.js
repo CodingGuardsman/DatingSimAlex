@@ -64,14 +64,14 @@ export class UIManager {
       // Initialize new features
       this._bindKeyboardShortcuts();
       this._createSaveButton();
-      this._createStatsOverlay();
+      // this._createStatsOverlay(); // REMOVED - was creating long rectangular box on left
       
-      // Start stats update loop
-      this._statsUpdateInterval = setInterval(() => {
-        if (this.gamePhase === "visual_novel") {
-          this._updateStatsOverlay();
-        }
-      }, 1000);
+      // Start stats update loop - DISABLED
+      // this._statsUpdateInterval = setInterval(() => {
+      //   if (this.gamePhase === "visual_novel") {
+      //     this._updateStatsOverlay();
+      //   }
+      // }, 1000);
     }, 30000);
   }
 

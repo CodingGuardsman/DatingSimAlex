@@ -28,6 +28,23 @@ export class V0StartMenuScene extends Scene {
 const warn=document.createElement("p");warn.style.cssText="margin-top:16px;font-size:14px;letter-spacing:0.3em;text-transform:uppercase;color:#ff0000;text-shadow:0 0 20px #ff0000,0 0 40px #8b0000;animation:warningPulse 2s ease-in-out infinite;";warn.textContent="⚠ DO NOT PLAY ALONE ⚠";u.appendChild(warn);
     // Credits
     const cr=document.createElement("p");cr.style.cssText="margin-top:24px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);";cr.textContent="Credits · Bryan Lee";u.appendChild(cr);
+    
+    // Second playthrough indicator
+    try {
+      const secondPlay = localStorage.getItem('afterclass_completed') === 'true';
+      if (secondPlay) {
+        const sp = document.createElement("p");
+        sp.style.cssText = "margin-top:16px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#ff00ff;text-shadow:0 0 10px #ff00ff;animation:warningPulse 2s ease-in-out infinite;";
+        sp.textContent = "⚠ SECOND PLAYTHROUGH DETECTED ⚠";
+        u.appendChild(sp);
+        
+        const sp2 = document.createElement("p");
+        sp2.style.cssText = "margin-top:8px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,0,255,0.7);";
+        sp2.textContent = "The archive remembers. Things have changed...";
+        u.appendChild(sp2);
+      }
+    } catch(e) {}
+    
     // Visible hint for accessing the archive
     const guide = document.createElement("p");
     guide.style.cssText = "margin-top:12px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(120,60,60,0.4);text-align:center;";
