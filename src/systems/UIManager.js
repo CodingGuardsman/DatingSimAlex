@@ -961,7 +961,14 @@ export class UIManager {
     if (this.dialogueSystem) this.dialogueSystem.pauseDialogue();
     this._createSaveButton().style.display = 'none';
     
-    const slots = this.saveSystem ? this.saveSystem.listSaves() : [];
+    // Show ALL save slots (including empty ones) like the main menu
+    const slots = [];
+    if (this.saveSystem) {
+      for (let i = 1; i <= this.saveSystem.slotCount; i++) {
+        const meta = this.saveSystem.getSlotMetadata(i);
+        slots.push({ number: i, label: "Slot " + i, hasSave: !!meta, meta: meta });
+      }
+    }
     this.renderSaveMenu(slots, 
       (slotNumber) => {
         if (this.saveSystem.saveToSlot(slotNumber)) {
