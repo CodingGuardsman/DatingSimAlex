@@ -22,7 +22,26 @@ export class V0StartMenuScene extends Scene {
     const u=document.createElement("div");u.style.cssText="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:16vh;";
     const tb=document.createElement("div");tb.style.cssText="animation:fadeup 1.2s ease-out both;animation-delay:0.2s;text-align:center;";
     const sp=document.createElement("p");sp.style.cssText="margin-bottom:12px;font-size:12px;letter-spacing:0.5em;text-transform:uppercase;color:rgba(170,230,255,0.7);";sp.textContent="A Visual Novel";tb.appendChild(sp);
-    const ti=document.createElement("h1");ti.className="anim-titleglow";ti.style.cssText="font-family:Georgia,serif;font-size:clamp(2rem,7vw,5rem);font-weight:700;letter-spacing:0.15em;color:#fff;margin:0;animation:titleglow 4s ease-in-out infinite;text-shadow:0 0 12px rgba(120,190,255,0.35),0 0 30px rgba(90,150,255,0.25),0 2px 6px rgba(0,0,0,0.6);";ti.textContent="After Class";tb.appendChild(ti);u.appendChild(tb);
+    const ti=document.createElement("h1");ti.className="anim-titleglow";ti.style.cssText="font-family:Georgia,serif;font-size:clamp(2rem,7vw,5rem);font-weight:700;letter-spacing:0.15em;color:#fff;margin:0;animation:titleglow 4s ease-in-out infinite;text-shadow:0 0 12px rgba(120,190,255,0.35),0 0 30px rgba(90,150,255,0.25),0 2px 6px rgba(0,0,0,0.6);";ti.textContent="After Class";tb.appendChild(ti);
+    
+    // Name input field
+    const nameContainer = document.createElement("div");
+    nameContainer.style.cssText = "margin-top:24px;animation:fadeup 1.2s ease-out both;animation-delay:0.6s;display:flex;flex-direction:column;align-items:center;gap:8px;";
+    const nameLabel = document.createElement("p");
+    nameLabel.style.cssText = "font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(201,168,76,0.8);margin:0;";
+    nameLabel.textContent = "Enter your name, Archivist:";
+    nameContainer.appendChild(nameLabel);
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.maxLength = 20;
+    nameInput.placeholder = "Alex";
+    nameInput.style.cssText = "width:200px;padding:10px 14px;font-family:Georgia,serif;font-size:1rem;color:#e8e0d0;background:rgba(10,8,16,0.9);border:2px solid #c9a84c;border-radius:4px;text-align:center;outline:none;transition:border-color 0.2s;";
+    nameInput.addEventListener("focus", () => { nameInput.style.borderColor = "#ff00ff"; });
+    nameInput.addEventListener("blur", () => { nameInput.style.borderColor = "#c9a84c"; });
+    nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") this._h(); });
+    nameContainer.appendChild(nameInput);
+    u.appendChild(tb);
+    u.appendChild(nameContainer);
     const bt=document.createElement("button");bt.type="button";bt.id="v0-press-start-btn";bt.className="anim-press";bt.style.cssText="margin-top:40px;cursor:pointer;font-size:clamp(12px,2vw,16px);font-weight:500;letter-spacing:0.4em;text-transform:uppercase;color:rgba(255,255,255,0.9);background:none;border:none;outline:none;padding:8px 24px;animation:presspulse 1.6s ease-in-out infinite;animation-delay:1s;";bt.textContent="Press Start";u.appendChild(bt);
     const h=document.createElement("p");h.style.cssText="margin-top:16px;font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,255,255,0.4);";h.textContent="Click anywhere · Enter · Space";u.appendChild(h);
 const warn=document.createElement("p");warn.style.cssText="margin-top:16px;font-size:14px;letter-spacing:0.3em;text-transform:uppercase;color:#ff0000;text-shadow:0 0 20px #ff0000,0 0 40px #8b0000;animation:warningPulse 2s ease-in-out infinite;";warn.textContent="⚠ DO NOT PLAY ALONE ⚠";u.appendChild(warn);
@@ -69,6 +88,13 @@ m.appendChild(subtleHint);
   _a() { this._el.addEventListener("click",()=>this._h());window.addEventListener("keydown",this._boundKeyHandler); }
   _k(e) { if(e.key==="Enter"||e.key===" "){e.preventDefault();this._h();} }
   _h() { if(this._started)return;this._started=true;window.removeEventListener("keydown",this._boundKeyHandler);if(this._f)this._f.style.display="none";if(this._el)this._el.remove();
+    // Get and save player name
+    const nameInput = this._el ? this._el.querySelector('input[type="text"]') : null;
+    const playerName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Alex";
+    try { localStorage.setItem('afterclass_player_name', playerName); } catch(e) {}
+    if (window.gameInstance && window.gameInstance.stateManager) {
+      window.gameInstance.stateManager.state.playerName = playerName;
+    }
     // Start music on user click (browsers require user gesture for autoplay)
     if(window.gameInstance && window.gameInstance._startBgMusic) {
       window.gameInstance._startBgMusic();

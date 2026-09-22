@@ -88,6 +88,7 @@ this._checkSecondPlaythrough();
       this.dialogueSystem.selectChoice(data.choiceIndex);
     });
     this.eventBus.subscribe(EVENTS.DIALOGUE_CONTINUE, () => {
+      this.dialogueSystem.trackSkip();
       this.dialogueSystem.advance();
     });
   }

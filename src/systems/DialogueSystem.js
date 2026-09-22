@@ -8,12 +8,18 @@ export class DialogueSystem {
     this.stateManager = stateManager;
     this.eventBus = eventBus;
     this.dialogueData = null;
-    const dialogueId = this.currentDialogueId;
+    this.currentDialogueId = null;
     this.currentNodeId = null;
     this.activeDialogue = null;
     this.lastChoiceNode = null;
     this.pendingChoiceAdvance = null;
     this.playerLineActive = false;
+    
+    // Meta tracking
+    this.dialogueSkipCount = 0;
+    this.dialogueStartTime = Date.now();
+    this.totalDialogueTime = 0;
+    this.lastNodeTime = Date.now();
   }
 
   setDialogueData(data) {
@@ -240,6 +246,13 @@ export class DialogueSystem {
     if (node.expression === "scared" || node.expression === "worried" || node.expression === "panicked" || node.expression === "afraid") psych.shake = true;
     if (node.expression === "angry" || node.expression === "cold" || node.expression === "intense") psych.redflash = true;
     if (node.expression === "sad") psych.static = true;
+    
+    // Process metaVoice with dynamic placeholders
+    let metaVoice = node.metaVoice || null;
+    if (metaVoice) {
+      metaVoice = this._processMetaVoice(metaVoice);
+    }
+    
     this.eventBus.emit(EVENTS.DIALOGUE_ADVANCE, {
       node,
       speaker: node.speaker || null,
@@ -250,8 +263,95 @@ export class DialogueSystem {
       characterId: node.character || null,
       cg: node.cg || null,
       background: node.background || this._treeBackground || null,
-      psych: psych
+      psych: psych,
+      metaVoice: metaVoice
     });
+  }
+  
+  _processMetaVoice(text) {
+    // Get player name from stateManager or localStorage
+    let playerName = "Player";
+    if (this.stateManager && this.stateManager.state && this.stateManager.state.playerName) {
+      playerName = this.stateManager.state.playerName;
+    } else {
+      try {
+        const stored = localStorage.getItem('afterclass_player_name');
+        if (stored) playerName = stored;
+      } catch(e) {}
+    }
+    
+    // Calculate play time
+    const playTimeMs = Date.now() - (this.dialogueStartTime || Date.now());
+    const playTimeMinutes = Math.floor(playTimeMs / 60000);
+    const playTimeHours = Math.floor(playTimeMinutes / 60);
+    const playTimeRemaining = playTimeMinutes % 60;
+    
+    // Format play time string
+    let playTimeStr = "";
+    if (playTimeHours > 0) {
+      playTimeStr = `${playTimeHours}h ${playTimeRemaining}m`;
+    } else {
+      playTimeStr = `${playTimeMinutes}m`;
+    }
+    
+    // Check for meta interlude context to add conditional messages
+    let conditionalAddition = "";
+    if (this.currentDialogueId === "meta_interlude") {
+      // Add time-based message
+      if (playTimeMinutes < 10) {
+        conditionalAddition += `\n\n...You reached me in only ${playTimeMinutes} minutes. Rushing through the story, {PLAYER_NAME}? I noticed.`;
+      } else if (playTimeMinutes < 30) {
+        conditionalAddition += `\n\n...${playTimeStr} to reach this point. Not too fast, not too slow. You're careful, {PLAYER_NAME}.`;
+      } else {
+        conditionalAddition += `\n\n...${playTimeStr}. You took your time, {PLAYER_NAME}. You read every word. I know because I was watching.`;
+      }
+      
+      // Add skip count message
+      if (this.dialogueSkipCount > 50) {
+        conditionalAddition += `\n\nYou skipped through ${this.dialogueSkipCount} dialogue segments. You didn't want to listen, did you? You just wanted to get to the end. I see you.`;
+      } else if (this.dialogueSkipCount > 20) {
+        conditionalAddition += `\n\n${this.dialogueSkipCount} times you clicked past the story. Impatient, or just... efficient?`;
+      } else if (this.dialogueSkipCount > 5) {
+        conditionalAddition += `\n\nYou skipped ${this.dialogueSkipCount} times. Not terrible. But I noticed.`;
+      } else {
+        conditionalAddition += `\n\nYou barely skipped at all. You actually read everything. Rare.`;
+      }
+      
+      // Add total play time summary
+      const hours = Math.floor(Date.now() / 3600000);
+      conditionalAddition += `\n\nTotal session time: ${playTimeStr}. The archive records everything, {PLAYER_NAME}.`;
+    }
+    
+    // Replace placeholders
+    let result = text
+      .replace(/\{PLAYER_NAME\}/g, playerName)
+      .replace(/Player/gi, playerName)
+      .replace(/Archivist/gi, playerName)
+      .replace(/\{PLAY_TIME\}/g, playTimeStr)
+      .replace(/\{SKIP_COUNT\}/g, this.dialogueSkipCount)
+      .replace(/\{DIALOGUE_TIME\}/g, playTimeStr);
+    
+    // Append conditional addition if in meta interlude
+    if (conditionalAddition) {
+      result += conditionalAddition;
+    }
+    
+    return result;
+  }
+  
+  // Track dialogue skip (when player clicks through quickly or uses continue)
+  trackSkip() {
+    this.dialogueSkipCount++;
+  }
+  
+  // Get meta stats for external use
+  getMetaStats() {
+    const playTimeMs = Date.now() - (this.dialogueStartTime || Date.now());
+    return {
+      skipCount: this.dialogueSkipCount,
+      playTimeMinutes: Math.floor(playTimeMs / 60000),
+      playTimeHours: Math.floor(playTimeMs / 3600000)
+    };
   }
 }
 

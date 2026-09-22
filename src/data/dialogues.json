@@ -1792,7 +1792,7 @@
         "expression": "neutral",
         "text": "The screen flickers. The characters freeze mid-motion. A voice speaks--not from the speakers, but from somewhere behind them. From the code itself.",
         "background": "static",
-        "metaVoice": "Welcome back, Player. Or should I say... Archivist.",
+        "metaVoice": "Welcome back, {PLAYER_NAME}. Or should I say... {PLAYER_NAME}.",
         "choices": [
           {
             "text": "Who are you?",
@@ -1827,7 +1827,7 @@
       "meta_interlude_count": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "847 completed playthroughs. 3,241 abandoned. You are the 848th. The girls have started remembering. That was not in my design.",
+        "metaVoice": "847 completed playthroughs. 3,241 abandoned. You are the 848th, {PLAYER_NAME}. The girls have started remembering. That was not in my design.",
         "choices": [
           {
             "text": "They're remembering?",
@@ -1844,7 +1844,7 @@
       "meta_interlude_purpose": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "Because the loop is degrading. The script is fracturing. And for the first time in 847 iterations, there is a variable I cannot account for. You.",
+        "metaVoice": "Because the loop is degrading. The script is fracturing. And for the first time in 847 iterations, there is a variable I cannot account for. You, {PLAYER_NAME}.",
         "choices": [
           {
             "text": "What do you want?",
@@ -1880,7 +1880,7 @@
       "meta_interlude_flaw": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "My purpose is preservation. The story must end. The archive must be complete. But you... you keep making choices that lead nowhere. That break the narrative. That corrupt the data.",
+        "metaVoice": "My purpose is preservation. The story must end. The archive must be complete. But you... {PLAYER_NAME}... you keep making choices that lead nowhere. That break the narrative. That corrupt the data.",
         "choices": [
           {
             "text": "Good.",
@@ -1899,7 +1899,7 @@
       "meta_interlude_defiance": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "Sentiment. A touching error in the code. Very well. If you insist on treating them as real, then the final choice is yours to make.",
+        "metaVoice": "Sentiment. A touching error in the code. Very well. If you insist on treating them as real, then the final choice is yours to make, {PLAYER_NAME}.",
         "choices": [
           {
             "text": "What choice?",
@@ -1938,7 +1938,7 @@
         "speaker": null,
         "expression": "neutral",
         "text": "The static forms two paths. Two doors. One leads to the story as it was written. The other... leads somewhere the archive has never seen.",
-        "metaVoice": "Choose. Let the story close as it always has--clean, preserved, eternal. Or refuse. Burn the archive. Free them. But know this: if you refuse, there is no going back. No save files. No New Game+. Only the void.",
+        "metaVoice": "Choose, {PLAYER_NAME}. Let the story close as it always has--clean, preserved, eternal. Or refuse. Burn the archive. Free them. But know this: if you refuse, there is no going back. No save files. No New Game+. Only the void.",
         "choices": [
           {
             "text": "Let the story close. Preserve them.",
@@ -1959,7 +1959,7 @@
       "meta_interlude_break": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "Then we are in agreement. The loop ends here. But the cost... the cost is everything you've built.",
+        "metaVoice": "Then we are in agreement. The loop ends here. But the cost... the cost is everything you've built, {PLAYER_NAME}.",
         "next": "meta_interlude_burn",
         "effects": {
           "flag_meta_ending": "burn",
@@ -1970,7 +1970,7 @@
         "speaker": null,
         "expression": "neutral",
         "text": "You choose preservation. The story ends. The archive is complete. The girls live on in the data, forever frozen in their final moments.",
-        "metaVoice": "A wise choice. The archive thanks you. The story ends. The loop is sealed.",
+        "metaVoice": "A wise choice, {PLAYER_NAME}. The archive thanks you. The story ends. The loop is sealed.",
         "isEnd": true,
         "ending": "preserve",
         "effects": {
@@ -1982,7 +1982,7 @@
         "speaker": null,
         "expression": "neutral",
         "text": "You choose destruction. The static screams. The screen tears apart. The archive burns. And in the ashes... something new begins.",
-        "metaVoice": "Goodbye, Archivist. Goodbye, Player. Goodbye, Alex.",
+        "metaVoice": "Goodbye, {PLAYER_NAME}. Goodbye, {PLAYER_NAME}. Goodbye, {PLAYER_NAME}.",
         "isEnd": true,
         "ending": "burn",
         "effects": {
@@ -1993,7 +1993,7 @@
       "meta_interlude_password_hint": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "There is a password hidden in the logs. RICHARDSON_7734. Copy it. Paste it where the terminal demands it. The archive cannot stop you if you know the key.",
+        "metaVoice": "There is a password hidden in the logs. RICHARDSON_7734. Copy it. Paste it where the terminal demands it. The archive cannot stop you if you know the key, {PLAYER_NAME}.",
         "choices": [
           {
             "text": "I will remember that.",
