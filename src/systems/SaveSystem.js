@@ -40,6 +40,8 @@ export class SaveSystem {
       
       localStorage.setItem(this.getSaveKey(slot), JSON.stringify(saveData));
       localStorage.setItem(this.getMetaKey(slot), JSON.stringify(metaData));
+      // Track that a save exists for meta detection
+      localStorage.setItem('level_up_campus_crush_had_save', 'true');
       
       return true;
     } catch (error) {

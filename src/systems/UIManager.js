@@ -37,7 +37,13 @@ export class UIManager {
       this._startScreenReaderWatch();
       this._startDownloadWatch();
       this._startMouseTrailWatch();
-          }, 30000);
+      this._checkConsoleCommands();
+      this._checkFileManipulation();
+      // Mark completion in localStorage if flag is set
+      if (this.stateManager && this.stateManager.getFlag('completed')) {
+        this._markGameCompleted();
+      }
+    }, 30000);
   }
 
   _setupContainers() {
@@ -1045,13 +1051,24 @@ if (!portraitPath) {
   }
   
   _applySecondPlaythroughChanges() {
-    // Darker atmosphere on second playthrough
-    document.body.style.filter = 'sepia(0.15) hue-rotate(-5deg) saturate(1.1) brightness(0.9)';
+    // Darker atmosphere on second playthrough - much more obvious
+    document.body.style.filter = 'sepia(0.4) hue-rotate(-15deg) saturate(0.6) brightness(0.7) contrast(1.2)';
     this._addScanlines();
+    // Make scanlines more visible
+    const scanlines = document.getElementById('scanlines-overlay');
+    if (scanlines) {
+      scanlines.style.opacity = '0.4';
+      scanlines.style.backgroundSize = '4px 4px';
+    }
     // More aggressive ambient horror
     this._startSecondPlaythroughMeta();
     // Change tab title
     try { document.title = 'After Class - You already know how this ends'; } catch(e) {}
+    // Show immediate message
+    setTimeout(() => {
+      this._showMetaMessage('You are back. The archive remembers.', 5000);
+      this._glitch(300);
+    }, 2000);
   }
   
   _startSecondPlaythroughMeta() {
@@ -1081,8 +1098,8 @@ if (!portraitPath) {
   
   _checkFileManipulation() {
     // Check if player deleted their save file
-    const hadSave = localStorage.getItem('afterclass_had_save');
-    const hasSave = localStorage.getItem('save_slot_1');
+    const hadSave = localStorage.getItem('level_up_campus_crush_had_save');
+    const hasSave = localStorage.getItem('level_up_campus_crush_save_1');
     if (hadSave === 'true' && !hasSave) {
       this._showMetaMessage('You deleted the save file.\n\nI saw you.\n\nYou cannot hide from the truth by deleting data.', 7000);
       this._glitch(800);
@@ -1104,6 +1121,15 @@ if (!portraitPath) {
         }
       }
     }, 2000);
+    
+    // Also log to console immediately on load
+    setTimeout(() => {
+      if (console.log) {
+        console.log('%cAfter Class', 'color:#8b0000;font-size:24px;font-weight:bold;text-shadow:0 0 10px #8b0000;');
+        console.log('%cWelcome to the archive. Press F12 to open this console.', 'color:#5a3a3a;font-family:monospace;font-size:13px;');
+        console.log('%cThe archive watches. You can watch back.', 'color:#5a3a3a;font-family:monospace;font-size:12px;');
+      }
+    }, 1000);
   }
   
   _manipulateBrowser() {
@@ -1155,8 +1181,11 @@ if (!portraitPath) {
   }
 
   _startHintSystem() {
-    // Very subtle hints that appear only after significant play time
+    // Direct hints that appear at reasonable intervals
     const hints = [
+      { text: 'Press F12 to open the developer console. The archive is watching there.', delay: 30000 },
+      { text: 'Right-click anywhere and choose "Inspect" to see the archive.', delay: 60000 },
+      { text: 'Go to the Application tab > Local Storage. Your saves are in level_up_campus_crush_save_1.', delay: 120000 },
       { text: 'Some files are not meant to be saved.', delay: 180000 },
       { text: 'The archive has no delete button.', delay: 240000 },
       { text: 'You can close the tab. But the archive remains.', delay: 300000 },
@@ -1169,28 +1198,29 @@ if (!portraitPath) {
     
     hints.forEach(h => {
       setTimeout(() => {
-        if (this._hasCompletedGame() || this._getPlayTime() > 60) {
-          this._showSubtleHint(h.text, 6000);
-          if (Math.random() < 0.3) this._glitch(150);
-        }
+        this._showSubtleHint(h.text, 8000);
+        if (Math.random() < 0.5) this._glitch(150);
       }, h.delay);
     });
     
-    // After second playthrough, more direct hints
+    // After completion, more direct hints
     setInterval(() => {
-      if (this._hasCompletedGame() && this._getPlayTime() > 120) {
+      if (this._hasCompletedGame()) {
         const secondHints = [
           'The save file knows your name.',
           'Try looking where the game keeps its memories.',
           'Some things can be un-written.',
           'The truth is in the data.',
-          'You can erase a choice. Not the consequence.'
+          'You can erase a choice. Not the consequence.',
+          'Press F12 > Application > Local Storage > level_up_campus_crush_save_1',
+          'Edit the flags in localStorage. The archive will react.'
         ];
-        if (Math.random() < 0.15) {
-          this._showSubtleHint(secondHints[Math.floor(Math.random() * secondHints.length)], 5000);
+        if (Math.random() < 0.3) {
+          this._showSubtleHint(secondHints[Math.floor(Math.random() * secondHints.length)], 6000);
+          this._glitch(100);
         }
       }
-    }, 25000);
+    }, 15000);
   }
 
   /* ==================== TAB / VISIBILITY ==================== */
@@ -1237,7 +1267,7 @@ if (!portraitPath) {
   _startStorageWatch() {
     // Watch for external save modifications
     setInterval(() => {
-      const saves = JSON.parse(localStorage.getItem('afterclass_saves') || '[]');
+      const saves = JSON.parse(localStorage.getItem('level_up_campus_crush_save_1') || '[]');
       // Check for unexpected changes
       const checksum = JSON.stringify(saves);
       if (this._lastSaveChecksum && this._lastSaveChecksum !== checksum) {
@@ -1440,11 +1470,13 @@ if (!portraitPath) {
   
   _startContextMenuWatch() {
     document.addEventListener('contextmenu', (e) => {
+      // Always show message, but different based on completion
+      e.preventDefault();
       if (this._hasCompletedGame()) {
-        // Show a custom message instead of default menu
-        e.preventDefault();
         this._showMetaMessage('Right-clicking will not save you.', 3000);
         this._glitch(100);
+      } else {
+        this._showMetaMessage('Right-click opens the archive. Press F12 to see it.', 3000);
       }
     });
   }
