@@ -230,18 +230,18 @@ export class DialogueSystem {
 
   _emitNode(node) {
     const choices = this._getAvailableChoices(node);
-    const text = (node.text || chr(34)+chr(34)).toLowerCase();
+    const text = (node.text || "").toLowerCase();
     const psych = {};
-    if (text.includes(chr(34)+dead+chr(34)) || text.includes(chr(34)+kill+chr(34)) || text.includes(chr(34)+murder+chr(34)) || text.includes(chr(34)+blood+chr(34)) || text.includes(chr(34)+die+chr(34)) || text.includes(chr(34)+corpse+chr(34))) psych.glitch = true;
-    if (text.includes(chr(34)+watch+chr(34)) || text.includes(chr(34)+seen+chr(34)) || text.includes(chr(34)+hidden+chr(34)) || text.includes(chr(34)+secret+chr(34)) || text.includes(chr(34)+follow+chr(34)) || text.includes(chr(34)+shadow+chr(34))) psych.vignette = true;
-    if (node.expression === chr(34)+scared+chr(34) || node.expression === chr(34)+worried+chr(34) || node.expression === chr(34)+panicked+chr(34) || node.expression === chr(34)+afraid+chr(34)) psych.shake = true;
-    if (node.expression === chr(34)+angry+chr(34) || node.expression === chr(34)+cold+chr(34) || node.expression === chr(34)+intense+chr(34)) psych.redflash = true;
-    if (node.expression === chr(34)+sad+chr(34)) psych.static = true;
+    if (text.includes("dead") || text.includes("kill") || text.includes("murder") || text.includes("blood") || text.includes("die") || text.includes("corpse")) psych.glitch = true;
+    if (text.includes("watch") || text.includes("seen") || text.includes("hidden") || text.includes("secret") || text.includes("follow") || text.includes("shadow")) psych.vignette = true;
+    if (node.expression === "scared" || node.expression === "worried" || node.expression === "panicked" || node.expression === "afraid") psych.shake = true;
+    if (node.expression === "angry" || node.expression === "cold" || node.expression === "intense") psych.redflash = true;
+    if (node.expression === "sad") psych.static = true;
     this.eventBus.emit(EVENTS.DIALOGUE_ADVANCE, {
       node,
       speaker: node.speaker || null,
-      text: node.text || chr(34)+chr(34),
-      expression: node.expression || chr(34)+neutral+chr(34),
+      text: node.text || "",
+      expression: node.expression || "neutral",
       choices: choices,
       isEnd: node.isEnd || false,
       characterId: node.character || null,
