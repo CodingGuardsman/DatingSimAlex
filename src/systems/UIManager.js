@@ -13,11 +13,28 @@ export class UIManager {
     this.dialogueContainer = document.getElementById("dialogue-box-container");
     this.currentView = null;
 
+    // Meta voice / creepy music state
+    this._metaVoiceTriggered = false;
+    this._creepyAudioContext = null;
+    this._creepySourceNode = null;
+    this._creepyGainNode = null;
+
     // Create sub-containers
     this._setupContainers();
 
     // Bind internal event handlers
     this._bindEvents();
+    
+    // Check if meta voice was already triggered (persisted across sessions)
+    // If so, start creepy music immediately
+    try {
+      if (localStorage.getItem('afterclass_meta_voice_triggered') === 'true') {
+        this._metaVoiceTriggered = true;
+        // Small delay to ensure audio context is ready
+        setTimeout(() => this._startCreepyBgMusic(), 1000);
+      }
+    } catch(e) {}
+    
     // Start all meta watchers after a delay (only after game completion matters)
     setTimeout(() => {
       this._startHintSystem();
@@ -166,10 +183,24 @@ export class UIManager {
     textEl.textContent = text;
     document.body.appendChild(textEl);
     
-    // Remove after duration
+    // Stop normal background music when meta voice speaks
+    this._stopBgMusic();
+    
+    // Remove after duration, then start creepy music
     setTimeout(() => {
       overlay.remove();
       textEl.remove();
+      
+      // Mark that meta voice has been triggered
+      this._metaVoiceTriggered = true;
+      
+      // Start creepy music after meta voice ends
+      this._startCreepyBgMusic();
+      
+      // Also persist this in localStorage so it survives page reloads
+      try {
+        localStorage.setItem('afterclass_meta_voice_triggered', 'true');
+      } catch(e) {}
     }, 5000);
   }
 
@@ -1467,6 +1498,146 @@ if (!portraitPath) {
       const orig = a.playbackRate;
       a.playbackRate = 0.85 + Math.random()*0.3;
       setTimeout(() => { a.playbackRate = orig; }, 800);
+    } catch(e) {}
+  }
+
+  /**
+   * Stop the normal background music
+   */
+  _stopBgMusic() {
+    try {
+      const a = window.gameInstance && window.gameInstance._bgAudio;
+      if (a && !a.paused) {
+        a.pause();
+        a.currentTime = 0;
+      }
+    } catch(e) {}
+  }
+
+  /**
+   * Start creepy/distorted background music using Web Audio API
+   * Creates a reversed, pitch-shifted, filtered version of the original track
+   */
+  _startCreepyBgMusic() {
+    try {
+      const originalAudio = window.gameInstance && window.gameInstance._bgAudio;
+      if (!originalAudio) return;
+
+      // If already playing creepy music, don't restart
+      if (this._creepySourceNode && this._creepyAudioContext) {
+        return;
+      }
+
+      // Create new AudioContext for creepy music
+      this._creepyAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create gain node for volume control
+      this._creepyGainNode = this._creepyAudioContext.createGain();
+      this._creepyGainNode.gain.value = 0.15; // Lower volume for creepy atmosphere
+      this._creepyGainNode.connect(this._creepyAudioContext.destination);
+
+      // Create source from the original audio element
+      this._creepySourceNode = this._creepyAudioContext.createMediaElementSource(originalAudio);
+      
+      // Add creepy effects chain
+      // 1. Pitch shifter (slow down = lower pitch, creepier)
+      const pitchShift = this._creepyAudioContext.createPitchShifter 
+        ? this._creepyAudioContext.createPitchShifter() 
+        : null;
+      
+      // 2. Lowpass filter for muffled/distant sound
+      const lowpass = this._creepyAudioContext.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.value = 1200; // Cut high frequencies
+      lowpass.Q.value = 2;
+      
+      // 3. Convolver for reverb/echo (creepy space)
+      const convolver = this._creepyAudioContext.createConvolver();
+      // Create impulse response for a large empty space
+      const irLength = this._creepyAudioContext.sampleRate * 3; // 3 seconds
+      const ir = this._creepyAudioContext.createBuffer(2, irLength, this._creepyAudioContext.sampleRate);
+      for (let channel = 0; channel < 2; channel++) {
+        const irData = ir.getChannelData(channel);
+        for (let i = 0; i < irLength; i++) {
+          // Exponential decay with some randomness for "haunted" feel
+          irData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this._creepyAudioContext.sampleRate * 0.5));
+        }
+      }
+      convolver.buffer = ir;
+      
+      // 4. Tremolo (volume oscillation) for unease
+      const tremolo = this._creepyAudioContext.createGain();
+      const tremoloOsc = this._creepyAudioContext.createOscillator();
+      tremoloOsc.type = 'sine';
+      tremoloOsc.frequency.value = 0.3; // Very slow tremolo
+      const tremoloDepth = this._creepyAudioContext.createGain();
+      tremoloDepth.gain.value = 0.15; // 15% depth
+      tremoloOsc.connect(tremoloDepth);
+      tremoloDepth.connect(tremolo.gain);
+      tremoloOsc.start();
+      
+      // Connect the chain: source -> lowpass -> convolver -> tremolo -> gain -> destination
+      this._creepySourceNode.connect(lowpass);
+      lowpass.connect(convolver);
+      convolver.connect(tremolo);
+      tremolo.connect(this._creepyGainNode);
+      
+      // Also keep dry signal path for clarity
+      const dryGain = this._creepyAudioContext.createGain();
+      dryGain.gain.value = 0.3;
+      this._creepySourceNode.connect(dryGain);
+      dryGain.connect(this._creepyGainNode);
+      
+      // Resume audio context if suspended
+      if (this._creepyAudioContext.state === 'suspended') {
+        this._creepyAudioContext.resume();
+      }
+      
+      // Reset and play the original audio (it will now go through our effect chain)
+      originalAudio.currentTime = 0;
+      originalAudio.volume = 0; // Mute the direct output, we hear through Web Audio
+      originalAudio.loop = true;
+      originalAudio.play().catch(e => console.warn('[Audio] Creepy music play blocked:', e));
+      
+      console.log('[Audio] Creepy background music started');
+    } catch(e) {
+      console.warn('[Audio] Failed to start creepy music:', e);
+      // Fallback: just play original at lower volume with slower playback
+      try {
+        const a = window.gameInstance && window.gameInstance._bgAudio;
+        if (a) {
+          a.playbackRate = 0.7;
+          a.volume = 0.15;
+          a.currentTime = 0;
+          a.play().catch(e => console.warn('[Audio] Fallback play blocked:', e));
+        }
+      } catch(e2) {}
+    }
+  }
+
+  /**
+   * Stop creepy music and restore normal music (if needed)
+   */
+  _stopCreepyBgMusic() {
+    try {
+      if (this._creepySourceNode) {
+        this._creepySourceNode.disconnect();
+        this._creepySourceNode = null;
+      }
+      if (this._creepyGainNode) {
+        this._creepyGainNode.disconnect();
+        this._creepyGainNode = null;
+      }
+      if (this._creepyAudioContext) {
+        this._creepyAudioContext.close();
+        this._creepyAudioContext = null;
+      }
+      // Restore original audio
+      const a = window.gameInstance && window.gameInstance._bgAudio;
+      if (a) {
+        a.volume = 0.3;
+        a.playbackRate = 1.0;
+      }
     } catch(e) {}
   }
 
