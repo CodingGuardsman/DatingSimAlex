@@ -1161,13 +1161,13 @@ if (!portraitPath) {
       university: "assets/images/backgrounds/classroom-hero.jpg",
       classroom: "assets/images/backgrounds/classroom-hero.jpg",
       library: "assets/images/backgrounds/library.jpeg",
-      archive: "assets/images/backgrounds/archive.jpeg",
+      archive: "assets/images/backgrounds/archuive.jpeg",
       security: "assets/images/backgrounds/security_room.jpeg",
       campaign: "assets/images/backgrounds/campaign_office.jpeg",
       gallery: "assets/images/backgrounds/gallery.jpeg",
       research: "assets/images/backgrounds/research_building.jpeg",
-      old_research: "assets/images/backgrounds/research_building.jpeg",
-      static: "assets/images/backgrounds/static.jpeg",
+      old_research: "assets/images/backgrounds/old research builkding.jpeg",
+      static: "assets/images/backgrounds/classroom-hero.jpg",
       default: "assets/images/backgrounds/classroom-hero.jpg"
     };
     bg.src = backgroundAssets[bgId] || backgroundAssets["default"] || this._createBackgroundDataUrl(bgId);
