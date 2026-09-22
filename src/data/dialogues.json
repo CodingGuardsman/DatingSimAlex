@@ -1868,12 +1868,12 @@
             "effects": {
               "flag_meta_defend": true
             },
-            "next": "meta_interlude_defiance"
+            "next": "meta_interlude_password_hint"
           },
           {
             "text": "Can they be saved?",
             "effects": {},
-            "next": "meta_interlude_choice"
+            "next": "meta_interlude_password_hint"
           }
         ]
       },
@@ -1887,12 +1887,12 @@
             "effects": {
               "flag_meta_rebel": true
             },
-            "next": "meta_interlude_choice"
+            "next": "meta_interlude_password_hint"
           },
           {
             "text": "How do I stop it?",
             "effects": {},
-            "next": "meta_interlude_choice"
+            "next": "meta_interlude_password_hint"
           }
         ]
       },
@@ -1904,7 +1904,7 @@
           {
             "text": "What choice?",
             "effects": {},
-            "next": "meta_interlude_choice"
+            "next": "meta_interlude_password_hint"
           },
           {
             "text": "I choose to break the loop.",
@@ -1923,7 +1923,7 @@
           {
             "text": "What choice?",
             "effects": {},
-            "next": "meta_interlude_choice"
+            "next": "meta_interlude_password_hint"
           },
           {
             "text": "I choose to break the loop.",
@@ -1989,6 +1989,25 @@
           "flag_meta_ending": "burn",
           "meta_ending": "burn"
         }
+      },
+      "meta_interlude_password_hint": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "There is a password hidden in the logs. RICHARDSON_7734. Copy it. Paste it where the terminal demands it. The archive cannot stop you if you know the key.",
+        "choices": [
+          {
+            "text": "I will remember that.",
+            "effects": {
+              "flag_clipboard_hint": true
+            },
+            "next": "meta_interlude_choice"
+          },
+          {
+            "text": "What terminal?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          }
+        ]
       }
     },
     "background": "static"
