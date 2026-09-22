@@ -1146,7 +1146,6 @@ if (!portraitPath) {
     }
 
     bg.alt = bgId;
-    bg.style.background = this._getBackgroundGradient(bgId);
     bg.style.objectFit = "cover";
     bg.style.width = "100%";
     bg.style.height = "100%";
@@ -1155,6 +1154,11 @@ if (!portraitPath) {
     bg.style.left = "0";
     bg.style.zIndex = "0";
     bg.style.display = "block";
+    
+    // Apply gradient to scene-layer as fallback
+    const gradient = this._getBackgroundGradient(bgId);
+    this.sceneLayer.style.background = gradient;
+    
     const backgroundAssets = {
       bedroom: "assets/images/backgrounds/bedroom.png",
       campus: "assets/images/backgrounds/campus.png",
@@ -1170,7 +1174,19 @@ if (!portraitPath) {
       static: "assets/images/backgrounds/classroom-hero.jpg",
       default: "assets/images/backgrounds/classroom-hero.jpg"
     };
-    bg.src = backgroundAssets[bgId] || backgroundAssets["default"] || this._createBackgroundDataUrl(bgId);
+    
+    const src = backgroundAssets[bgId] || backgroundAssets["default"] || this._createBackgroundDataUrl(bgId);
+    
+    // Handle image load/error
+    bg.onload = () => {
+      bg.style.background = "transparent";
+    };
+    bg.onerror = () => {
+      bg.style.display = "none";
+      this.sceneLayer.style.background = gradient;
+    };
+    
+    bg.src = src;
     return bg;
   }
 
