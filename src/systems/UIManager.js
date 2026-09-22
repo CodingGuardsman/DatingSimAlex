@@ -327,6 +327,13 @@ export class UIManager {
 
   _onDialogueEnd() {
     this._hideDialogueBox();
+    // Clear any lingering visual effects
+    this._clearVignette();
+    const c = document.getElementById('game-container');
+    if (c) {
+      c.style.transform = '';
+      c.dataset.shaking = 'false';
+    }
     // Check if game just completed
     if (this.stateManager && this.stateManager.state && this.stateManager.state.completed) {
       if (!this._hasCompletedGame()) {
@@ -986,24 +993,25 @@ export class UIManager {
     const container = document.getElementById("character-sprite-slot") || this._createCharSlot();
     container.innerHTML = "";
     container.id = "character-sprite-slot";
+    // Position container at bottom right/left like original setup
     container.style.position = "absolute";
-    container.style.left = "0";
-    container.style.top = "0";
-    container.style.width = "100%";
-    container.style.height = "100%";
     container.style.zIndex = "5";
-    container.style.display = "block";
-    container.style.overflow = "hidden";
-    container.style.background = "transparent";
+    container.style.display = "flex";
+    container.style.justifyContent = "center";
+    container.style.alignItems = "flex-end";
     container.style.pointerEvents = "none";
+    container.style.width = "auto";
+    container.style.height = "auto";
+    container.style.bottom = "120px";
+    container.style.left = position === "left" ? "40px" : "auto";
+    container.style.right = position === "right" ? "40px" : "auto";
 
     const label = `${this._getCharacterName(charId)}`;
     const bgColor = this._getCharacterColor(charId);
     const isAlex = charId === "alex";
-    const horizontalPosition = isAlex ? "left:3%;" : "right:3%;";
     const portraitSize = isAlex
-      ? "width:36vw;height:68vh;object-fit:cover;object-position:center top;transform:scale(1.15);transform-origin:bottom left;"
-      : "width:28vw;height:59vh;object-fit:contain;object-position:center bottom;transform:scale(1.15);transform-origin:bottom right;";
+      ? "width:36vw;max-width:400px;height:68vh;max-height:600px;object-fit:cover;object-position:center top;transform:scale(1.15);transform-origin:bottom left;"
+      : "width:28vw;max-width:320px;height:59vh;max-height:500px;object-fit:contain;object-position:center bottom;transform:scale(1.15);transform-origin:bottom right;";
 
     const expressionMap = {
       alex: {
@@ -1091,7 +1099,7 @@ if (!portraitPath) {
     const cacheKey = charId + "_" + expression;
     if (this._portraitCache[cacheKey]) {
       const cached = this._portraitCache[cacheKey].cloneNode(true);
-      cached.style.cssText = portraitSize + "position:absolute;" + horizontalPosition + "bottom:12%;";
+      cached.style.cssText = portraitSize;
       container.appendChild(cached);
       return;
     }
@@ -1102,7 +1110,7 @@ if (!portraitPath) {
       this._portraitCache[cacheKey] = img.cloneNode(true);
       container.innerHTML = "";
       img.alt = label;
-      img.style.cssText = portraitSize + "position:absolute;" + horizontalPosition + "bottom:12%;";
+      img.style.cssText = portraitSize;
       container.appendChild(img);
     };
     img.onerror = () => {
@@ -1406,11 +1414,18 @@ if (!portraitPath) {
   _screenShake(intensity, duration) {
     const c = document.getElementById('game-container');
     if (!c) return;
+    // Prevent multiple simultaneous shakes
+    if (c.dataset.shaking === 'true') return;
+    c.dataset.shaking = 'true';
     c.style.transition = 'transform 0.05s';
     const start = Date.now();
     const shake = () => {
       const elapsed = Date.now() - start;
-      if (elapsed > (duration||300)) { c.style.transform = ''; return; }
+      if (elapsed > (duration||300)) { 
+        c.style.transform = ''; 
+        c.dataset.shaking = 'false';
+        return; 
+      }
       const x = (Math.random()-0.5)*(intensity||3);
       const y = (Math.random()-0.5)*(intensity||3);
       c.style.transform = 'translate('+x+'px,'+y+'px)';

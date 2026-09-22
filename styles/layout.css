@@ -95,15 +95,13 @@
   transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .dialogue-choices button::before {
-  content: "";
+  content: "▸";
   position: absolute;
   left: 0.7rem;
   top: 50%;
-  width: 16px;
-  height: 16px;
   transform: translateY(-50%);
-  background: url("../assets/images/itch-forest/sprites-1x/ui/tree-icon-ui.png") center / contain no-repeat;
-  image-rendering: pixelated;
+  font-size: 0.8rem;
+  color: #c9a84c;
 }
 .dialogue-choices button:hover {
   background: #3d2e55;
