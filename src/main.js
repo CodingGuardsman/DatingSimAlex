@@ -175,6 +175,8 @@ _checkSecondPlaythrough() {
 
   _showEnding(data) {
 this.stateManager.setFlag("completed", true);
+    // Set completion flag in localStorage for meta systems
+    try { localStorage.setItem("afterclass_completed", "true"); } catch(e) {}
     this.stateManager.setFlag("playthrough_count", (this.stateManager.getFlag("playthrough_count") || 0) + 1);
     let chosenEnding = "ending_truth";
     if (this.stateManager.getFlag("flag_ending_maya")) chosenEnding = "ending_maya";

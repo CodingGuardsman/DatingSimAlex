@@ -28,7 +28,12 @@ export class V0StartMenuScene extends Scene {
 const warn=document.createElement("p");warn.style.cssText="margin-top:8px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(200,50,50,0.5);";warn.textContent="Do not play alone.";u.appendChild(warn);
     // Credits
     const cr=document.createElement("p");cr.style.cssText="margin-top:24px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);";cr.textContent="Credits · Bryan Lee";u.appendChild(cr);
-// Tiny almost-invisible hint - only visible on close inspection
+    // Visible hint for accessing the archive
+    const guide = document.createElement("p");
+    guide.style.cssText = "margin-top:12px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(120,60,60,0.4);text-align:center;";
+    guide.textContent = "Press F12 to open the archive · Right-click > Inspect";
+    u.appendChild(guide);
+    // Tiny almost-invisible hint
 const subtleHint = document.createElement("p");
 subtleHint.style.cssText = "position:absolute;bottom:4px;right:8px;font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(120,60,60,0.15);pointer-events:none;user-select:none;";
 subtleHint.textContent = "Some files can be un-written.";
