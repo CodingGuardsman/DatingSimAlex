@@ -1443,6 +1443,12 @@ if (!portraitPath) {
     setTimeout(() => {
       const splitEl = document.getElementById('glitch-rgb-split');
       if (splitEl) splitEl.remove();
+      // FIX: Remove the anim-glitch class and reset transform
+      const gc = document.getElementById('game-container');
+      if (gc) {
+        gc.classList.remove('anim-glitch');
+        gc.style.transform = '';
+      }
     }, duration || 500);
   }
 

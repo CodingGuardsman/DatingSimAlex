@@ -217,7 +217,6 @@
   80% { transform: translate(1px, 1px); filter: hue-rotate(-2deg); }
   90% { transform: translate(-1px, 0px); filter: hue-rotate(4deg); }
 }
-.anim-glitch { animation: glitch 0.3s steps(2) infinite; }
 
 /* Text corruption - random character replacement */
 @keyframes textCorrupt {
