@@ -1849,8 +1849,11 @@ if (!portraitPath) {
         this._lastHiddenTime = Date.now();
         // Change tab title when hidden
         document.title = 'The archive is watching...';
+        // Show visible "tab switched away" indicator
+        this._showTabAwayIndicator();
       } else {
         // Player returned
+        this._hideTabAwayIndicator();
         if (this._lastHiddenTime) {
           const awaySeconds = Math.floor((Date.now() - this._lastHiddenTime) / 1000);
           if (awaySeconds > 10) {
@@ -1881,6 +1884,30 @@ if (!portraitPath) {
         document.title = 'The archive is waiting...';
       }
     }, 5000);
+  }
+  
+  _showTabAwayIndicator() {
+    if (document.getElementById('tab-away-indicator')) return;
+    const indicator = document.createElement('div');
+    indicator.id = 'tab-away-indicator';
+    indicator.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(10,8,16,0.95);color:#ff00ff;padding:0.75rem 1.5rem;border:2px solid #ff00ff;border-radius:4px;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.1em;text-align:center;text-shadow:0 0 10px #ff00ff;box-shadow:0 0 20px rgba(255,0,255,0.3);animation:tabPulse 1s ease-in-out infinite;';
+    indicator.innerHTML = '👁 THE ARCHIVE IS WATCHING 👁<br><span style="font-size:0.7rem;color:#c9a84c;">Tab inactive — they know you left</span>';
+    document.body.appendChild(indicator);
+    
+    // Add animation style if not exists
+    if (!document.getElementById('tab-away-style')) {
+      const style = document.createElement('style');
+      style.id = 'tab-away-style';
+      style.textContent = '@keyframes tabPulse { 0%,100% { box-shadow:0 0 20px rgba(255,0,255,0.3); } 50% { box-shadow:0 0 40px rgba(255,0,255,0.6); } }';
+      document.head.appendChild(style);
+    }
+  }
+  
+  _hideTabAwayIndicator() {
+    const indicator = document.getElementById('tab-away-indicator');
+    if (indicator) indicator.remove();
+    const style = document.getElementById('tab-away-style');
+    if (style) style.remove();
   }
 
   /* ==================== LOCALSTORAGE TAMPERING ==================== */
