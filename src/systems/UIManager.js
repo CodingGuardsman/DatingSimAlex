@@ -25,6 +25,9 @@ export class UIManager {
     // Bind internal event handlers
     this._bindEvents();
     
+    // Set up favicon immediately
+    this._manipulateBrowser();
+    
     // Check if meta voice was already triggered (persisted across sessions)
     // If so, start creepy music immediately
     try {
