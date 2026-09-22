@@ -520,7 +520,10 @@ export class UIManager {
 
   _clearCharacterSprite() {
     const slot = document.getElementById("character-sprite-slot");
-    if (slot) slot.innerHTML = "";
+    if (slot) {
+      slot.innerHTML = "";
+      slot.style.display = "none";
+    }
   }
 
   _getCharacterName(charId) {
@@ -1031,6 +1034,7 @@ export class UIManager {
     container.style.justifyContent = "center";
     container.style.alignItems = "flex-end";
     container.style.pointerEvents = "none";
+    // Only set width/height when there's content - use auto so empty container collapses
     container.style.width = "auto";
     container.style.height = "auto";
     container.style.bottom = "120px";
@@ -1041,8 +1045,8 @@ export class UIManager {
     const bgColor = this._getCharacterColor(charId);
     const isAlex = charId === "alex";
     const portraitSize = isAlex
-      ? "width:36vw;max-width:400px;height:68vh;max-height:600px;object-fit:cover;object-position:center top;transform:scale(1.15);transform-origin:bottom left;"
-      : "width:28vw;max-width:320px;height:59vh;max-height:500px;object-fit:contain;object-position:center bottom;transform:scale(1.15);transform-origin:bottom right;";
+      ? "width:36vw;height:68vh;object-fit:cover;object-position:center top;transform:scale(1.15);transform-origin:bottom left;"
+      : "width:28vw;height:59vh;object-fit:contain;object-position:center bottom;transform:scale(1.15);transform-origin:bottom right;";
 
     const expressionMap = {
       alex: {
