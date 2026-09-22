@@ -23,6 +23,7 @@ export class Game {
     this._bgAudio = null;
     window.gameInstance = this;
     this.sceneLayer = document.getElementById("scene-layer");
+    this.uiLayer = document.getElementById("ui-layer");
     this._startBgMusic();
     this.eventBus = new EventBus();
     this.stateManager = new StateManager(this.eventBus);
