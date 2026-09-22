@@ -959,12 +959,15 @@ if (!portraitPath) {
       bedroom: "assets/images/backgrounds/bedroom.png",
       campus: "assets/images/backgrounds/campus.png",
       university: "assets/images/backgrounds/classroom-hero.jpg",
+      classroom: "assets/images/backgrounds/classroom-hero.jpg",
       library: "assets/images/backgrounds/library.jpeg",
-      archive: "assets/images/backgrounds/archuive.jpeg",
+      archive: "assets/images/backgrounds/archive.jpeg",
       security: "assets/images/backgrounds/security_room.jpeg",
       campaign: "assets/images/backgrounds/campaign_office.jpeg",
       gallery: "assets/images/backgrounds/gallery.jpeg",
       research: "assets/images/backgrounds/research_building.jpeg",
+      old_research: "assets/images/backgrounds/research_building.jpeg",
+      static: "assets/images/backgrounds/static.jpeg",
       default: "assets/images/backgrounds/classroom-hero.jpg"
     };
     bg.src = backgroundAssets[bgId] || backgroundAssets["default"] || this._createBackgroundDataUrl(bgId);
@@ -975,6 +978,7 @@ if (!portraitPath) {
     const gradients = {
       bedroom: ["#667eea", "#764ba2", "#f6d365"],
       campus: ["#1a2a6c", "#b21f1f", "#1a2a6c"],
+      static: ["#0a0a0a", "#1a0a2e", "#0a0a0a"],
       default: ["#16213e", "#0f3460", "#1f4068"]
     };
     const [start, mid, end] = gradients[bgId] || gradients.default;
