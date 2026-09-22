@@ -189,22 +189,50 @@ export class UIManager {
     // Stop normal background music when meta voice speaks
     this._stopBgMusic();
     
-    // Remove after duration, then start creepy music
-    setTimeout(() => {
-      overlay.remove();
-      textEl.remove();
-      
-      // Mark that meta voice has been triggered
-      this._metaVoiceTriggered = true;
-      
-      // Start creepy music after meta voice ends
-      this._startCreepyBgMusic();
-      
-      // Also persist this in localStorage so it survives page reloads
-      try {
-        localStorage.setItem('afterclass_meta_voice_triggered', 'true');
-      } catch(e) {}
-    }, 5000);
+    // Check if this is the password hint (contains RICHARDSON_7734)
+    const isPasswordHint = text.includes('RICHARDSON_7734');
+    
+    if (isPasswordHint) {
+      // Add "Continue" button at bottom for password hint
+      const btn = document.createElement('button');
+      btn.textContent = 'I copied it — Continue';
+      btn.style.cssText = 'margin-top:1.5rem;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
+      btn.onmouseover = () => { btn.style.background = '#fff'; btn.style.color = '#8b0000'; btn.style.boxShadow = '0 0 25px rgba(255,0,255,0.8)'; };
+      btn.onmouseout = () => { btn.style.background = '#ff00ff'; btn.style.color = '#0a0816'; btn.style.boxShadow = '0 0 15px rgba(255,0,255,0.5)'; };
+      btn.onclick = () => {
+        // Mark that meta voice has been triggered
+        this._metaVoiceTriggered = true;
+        
+        // Start creepy music after meta voice ends
+        this._startCreepyBgMusic();
+        
+        // Also persist this in localStorage so it survives page reloads
+        try {
+          localStorage.setItem('afterclass_meta_voice_triggered', 'true');
+        } catch(e) {}
+        
+        overlay.remove();
+        textEl.remove();
+      };
+      textEl.appendChild(btn);
+    } else {
+      // Normal meta voice - remove after duration
+      setTimeout(() => {
+        overlay.remove();
+        textEl.remove();
+        
+        // Mark that meta voice has been triggered
+        this._metaVoiceTriggered = true;
+        
+        // Start creepy music after meta voice ends
+        this._startCreepyBgMusic();
+        
+        // Also persist this in localStorage so it survives page reloads
+        try {
+          localStorage.setItem('afterclass_meta_voice_triggered', 'true');
+        } catch(e) {}
+      }, 5000);
+    }
   }
 
   _showTypewriter(text, duration) {
