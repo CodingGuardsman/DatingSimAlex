@@ -95,8 +95,6 @@ export class UIManager {
   }
 
   _showMetaMessage(text, duration, type = 'normal') {
-    const el = document.createElement('div');
-    
     // Different styles for different message types
     const styles = {
       normal: {
@@ -983,6 +981,8 @@ export class UIManager {
       }
     });
   }
+
+  renderCharacterSprite(charId, expression = "neutral", position = "right") {
     const container = document.getElementById("character-sprite-slot") || this._createCharSlot();
     container.innerHTML = "";
     container.id = "character-sprite-slot";
