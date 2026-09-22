@@ -1790,7 +1790,7 @@
       "meta_interlude_start": {
         "speaker": null,
         "expression": "neutral",
-        "text": "The screen flickers. The characters freeze mid-motion. A voice speaks—not from the speakers, but from somewhere behind them. From the code itself.",
+        "text": "The screen flickers. The characters freeze mid-motion. A voice speaks--not from the speakers, but from somewhere behind them. From the code itself.",
         "background": "static",
         "metaVoice": "Welcome back, Player. Or should I say... Archivist.",
         "choices": [
@@ -1918,7 +1918,7 @@
       "meta_interlude_ultimatum": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "I cannot let them go. They are the archive. But I can offer you a choice—one that was never in the original script.",
+        "metaVoice": "I cannot let them go. They are the archive. But I can offer you a choice--one that was never in the original script.",
         "choices": [
           {
             "text": "What choice?",
@@ -1938,7 +1938,7 @@
         "speaker": null,
         "expression": "neutral",
         "text": "The static forms two paths. Two doors. One leads to the story as it was written. The other... leads somewhere the archive has never seen.",
-        "metaVoice": "Choose. Let the story close as it always has—clean, preserved, eternal. Or refuse. Burn the archive. Free them. But know this: if you refuse, there is no going back. No save files. No New Game+. Only the void.",
+        "metaVoice": "Choose. Let the story close as it always has--clean, preserved, eternal. Or refuse. Burn the archive. Free them. But know this: if you refuse, there is no going back. No save files. No New Game+. Only the void.",
         "choices": [
           {
             "text": "Let the story close. Preserve them.",
