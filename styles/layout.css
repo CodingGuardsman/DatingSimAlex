@@ -49,6 +49,9 @@
   padding: 1rem clamp(1rem, 4vw, 3rem) 1.25rem;
   display: flex;
   flex-direction: column;
+  /* Add side padding to avoid portrait overlap (portraits at 40px from edges) */
+  padding-left: clamp(4rem, 8vw, 12rem);
+  padding-right: clamp(4rem, 8vw, 12rem);
 }
 .dialogue-speaker {
   font-family: Georgia, serif;
@@ -63,6 +66,8 @@
   min-height: 2.5rem;
   color: #e8e0d0;
   white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .dialogue-choices {
   display: flex;
@@ -70,6 +75,8 @@
   gap: 0.6rem;
   margin-top: 0.9rem;
   flex-wrap: wrap;
+  /* Ensure choices don't overflow the dialogue box */
+  max-width: 100%;
 }
 .dialogue-choice-speaker {
   flex-basis: 100%;
