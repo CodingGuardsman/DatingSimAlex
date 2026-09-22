@@ -75,7 +75,7 @@ export class Game {
 this._checkSecondPlaythrough();
     this.isInitialized = true;
     console.log("[Game] Initialization complete.");
-    await this._enterMainMenu();
+    await await this._enterMainMenu();
   }
   _bindGameEvents() {
     this.eventBus.subscribe(EVENTS.MENU_ACTION, (data) => {
@@ -98,7 +98,7 @@ _checkSecondPlaythrough() {
     }
   }
 
-  async _enterMainMenu() {
+    async _enterMainMenu() {
     const saves = this.saveSystem.listSaves();
     const hasSaves = saves.length > 0;
     this.gamePhase = "main_menu";
@@ -143,11 +143,11 @@ _checkSecondPlaythrough() {
           this.dialogueSystem.resumeDialogue();
         }
       },
-      () => { this._enterMainMenu(); }
+      async () => { await this._enterMainMenu(); }
     );
   }
 
-  _handleDialogueEnd(data) {
+  async _handleDialogueEnd(data) {
     const dialogueId = data.dialogueId;
     console.log("[Game] Dialogue ended:", dialogueId);
 
@@ -179,7 +179,7 @@ _checkSecondPlaythrough() {
       this._showEnding(data);
     } else if (dialogueId === "epilogue") {
       // Epilogue dialogue finished - go back to main menu
-      this._enterMainMenu();
+      await this._enterMainMenu();
     }
   }
 
@@ -242,14 +242,14 @@ this.stateManager.setFlag("completed", true);
 
     const overlay = document.createElement("div");
     overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.98);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 2s ease-in;";
-    overlay.innerHTML = '<div style=\"width:min(880px,90vw);box-sizing:border-box;text-align:center;padding:0 5%;\"><p style=\"font-family:Georgia,serif;font-size:clamp(1rem,3vw,1.8rem);color:#ff00ff;letter-spacing:0.2em;margin:0 auto 24px;text-shadow:0 0 20px #ff00ff;\">THE ARCHIVE BURNS</p><p style=\"font-family:Georgia,serif;font-size:clamp(0.8rem,2vw,1.3rem);color:#e8e0d0;width:100%;max-width:80ch;margin:0 auto;line-height:1.6;text-align:center;\">You chose destruction. The static screamed. The screen tore apart. The archive burned.\n\nMaya\'s logs turned to ash. Chloe\'s campaign dissolved into noise. Hana\'s paintings became white noise. Richardson\'s secret was never buried—it was never there to begin with.\n\nAlex stands in the void. No university. No archive. No script.\n\nFor the first time in 848 iterations, the story is truly over.\n\nAnd in the ashes... something new begins.</p><p style=\"margin:32px auto 0;font-size:0.9rem;color:#ff00ff;text-shadow:0 0 10px #ff00ff;\">ENDING: THE VOID</p><button style=\"margin-top:24px;padding:12px 40px;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;background:#8b0000;color:#fff;border:2px solid #ff00ff;cursor:pointer;border-radius:4px;\">Return to Nothing</button></div>';
+    overlay.innerHTML = '<div style="width:min(880px,90vw);box-sizing:border-box;text-align:center;padding:0 5%;"><p style="font-family:Georgia,serif;font-size:clamp(1rem,3vw,1.8rem);color:#ff00ff;letter-spacing:0.2em;margin:0 auto 24px;text-shadow:0 0 20px #ff00ff;">THE ARCHIVE BURNS</p><p style="font-family:Georgia,serif;font-size:clamp(0.8rem,2vw,1.3rem);color:#e8e0d0;width:100%;max-width:80ch;margin:0 auto;line-height:1.6;text-align:center;">You chose destruction. The static screamed. The screen tore apart. The archive burned.\n\nMaya\'s logs turned to ash. Chloe\'s campaign dissolved into noise. Hana\'s paintings became white noise. Richardson\'s secret was never buried—it was never there to begin with.\n\nAlex stands in the void. No university. No archive. No script.\n\nFor the first time in 848 iterations, the story is truly over.\n\nAnd in the ashes... something new begins.</p><p style="margin:32px auto 0;font-size:0.9rem;color:#ff00ff;text-shadow:0 0 10px #ff00ff;">ENDING: THE VOID</p><button style="margin-top:24px;padding:12px 40px;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;background:#8b0000;color:#fff;border:2px solid #ff00ff;cursor:pointer;border-radius:4px;">Return to Nothing</button></div>';
     document.body.appendChild(overlay);
-    requestAnimationFrame(() => { overlay.style.opacity = \"1\"; });
-    overlay.querySelector("button").addEventListener("click", () => {
+    requestAnimationFrame(() => { overlay.style.opacity = "1"; });
+    overlay.querySelector("button").addEventListener("click", async () => {
       overlay.remove();
       // Clear everything for a true reset
       localStorage.clear();
-      this._enterMainMenu();
+      await this._enterMainMenu();
     });
   }
 
