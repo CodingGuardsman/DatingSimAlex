@@ -1101,7 +1101,7 @@ if (!portraitPath) {
     const hadSave = localStorage.getItem('level_up_campus_crush_had_save');
     const hasSave = localStorage.getItem('level_up_campus_crush_save_1');
     if (hadSave === 'true' && !hasSave) {
-      this._showMetaMessage('You deleted the save file.\n\nI saw you.\n\nYou cannot hide from the truth by deleting data.', 7000);
+      this._showMetaMessage('Save file deleted. To restore: re-save the game or edit Local Storage.', 7000);
       this._glitch(800);
       this._redFlash(800);
     }
@@ -1110,7 +1110,7 @@ if (!portraitPath) {
   _checkConsoleCommands() {
     // Detect if player opens dev tools
     const warn = () => {
-      this._showMetaMessage('You are looking for something.\n\nThere is nothing here that can help you.', 5000);
+      this._showMetaMessage('Dev tools detected. Use Console tab for commands, Application tab for Local Storage.', 5000);
     };
     // Detect dev tools opening
     setInterval(() => {
@@ -1126,8 +1126,8 @@ if (!portraitPath) {
     setTimeout(() => {
       if (console.log) {
         console.log('%cAfter Class', 'color:#8b0000;font-size:24px;font-weight:bold;text-shadow:0 0 10px #8b0000;');
-        console.log('%cWelcome to the archive. Press F12 to open this console.', 'color:#5a3a3a;font-family:monospace;font-size:13px;');
-        console.log('%cThe archive watches. You can watch back.', 'color:#5a3a3a;font-family:monospace;font-size:12px;');
+        console.log('%cPress F12 to open this console and see developer tools.', 'color:#5a3a3a;font-family:monospace;font-size:13px;');
+        console.log('%cYou can edit save files in Application > Local Storage.', 'color:#5a3a3a;font-family:monospace;font-size:12px;');
       }
     }, 1000);
   }
@@ -1181,46 +1181,39 @@ if (!portraitPath) {
   }
 
   _startHintSystem() {
-    // Direct hints that appear at reasonable intervals
+    // Direct instructional hints - no meta narrative
     const hints = [
-      { text: 'Press F12 to open the developer console. The archive is watching there.', delay: 30000 },
-      { text: 'Right-click anywhere and choose "Inspect" to see the archive.', delay: 60000 },
-      { text: 'Go to the Application tab > Local Storage. Your saves are in level_up_campus_crush_save_1.', delay: 120000 },
-      { text: 'Some files are not meant to be saved.', delay: 180000 },
-      { text: 'The archive has no delete button.', delay: 240000 },
-      { text: 'You can close the tab. But the archive remains.', delay: 300000 },
-      { text: 'Some truths are buried in the code.', delay: 360000 },
-      { text: 'The browser remembers everything.', delay: 420000 },
-      { text: 'Some doors only open from the outside.', delay: 480000 },
-      { text: 'The console knows what you did.', delay: 540000 },
-      { text: 'Deleting is not the same as forgetting.', delay: 600000 }
+      { text: 'Press F12 to open the developer console.', delay: 30000 },
+      { text: 'Right-click anywhere and choose Inspect to open the archive.', delay: 60000 },
+      { text: 'Go to Application tab > Local Storage. Your saves are in level_up_campus_crush_save_1.', delay: 120000 },
+      { text: 'You can edit save files directly in Local Storage.', delay: 180000 },
+      { text: 'Edit the flags in localStorage to change your choices.', delay: 240000 },
+      { text: 'The playthrough_count flag tracks how many times you finished.', delay: 300000 },
+      { text: 'Set completed to false to reset the story.', delay: 360000 },
+      { text: 'Delete the save key to start completely fresh.', delay: 420000 },
     ];
     
     hints.forEach(h => {
       setTimeout(() => {
-        this._showSubtleHint(h.text, 8000);
-        if (Math.random() < 0.5) this._glitch(150);
+        this._showSubtleHint(h.text, 10000);
       }, h.delay);
     });
     
-    // After completion, more direct hints
+    // After completion, more specific instructions
     setInterval(() => {
       if (this._hasCompletedGame()) {
         const secondHints = [
-          'The save file knows your name.',
-          'Try looking where the game keeps its memories.',
-          'Some things can be un-written.',
-          'The truth is in the data.',
-          'You can erase a choice. Not the consequence.',
           'Press F12 > Application > Local Storage > level_up_campus_crush_save_1',
-          'Edit the flags in localStorage. The archive will react.'
+          'Change playthrough_count to 0 to reset New Game+ effects.',
+          'Set completed to false to replay without the dark filter.',
+          'Edit flag_ending_maya, flag_ending_chloe, flag_ending_hana to change endings.',
+          'Delete the save key to start completely fresh.',
         ];
-        if (Math.random() < 0.3) {
-          this._showSubtleHint(secondHints[Math.floor(Math.random() * secondHints.length)], 6000);
-          this._glitch(100);
+        if (Math.random() < 0.2) {
+          this._showSubtleHint(secondHints[Math.floor(Math.random() * secondHints.length)], 10000);
         }
       }
-    }, 15000);
+    }, 20000);
   }
 
   /* ==================== TAB / VISIBILITY ==================== */
@@ -1273,7 +1266,7 @@ if (!portraitPath) {
       if (this._lastSaveChecksum && this._lastSaveChecksum !== checksum) {
         // Save was modified externally
         if (this._hasCompletedGame()) {
-          this._showMetaMessage('You changed the save file. I saw you. The archive keeps its own copies.', 5000);
+          this._showMetaMessage('Save file modified externally. The game will use the current Local Storage values.', 5000);
           this._glitch(200);
           this._redFlash();
         }
@@ -1285,7 +1278,7 @@ if (!portraitPath) {
     const originalClear = localStorage.clear.bind(localStorage);
     localStorage.clear = () => {
       if (this._hasCompletedGame()) {
-        this._showMetaMessage('You think clearing storage clears the archive. It does not.', 5000);
+        this._showMetaMessage('All Local Storage cleared. Save files removed. Re-save or edit Local Storage to continue.', 5000);
         this._glitch(300);
       }
       originalClear();
@@ -1295,7 +1288,7 @@ if (!portraitPath) {
     const originalRemove = localStorage.removeItem.bind(localStorage);
     localStorage.removeItem = (key) => {
       if (key && key.includes('save') && this._hasCompletedGame()) {
-        this._showMetaMessage('You cannot delete the archive. Not really.', 5000);
+        this._showMetaMessage('Save key removed from Local Storage. Re-save the game to recreate it.', 5000);
         this._glitch(200);
       }
       originalRemove(key);
@@ -1476,7 +1469,7 @@ if (!portraitPath) {
         this._showMetaMessage('Right-clicking will not save you.', 3000);
         this._glitch(100);
       } else {
-        this._showMetaMessage('Right-click opens the archive. Press F12 to see it.', 3000);
+        this._showMetaMessage('Right-click > Inspect opens developer tools. Press F12 for console.', 3000);
       }
     });
   }
