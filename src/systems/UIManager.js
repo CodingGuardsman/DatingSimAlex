@@ -43,6 +43,18 @@ export class UIManager {
       if (this.stateManager && this.stateManager.getFlag('completed')) {
         this._markGameCompleted();
       }
+      
+      // Initialize new features
+      this._bindKeyboardShortcuts();
+      this._createSaveButton();
+      this._createStatsOverlay();
+      
+      // Start stats update loop
+      this._statsUpdateInterval = setInterval(() => {
+        if (this.gamePhase === "visual_novel") {
+          this._updateStatsOverlay();
+        }
+      }, 1000);
     }, 30000);
   }
 
@@ -82,13 +94,64 @@ export class UIManager {
     try { return localStorage ? Object.keys(localStorage).filter(k => k.startsWith('save_slot_')).length : 0; } catch(e) { return 0; }
   }
 
-  _showMetaMessage(text, duration) {
+  _showMetaMessage(text, duration, type = 'normal') {
     const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(10,8,16,0.97);color:#e8e0d0;padding:2rem 3rem;border:2px solid #c9a84c;border-radius:4px;font-family:Georgia,serif;font-size:1.1rem;max-width:80vw;line-height:1.7;text-align:center;opacity:0;transition:opacity 1.5s;';
+    
+    // Different styles for different message types
+    const styles = {
+      normal: {
+        bg: 'rgba(10,8,16,0.97)',
+        color: '#e8e0d0',
+        border: '2px solid #c9a84c',
+        font: 'Georgia,serif',
+        size: '1.1rem',
+        shadow: '0 0 20px rgba(201,168,76,0.3)'
+      },
+      warning: {
+        bg: 'rgba(20,0,0,0.98)',
+        color: '#ff4444',
+        border: '2px solid #ff0000',
+        font: '"Courier New",monospace',
+        size: '1rem',
+        shadow: '0 0 30px rgba(255,0,0,0.5)'
+      },
+      glitch: {
+        bg: 'rgba(10,0,20,0.98)',
+        color: '#ff00ff',
+        border: '2px solid #00ffff',
+        font: '"Courier New",monospace',
+        size: '1rem',
+        shadow: '0 0 30px rgba(255,0,255,0.5)',
+        textShadow: '2px 0 #00ffff, -2px 0 #ff00ff'
+      },
+      archive: {
+        bg: 'rgba(0,0,0,0.99)',
+        color: '#00ffff',
+        border: '2px solid #00ffff',
+        font: '"Courier New",monospace',
+        size: '1.2rem',
+        shadow: '0 0 40px rgba(0,255,255,0.6)',
+        textShadow: '0 0 10px #00ffff'
+      },
+      system: {
+        bg: 'rgba(0,20,0,0.98)',
+        color: '#00ff00',
+        border: '2px solid #00ff00',
+        font: '"Courier New",monospace',
+        size: '0.9rem',
+        shadow: '0 0 20px rgba(0,255,0,0.4)'
+      }
+    };
+    
+    const style = styles[type] || styles.normal;
+    const textShadow = style.textShadow || '0 0 10px ' + style.border.replace('2px solid ', '');
+    
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:' + style.bg + ';color:' + style.color + ';padding:2rem 3rem;border:' + style.border + ';border-radius:4px;font-family:' + style.font + ';font-size:' + style.size + ';max-width:85vw;line-height:1.7;text-align:center;opacity:0;transition:opacity 1s;box-shadow:' + style.shadow + ';text-shadow:' + textShadow + ';';
     el.textContent = text;
     document.body.appendChild(el);
     requestAnimationFrame(() => { el.style.opacity = '1'; });
-    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 1500); }, duration || 5000);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 1500); }, duration || 6000);
   }
 
   _showMetaVoiceOverlay(text) {
@@ -252,9 +315,16 @@ export class UIManager {
 
   _showStatic(duration) {
     const s = document.createElement('div');
-    s.style.cssText = 'position:fixed;inset:0;z-index:9996;background:repeating-linear-gradient(0deg,#000 0px,#000 1px,transparent 1px,transparent 2px);opacity:0.3;pointer-events:none;';
+    s.id = 'static-overlay';
+    s.style.cssText = 'position:fixed;inset:0;z-index:9996;background:repeating-linear-gradient(0deg,#000 0px,#000 1px,transparent 1px,transparent 2px);opacity:0.6;pointer-events:none;animation:staticFlicker 0.05s steps(2) infinite;';
     document.body.appendChild(s);
-    setTimeout(() => s.remove(), duration||1500);
+    
+    // Add RGB noise overlay
+    const noise = document.createElement('div');
+    noise.style.cssText = 'position:fixed;inset:0;z-index:9997;background:url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E");opacity:0.15;pointer-events:none;mix-blend-mode:overlay;animation:noiseShift 0.1s infinite;';
+    document.body.appendChild(noise);
+    
+    setTimeout(() => { s.remove(); noise.remove(); }, duration||2000);
   }
 
   _onDialogueEnd() {
@@ -744,7 +814,7 @@ export class UIManager {
     osc.frequency.setValueAtTime(freq, this._audioContext.currentTime);
     osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this._audioContext.currentTime + duration);
     
-    gain.gain.setValueAtTime(0.15, this._audioContext.currentTime);
+    gain.gain.setValueAtTime(0.35, this._audioContext.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, this._audioContext.currentTime + duration);
     
     osc.connect(gain);
@@ -780,9 +850,139 @@ export class UIManager {
     osc.stop(this._audioContext.currentTime + 2);
   }
 
-  /* ==================== EXISTING renderCharacterSprite ==================== */
-  
-  renderCharacterSprite(charId, expression = "neutral", position = "right") {
+  /* ==================== STATS & TRUST DISPLAY ==================== */
+
+  _createStatsOverlay() {
+    // Create persistent stats overlay in top-left
+    let overlay = document.getElementById('stats-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'stats-overlay';
+      overlay.style.cssText = 'position:fixed;top:12px;left:12px;z-index:9990;background:rgba(10,8,16,0.9);border:1px solid #c9a84c;padding:12px 16px;border-radius:4px;font-family:monospace;font-size:0.7rem;color:#e8e0d0;min-width:180px;pointer-events:none;';
+      this.uiLayer.appendChild(overlay);
+    }
+    return overlay;
+  }
+
+  _updateStatsOverlay() {
+    if (!this.stateManager) return;
+    const overlay = this._createStatsOverlay();
+    const stats = ['confidence','intelligence','fitness','charm','social','money'];
+    const relationships = ['maya','chloe','hana'];
+    
+    let html = '<div style="font-weight:bold;margin-bottom:8px;color:#c9a84c;">STATS</div>';
+    stats.forEach(s => {
+      const val = this.stateManager.getStat(s) || 0;
+      const bar = this._createMiniBar(val);
+      html += `<div style="margin:2px 0;"><span style="width:80px;display:inline-block;text-transform:capitalize;">${s}</span>${bar} <span style="color:#c9a84c;">${val}</span></div>`;
+    });
+    
+    html += '<div style="margin-top:12px;font-weight:bold;color:#ff6b9d;">TRUST</div>';
+    relationships.forEach(r => {
+      const val = this.stateManager.getRelationship(r) || 0;
+      const bar = this._createMiniBar(val);
+      const icon = r === 'maya' ? '🛡️' : r === 'chloe' ? '🗣️' : '🎨';
+      html += `<div style="margin:2px 0;"><span style="width:60px;display:inline-block;">${icon} ${r}</span>${bar} <span style="color:#ff6b9d;">${val}</span></div>`;
+    });
+    
+    // Playtime & save count
+    const playtime = this._getPlayTime();
+    const saveCount = this._getSaveCount();
+    html += `<div style="margin-top:12px;font-size:0.65rem;color:#888;">Time: ${Math.floor(playtime/60)}m ${playtime%60}s | Saves: ${saveCount}</div>`;
+    
+    overlay.innerHTML = html;
+  }
+
+  _createMiniBar(val) {
+    const filled = Math.floor(val / 10);
+    const empty = 10 - filled;
+    return `<span style="color:#c9a84c;font-family:monospace;">[${'█'.repeat(filled)}${'░'.repeat(empty)}]</span>`;
+  }
+
+  /* ==================== IN-GAME SAVE MENU ==================== */
+
+  _createSaveButton() {
+    // Add save button to top-right during gameplay
+    let btn = document.getElementById('in-game-save-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'in-game-save-btn';
+      btn.textContent = 'SAVE (F5)';
+      btn.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9990;background:rgba(10,8,16,0.95);border:1px solid #c9a84c;padding:8px 16px;border-radius:4px;font-family:Georgia,serif;font-size:0.75rem;color:#c9a84c;cursor:pointer;letter-spacing:0.1em;transition:all 0.2s;';
+      btn.onmouseover = () => { btn.style.background = '#c9a84c'; btn.style.color = '#0a0810'; };
+      btn.onmouseout = () => { btn.style.background = 'rgba(10,8,16,0.95)'; btn.style.color = '#c9a84c'; };
+      btn.onclick = () => this._showInGameSaveMenu();
+      this.uiLayer.appendChild(btn);
+    }
+    return btn;
+  }
+
+  _showInGameSaveMenu() {
+    // Pause dialogue and show save menu
+    if (this.dialogueSystem) this.dialogueSystem.pauseDialogue();
+    this._createSaveButton().style.display = 'none';
+    
+    const slots = this.saveSystem ? this.saveSystem.listSaves() : [];
+    this.renderSaveMenu(slots, 
+      (slotNumber) => {
+        if (this.saveSystem.saveToSlot(slotNumber)) {
+          this._showMetaMessage(`Game saved to slot ${slotNumber}.`, 3000);
+        }
+        this._resumeFromSaveMenu();
+      },
+      () => this._resumeFromSaveMenu(),
+      'in-game-save-menu'
+    );
+  }
+
+  _resumeFromSaveMenu() {
+    this.clearUI();
+    this._createSaveButton();
+    if (this.dialogueSystem) this.dialogueSystem.resumeDialogue();
+  }
+
+  /* ==================== KEYBOARD SHORTCUTS ==================== */
+
+  _bindKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      // F5 = Quick Save
+      if (e.key === 'F5') {
+        e.preventDefault();
+        if (this.saveSystem && this.gamePhase === 'visual_novel') {
+          this.saveSystem.quickSave();
+          this._showMetaMessage('Quick saved (Slot 0).', 2000);
+        }
+      }
+      // F9 = Quick Load
+      if (e.key === 'F9') {
+        e.preventDefault();
+        if (this.saveSystem && this.gamePhase === 'visual_novel') {
+          if (this.saveSystem.quickLoad()) {
+            this._showMetaMessage('Quick loaded.', 2000);
+            this.dialogueSystem.resumeDialogue();
+          } else {
+            this._showMetaMessage('No quicksave found.', 2000);
+          }
+        }
+      }
+      // F12 = Force DevTools detection + console message
+      if (e.key === 'F12') {
+        setTimeout(() => {
+          if (console.log) {
+            console.log('%cF12 pressed - DevTools opened', 'color:#8b0000;font-size:18px;font-weight:bold;');
+            console.log('%cCheck Console tab for messages, Application > Local Storage for saves.', 'color:#5a3a3a;font-family:monospace;');
+            console.log('%cTry: archive_help() for commands', 'color:#8b0000;font-family:monospace;font-weight:bold;');
+          }
+          this._showMetaMessage('DevTools opened. Check Console and Application tabs.', 4000);
+        }, 100);
+      }
+      // ESC = Save menu
+      if (e.key === 'Escape' && this.gamePhase === 'visual_novel') {
+        e.preventDefault();
+        this._showInGameSaveMenu();
+      }
+    });
+  }
     const container = document.getElementById("character-sprite-slot") || this._createCharSlot();
     container.innerHTML = "";
     container.id = "character-sprite-slot";
@@ -1157,8 +1357,27 @@ if (!portraitPath) {
   _glitch(duration) {
     const c = document.getElementById('game-container');
     if (!c) return;
+    
+    // Main glitch
     c.classList.add('anim-glitch');
-    setTimeout(() => c.classList.remove('anim-glitch'), duration || 500);
+    
+    // Add RGB split overlay
+    const split = document.createElement('div');
+    split.style.cssText = 'position:fixed;inset:0;z-index:9999;background:linear-gradient(45deg,rgba(255,0,255,0.1) 0%,transparent 50%,rgba(0,255,255,0.1) 100%);pointer-events:none;mix-blend-mode:screen;animation:glitchSplit 0.05s steps(2) infinite;';
+    split.id = 'glitch-rgb-split';
+    document.body.appendChild(split);
+    
+    // Screen displacement
+    const c2 = document.getElementById('game-container');
+    if (c2) {
+      c2.style.transform = 'translate(' + (Math.random()-0.5)*20 + 'px,' + (Math.random()-0.5)*20 + 'px) skew(' + (Math.random()-0.5)*5 + 'deg)';
+      setTimeout(() => { if(c2) c2.style.transform = ''; }, 50);
+    }
+    
+    setTimeout(() => {
+      const splitEl = document.getElementById('glitch-rgb-split');
+      if (splitEl) splitEl.remove();
+    }, duration || 500);
   }
 
   _redFlash(duration) {
@@ -1200,6 +1419,7 @@ if (!portraitPath) {
     const s = document.createElement('div');
     s.id = 'scanlines-layer';
     s.className = 'scanlines';
+    s.style.cssText = 'position:absolute;inset:0;z-index:8;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;mix-blend-mode:multiply;animation:scanlineFlicker 0.15s steps(2) infinite;';
     const scene = document.getElementById('scene-layer');
     if (scene) scene.appendChild(s);
   }
@@ -1249,7 +1469,7 @@ if (!portraitPath) {
     try { document.title = 'After Class - You already know how this ends'; } catch(e) {}
     // Show immediate message
     setTimeout(() => {
-      this._showMetaMessage('You are back. The archive remembers.', 5000);
+      this._showMetaMessage('You are back. The archive remembers.', 5000, 'archive');
       this._glitch(300);
     }, 2000);
   }
@@ -1284,7 +1504,7 @@ if (!portraitPath) {
     const hadSave = localStorage.getItem('level_up_campus_crush_had_save');
     const hasSave = localStorage.getItem('level_up_campus_crush_save_1');
     if (hadSave === 'true' && !hasSave) {
-      this._showMetaMessage('Save file deleted. To restore: re-save the game or edit Local Storage.', 7000);
+      this._showMetaMessage('Save file deleted. To restore: re-save the game or edit Local Storage.', 7000, 'warning');
       this._glitch(800);
       this._redFlash(800);
     }
@@ -1293,7 +1513,7 @@ if (!portraitPath) {
   _checkConsoleCommands() {
     // Detect if player opens dev tools
     const warn = () => {
-      this._showMetaMessage('Dev tools detected. Use Console tab for commands, Application tab for Local Storage.', 5000);
+      this._showMetaMessage('Dev tools detected. Use Console tab for commands, Application tab for Local Storage.', 5000, 'system');
     };
     // Detect dev tools opening
     setInterval(() => {
@@ -1404,38 +1624,41 @@ if (!portraitPath) {
   _startTabWatch() {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        // Player left the tab
         this._lastHiddenTime = Date.now();
-        // Very subtle - just store it, mention later
+        // Change tab title when hidden
+        document.title = 'The archive is watching...';
       } else {
         // Player returned
         if (this._lastHiddenTime) {
           const awaySeconds = Math.floor((Date.now() - this._lastHiddenTime) / 1000);
-          if (awaySeconds > 30 && this._hasCompletedGame()) {
-            this._showMetaMessage('I was here the whole time.', 4000);
+          if (awaySeconds > 10) {
+            this._showMetaMessage('I was here the whole time.', 4000, 'archive');
             this._glitch(100);
           }
           delete this._lastHiddenTime;
         }
+        // Restore title
+        document.title = 'After Class';
       }
     });
     
     // Detect page hide (mobile, tab close)
     window.addEventListener('pagehide', () => {
-      if (this._hasCompletedGame()) {
-        // Store that they tried to leave
-        localStorage.setItem('_archive_left', Date.now());
-      }
+      localStorage.setItem('_archive_left', Date.now());
     });
     
     window.addEventListener('pageshow', (e) => {
       if (e.persisted) {
-        // Page was restored from bfcache
-        if (this._hasCompletedGame()) {
-          this._showMetaMessage('You came back. They always come back.', 4000);
-        }
+        this._showMetaMessage('You came back. They always come back.', 4000, 'archive');
       }
     });
+    
+    // Periodic tab title reminder
+    setInterval(() => {
+      if (document.hidden) {
+        document.title = 'The archive is waiting...';
+      }
+    }, 5000);
   }
 
   /* ==================== LOCALSTORAGE TAMPERING ==================== */
@@ -1554,10 +1777,12 @@ if (!portraitPath) {
   
   _startClipboardWatch() {
     // Detect if player copies text from the game
+    this._clipboardPuzzleActive = false;
+    this._clipboardPassword = 'RICHARDSON_7734'; // The password to unlock the terminal
+
     document.addEventListener('copy', (e) => {
       const selection = window.getSelection().toString();
       if (selection && this._hasCompletedGame()) {
-        // Player is copying text - maybe trying to save something
         this._lastCopiedText = selection;
         setTimeout(() => {
           if (this._hasCompletedGame()) {
@@ -1566,13 +1791,31 @@ if (!portraitPath) {
           }
         }, 500);
       }
+      // Check if player copied the password
+      if (selection === this._clipboardPassword) {
+        this._clipboardPuzzleActive = true;
+        this._showMetaMessage('Password copied: ' + this._clipboardPassword + '. Now paste it where it belongs.', 5000);
+        this._playDialogueSound('meta');
+      }
     });
     
-    // Detect paste attempts
+    // Detect paste attempts - PASSWORD PUZZLE
     document.addEventListener('paste', (e) => {
       if (this._hasCompletedGame()) {
-        this._showMetaMessage('You cannot paste a soul.', 3000);
-        this._glitch(100);
+        const pasted = e.clipboardData.getData('text');
+        if (pasted === this._clipboardPassword && this._clipboardPuzzleActive) {
+          // PASSWORD PUZZLE SOLVED!
+          this._clipboardPuzzleActive = false;
+          this._showMetaMessage('ACCESS GRANTED. Terminal unlocked.', 5000);
+          this._glitch(500);
+          this._redFlash(300);
+          this._playMetaVoice('Terminal access granted. The archive yields.');
+          this.stateManager.setFlag('clipboard_puzzle_solved', true);
+          // Could trigger a special event here
+        } else if (this._hasCompletedGame()) {
+          this._showMetaMessage('You cannot paste a soul.', 3000);
+          this._glitch(100);
+        }
       }
     });
   }
@@ -1580,34 +1823,60 @@ if (!portraitPath) {
   /* ==================== FINGERPRINT DETECTION ==================== */
   
   _startFingerprintWatch() {
-    // Subtle detection of browser fingerprinting attempts
+    // Explicit fingerprint detection - show the player what we know
     setTimeout(() => {
       if (!this._hasCompletedGame()) return;
       
-      // Check if canvas fingerprinting was attempted
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('archive', 2, 2);
+      // Collect fingerprint data
+      const fingerprint = {};
       
-      // Check WebGL fingerprint
+      // Canvas fingerprint
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('archive', 2, 2);
+        fingerprint.canvas = canvas.toDataURL().substring(0, 50) + '...'; 
+      } catch(e) { fingerprint.canvas = 'blocked'; }
+      
+      // WebGL fingerprint
       try {
         const gl = document.createElement('canvas').getContext('webgl');
         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
         if (debugInfo) {
-          // Player has WebGL - they might be trying to inspect
-          if (Math.random() < 0.3) {
-            this._showMetaMessage('I know what GPU you have.', 3000);
-          }
+          fingerprint.gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
         }
-      } catch(e) {}
+      } catch(e) { fingerprint.gpu = 'blocked'; }
       
-      // Check timezone - the archive knows where you are
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz && Math.random() < 0.2) {
-        this._showMetaMessage('I know what timezone you are in.', 3000);
-      }
+      // Timezone
+      fingerprint.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Screen resolution
+      fingerprint.screen = screen.width + 'x' + screen.height + 'x' + screen.colorDepth;
+      
+      // Language
+      fingerprint.language = navigator.language;
+      
+      // Platform
+      fingerprint.platform = navigator.platform;
+      
+      // Hardware concurrency
+      fingerprint.cores = navigator.hardwareConcurrency;
+      
+      // Display fingerprint to player
+      let msg = 'FINGERPRINT COLLECTED:\n';
+      msg += 'GPU: ' + (fingerprint.gpu || 'unknown') + '\n';
+      msg += 'Timezone: ' + fingerprint.timezone + '\n';
+      msg += 'Screen: ' + fingerprint.screen + '\n';
+      msg += 'Language: ' + fingerprint.language + '\n';
+      msg += 'Platform: ' + fingerprint.platform + '\n';
+      msg += 'Cores: ' + fingerprint.cores + '\n';
+      msg += 'Canvas: ' + fingerprint.canvas;
+      
+      this._showMetaMessage(msg, 10000, 'system');
+      this._glitch(200);
+      
     }, 45000);
   }
 

@@ -396,3 +396,25 @@
   75% { text-shadow: 1px 1px #00ffff, -1px -1px #ff00ff; }
   100% { text-shadow: 2px 0 #00ffff, -2px 0 #ff00ff; }
 }
+
+@keyframes scanlineFlicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes glitchSplit {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+@keyframes warningPulse {
+  0%, 100% { 
+    opacity: 1;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #8b0000;
+  }
+  50% { 
+    opacity: 0.7;
+    text-shadow: 0 0 40px #ff0000, 0 0 80px #8b0000, 0 0 120px #ff0000;
+  }
+}
