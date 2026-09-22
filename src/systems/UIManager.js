@@ -91,6 +91,27 @@ export class UIManager {
     setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 1500); }, duration || 5000);
   }
 
+  _showMetaVoiceOverlay(text) {
+    // Create overlay for meta voice
+    const overlay = document.createElement('div');
+    overlay.className = 'meta-voice-overlay';
+    overlay.id = 'meta-voice-overlay';
+    document.body.appendChild(overlay);
+    
+    // Create text element
+    const textEl = document.createElement('div');
+    textEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(10,8,16,0.95);color:#ff00ff;padding:2rem 3rem;border:2px solid #ff00ff;border-radius:4px;font-family:Georgia,serif;font-size:1.2rem;line-height:1.6;max-width:80vw;text-align:center;text-shadow:0 0 20px #ff00ff;';
+    textEl.className = 'corrupted-text';
+    textEl.textContent = text;
+    document.body.appendChild(textEl);
+    
+    // Remove after duration
+    setTimeout(() => {
+      overlay.remove();
+      textEl.remove();
+    }, 5000);
+  }
+
   _showTypewriter(text, duration) {
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(10,8,16,0.97);color:#8b0000;padding:2rem 3rem;border:1px solid #8b0000;border-radius:4px;font-family:monospace;font-size:1rem;max-width:80vw;line-height:1.7;opacity:0;transition:opacity 1s;';
@@ -212,6 +233,20 @@ export class UIManager {
       if (data.psych.redflash) this._redFlash(300);
       if (data.psych.static) this._showStatic(600);
     }
+    // Play dialogue sound for character
+    const speaker = data.speaker || 'alex';
+    const isCorrupted = data.node && data.node.corrupted;
+    if (speaker) {
+      this._playDialogueSound(speaker, isCorrupted);
+      if (isCorrupted) {
+        this._triggerPortraitCorruption(speaker, 1200);
+      }
+    }
+    // Meta voice detection
+    if (data.node && data.node.metaVoice) {
+      this._playMetaVoice();
+      this._showMetaVoiceOverlay(data.node.metaVoice);
+    }
     this.renderDialogueNode(data);
   }
 
@@ -283,6 +318,10 @@ export class UIManager {
         const btn = document.createElement("button");
         btn.textContent = this._formatDialogueText(choice.text);
         btn.className = "choice-btn";
+        // Add hidden-option class for hidden choices
+        if (choice.hidden) {
+          btn.classList.add("hidden-option");
+        }
         btn.addEventListener("click", () => {
           this.eventBus.emit(EVENTS.CHOICE_SELECTED, { choiceIndex: index, choice });
         });
@@ -603,6 +642,146 @@ export class UIManager {
 
   /* ==================== CHARACTER SPRITE ==================== */
 
+  /* ==================== CORRUPTED PORTRAIT EFFECT ==================== */
+
+  _applyCorruptedPortrait(img, charId) {
+    // Magenta/cyan pixel noise + jitter effect
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    ctx.drawImage(img, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      // Random pixel corruption
+      if (Math.random() < 0.08) {
+        const channel = Math.floor(Math.random() * 3);
+        if (channel === 0) data[i] = 255; // Red (magenta)
+        else if (channel === 1) data[i+1] = 0; // Green off
+        else if (channel === 2) data[i+2] = 255; // Blue (cyan)
+      }
+      // Random noise
+      if (Math.random() < 0.03) {
+        data[i] = Math.random() * 255;
+        data[i+1] = Math.random() * 255;
+        data[i+2] = Math.random() * 255;
+      }
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    return canvas.toDataURL();
+  }
+
+  _triggerPortraitCorruption(charId, duration) {
+    const container = document.getElementById('character-sprite-slot');
+    if (!container) return;
+    
+    const img = container.querySelector('img');
+    if (!img) return;
+    
+    // Add jitter class
+    container.classList.add('portrait-corrupted');
+    container.style.animation = 'portraitJitter 0.05s infinite';
+    
+    // Create corrupted version
+    if (img.complete) {
+      const corruptedSrc = this._applyCorruptedPortrait(img, charId);
+      const originalSrc = img.src;
+      img.src = corruptedSrc;
+      
+      setTimeout(() => {
+        container.classList.remove('portrait-corrupted');
+        container.style.animation = '';
+        img.src = originalSrc;
+      }, duration || 800);
+    }
+  }
+
+  _triggerPortraitJitterOnly(charId) {
+    const container = document.getElementById('character-sprite-slot');
+    if (!container) return;
+    
+    container.classList.add('portrait-jitter');
+    container.style.animation = 'portraitJitter 0.03s infinite';
+    
+    setTimeout(() => {
+      container.classList.remove('portrait-jitter');
+      container.style.animation = '';
+    }, 1000);
+  }
+
+/* ==================== DIALOGUE SOUND SYSTEM ==================== */
+
+  _initDialogueSounds() {
+    // Generate procedural sound effects using Web Audio API
+    this._audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    this._dialogueSounds = {
+      // Character voice "beeps" - different frequencies per character
+      maya: { freq: 440, type: 'sine', duration: 0.08 },      // A4 - calm, security
+      chloe: { freq: 554, type: 'square', duration: 0.06 },    // C#5 - sharp, campaign
+      hana: { freq: 330, type: 'triangle', duration: 0.1 },    // E4 - soft, artistic
+      alex: { freq: 494, type: 'sine', duration: 0.07 },       // B4 - protagonist
+      meta: { freq: 220, type: 'sawtooth', duration: 0.15 },   // A3 - deep, ominous
+      corrupted: { freq: 110, type: 'square', duration: 0.3 }  // A2 - glitchy
+    };
+  }
+
+  _playDialogueSound(charId, isCorrupted = false) {
+    if (!this._audioContext) this._initDialogueSounds();
+    
+    const sound = this._dialogueSounds[charId] || this._dialogueSounds.alex;
+    const freq = isCorrupted ? sound.freq * 0.5 : sound.freq;
+    const type = isCorrupted ? 'square' : sound.type;
+    const duration = isCorrupted ? sound.duration * 2 : sound.duration;
+    
+    const osc = this._audioContext.createOscillator();
+    const gain = this._audioContext.createGain();
+    
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this._audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this._audioContext.currentTime + duration);
+    
+    gain.gain.setValueAtTime(0.15, this._audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this._audioContext.currentTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(this._audioContext.destination);
+    
+    osc.start();
+    osc.stop(this._audioContext.currentTime + duration);
+  }
+
+  _playMetaVoice(text) {
+    // Play a longer, distinct sound for the meta voice
+    if (!this._audioContext) this._initDialogueSounds();
+    
+    const osc = this._audioContext.createOscillator();
+    const gain = this._audioContext.createGain();
+    const filter = this._audioContext.createBiquadFilter();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(165, this._audioContext.currentTime); // E3
+    osc.frequency.exponentialRampToValueAtTime(110, this._audioContext.currentTime + 2);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, this._audioContext.currentTime);
+    
+    gain.gain.setValueAtTime(0.2, this._audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this._audioContext.currentTime + 2);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this._audioContext.destination);
+    
+    osc.start();
+    osc.stop(this._audioContext.currentTime + 2);
+  }
+
+  /* ==================== EXISTING renderCharacterSprite ==================== */
+  
   renderCharacterSprite(charId, expression = "neutral", position = "right") {
     const container = document.getElementById("character-sprite-slot") || this._createCharSlot();
     container.innerHTML = "";

@@ -198,7 +198,10 @@ export class DialogueSystem {
 
   _getAvailableChoices(node) {
     if (!node.choices) return [];
+    const hasMetaAwareness = this.stateManager.getFlag('flag_meta_awareness') >= 1;
     return node.choices.filter(choice => {
+      // Hidden choices only appear with meta awareness
+      if (choice.hidden && !hasMetaAwareness) return false;
       if (!choice.conditions) return true;
       return choice.conditions.every(cond => this._evaluateCondition(cond));
     });

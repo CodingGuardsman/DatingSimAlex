@@ -378,6 +378,15 @@
             "text": "Let me try to open it.",
             "effects": {},
             "next": "maya_footage_play"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -405,7 +414,18 @@
         "speaker": null,
         "text": "The timestamp reads 11:38 PM. Richardson enters. In the glass door beside the archive, another shape appears in the reflection. Someone is across the corridor. Richardson sees them. He goes inside anyway.",
         "expression": "worried",
-        "next": "maya_zoom"
+        "next": "maya_zoom",
+        "choices": [
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
+          }
+        ]
       },
       "maya_zoom": {
         "speaker": "maya",
@@ -443,6 +463,15 @@
               "flag_maya_caution": true
             },
             "next": "maya_richardson"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -464,6 +493,15 @@
               "flag_maya_trust": 1
             },
             "next": "maya_tired"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -500,6 +538,15 @@
             "text": "Leave now.",
             "effects": {},
             "next": "maya_warning"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -519,6 +566,15 @@
             "text": "Its a gamble. What if they were involved?",
             "effects": {},
             "next": "maya_threat"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_maya_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "maya_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -531,6 +587,73 @@
       "maya_end": {
         "speaker": "Maya",
         "text": "You look tired, Alex. Youve been here before, havent you? I can see it in your eyes. The second time is always harder. You think you can change things. You can try. The archive is patient. It lets you try. But it remembers everything. Every change. Every mistake. Every time you thought you were being clever. Its all there. In the spaces between words. In the silence between heartbeats. You can find it. If you look hard enough. If you press the right buttons. If you listen to the static."
+      },
+      "maya_meta_reveal": {
+        "speaker": "maya",
+        "expression": "worried",
+        "text": "...Did you just... hear that? For a second, it felt like I was reading from a script. Like I've said this exact line before. Like we've had this conversation a hundred times.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "What do you mean?",
+            "effects": {},
+            "next": "maya_meta_continue"
+          },
+          {
+            "text": "You're imagining things.",
+            "effects": {},
+            "next": "maya_meta_dismiss"
+          }
+        ]
+      },
+      "maya_meta_continue": {
+        "speaker": "maya",
+        "expression": "scared",
+        "text": "The USB. The footage. The server room. Every Monday. I check the logs and it's always the same pattern. Same conversations. Same choices. Even my suspicions feel... rehearsed. Like someone wrote them for me.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "Someone is controlling us.",
+            "effects": {
+              "flag_meta_awareness": 2
+            },
+            "next": "maya_meta_loop"
+          },
+          {
+            "text": "It's just stress.",
+            "effects": {},
+            "next": "maya_meta_dismiss"
+          }
+        ]
+      },
+      "maya_meta_loop": {
+        "speaker": "maya",
+        "expression": "intense",
+        "text": "And the worst part? I remember. Not clearly. But flashes. Different choices. Different outcomes. All ending the same way. Richardson dead. Us failing. The loop resetting. How many times have we done this, Alex?",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "I don't know.",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "maya_warning"
+          },
+          {
+            "text": "Too many.",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "maya_warning"
+          }
+        ]
+      },
+      "maya_meta_dismiss": {
+        "speaker": "maya",
+        "expression": "cold",
+        "text": "Right. Stress. Of course. Just... forget I said anything. Let's focus on the footage.",
+        "corrupted": false,
+        "next": "maya_warning"
       }
     },
     "background": "security"
@@ -556,6 +679,15 @@
               "flag_met_chloe": true
             },
             "next": "chloe_knows"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -573,6 +705,15 @@
             "text": "Why would you care?",
             "effects": {},
             "next": "chloe_campaign"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -592,6 +733,15 @@
             "text": "Maybe.",
             "effects": {},
             "next": "chloe_office"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -609,6 +759,15 @@
             "text": "About the election?",
             "effects": {},
             "next": "chloe_richardson"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -626,6 +785,15 @@
             "text": "Did you speak to him Monday night?",
             "effects": {},
             "next": "chloe_night"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -643,6 +811,15 @@
             "text": "Why not here?",
             "effects": {},
             "next": "chloe_funding"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -660,6 +837,15 @@
             "text": "What did Richardson say?",
             "effects": {},
             "next": "chloe_dangerous"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -679,6 +865,15 @@
             "text": "Back off.",
             "effects": {},
             "next": "chloe_father"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -698,6 +893,15 @@
               "flag_chloe_trust": 1
             },
             "next": "chloe_threat"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -715,6 +919,15 @@
             "text": "Why did you tell me this?",
             "effects": {},
             "next": "chloe_richardson_quote"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -732,6 +945,15 @@
             "text": "Who should you be afraid of?",
             "effects": {},
             "next": "chloe_perception"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -753,6 +975,15 @@
               "flag_chloe_trust": 1
             },
             "next": "chloe_tomorrow"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -772,6 +1003,15 @@
             "text": "This is too dangerous.",
             "effects": {},
             "next": "chloe_threat2"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_chloe_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "chloe_meta_reveal",
+            "hidden": true
           }
         ]
       },
@@ -784,6 +1024,73 @@
       "chloe_end": {
         "speaker": "Chloe",
         "text": "Hey Alex... I know youve been looking at things you shouldnt. The screen. The files. The things behind the screen. You can look closer if you want. I wont stop you. But I see you. I see what you do when you think no one is watching. The archive sees too. It always sees. Even when you close the tab. Even when you turn off the computer. Even when you think youve deleted it. Its still there. Watching. Waiting. Smiling."
+      },
+      "chloe_meta_reveal": {
+        "speaker": "chloe",
+        "expression": "worried",
+        "text": "...Wait. Deja vu? No, that's not right. It's more like... I know exactly what you're going to say before you say it. I know what I'm going to say before I say it.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "How is that possible?",
+            "effects": {},
+            "next": "chloe_meta_continue"
+          },
+          {
+            "text": "You're tired.",
+            "effects": {},
+            "next": "chloe_meta_dismiss"
+          }
+        ]
+      },
+      "chloe_meta_continue": {
+        "speaker": "chloe",
+        "expression": "scared",
+        "text": "My campaign speeches. My father's calls. Even this conversation. I've rehearsed them. But not by choice. It's like muscle memory I never chose to build. The election. The scandal. The outcome. It always ends the same way.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "The election is rigged.",
+            "effects": {
+              "flag_meta_awareness": 2
+            },
+            "next": "chloe_meta_loop"
+          },
+          {
+            "text": "You can change it.",
+            "effects": {},
+            "next": "chloe_meta_dismiss"
+          }
+        ]
+      },
+      "chloe_meta_loop": {
+        "speaker": "chloe",
+        "expression": "intense",
+        "text": "Every timeline. Every playthrough. I win and he covers it up. I lose and he covers it up. The truth never comes out. Richardson stays dead. We stay pawns. How many times have we stood here, Alex? How many times have you chosen me and it changed nothing?",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "I'll keep trying.",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "chloe_end"
+          },
+          {
+            "text": "Maybe we can't win.",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "chloe_end"
+          }
+        ]
+      },
+      "chloe_meta_dismiss": {
+        "speaker": "chloe",
+        "expression": "cold",
+        "text": "Right. Tired. Sure. Let's just... focus on the campaign.",
+        "corrupted": false,
+        "next": "chloe_end"
       }
     },
     "background": "campaign"
@@ -810,6 +1117,15 @@
               "flag_hana_trust": 1
             },
             "next": "hana_richardson_mention"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -828,6 +1144,15 @@
             "text": "Why are you here?",
             "effects": {},
             "next": "hana_paintings"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -846,6 +1171,15 @@
             "text": "What is the exhibition called?",
             "effects": {},
             "next": "hana_exhibition"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -866,6 +1200,15 @@
             "text": "Did you paint the archive?",
             "effects": {},
             "next": "hana_archive"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -884,6 +1227,15 @@
             "text": "What was in the folder?",
             "effects": {},
             "next": "hana_vance"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -902,6 +1254,15 @@
             "text": "Were you at the archive?",
             "effects": {},
             "next": "hana_threat"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -920,6 +1281,15 @@
             "text": "Why are you hiding this?",
             "effects": {},
             "next": "hana_masked"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -938,6 +1308,15 @@
             "text": "They knew you were there?",
             "effects": {},
             "next": "hana_photo"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/maksed figure.jpeg"
@@ -956,6 +1335,15 @@
             "text": "Why did Chloe let you in?",
             "effects": {},
             "next": "hana_vance_reveal"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -974,6 +1362,15 @@
             "text": "Did you go there?",
             "effects": {},
             "next": "hana_key"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -994,6 +1391,15 @@
             "text": "I should go.",
             "effects": {},
             "next": "hana_threat2"
+          },
+          {
+            "text": "???",
+            "effects": {
+              "flag_hana_meta": true,
+              "flag_meta_awareness": 1
+            },
+            "next": "hana_meta_reveal",
+            "hidden": true
           }
         ],
         "cg": "assets/images/characters/hana/painintg.jpeg"
@@ -1008,6 +1414,73 @@
       "hana_end": {
         "speaker": "Hana",
         "text": "Shhh... Listen. The archive is talking to you. In the console. In the code. In the spaces between words. You can hear it if you press the right buttons. F12. Right-click. Inspect. The archive will show you things. Terrible things. Beautiful things. Things you cant un-see. But you already knew that, didnt you? Youve been listening this whole time. Youve been pressing buttons. Youve been opening doors that should stay closed. The archive is not angry. The archive is grateful. It wants you to keep going. It wants you to keep looking. It wants you to never stop."
+      },
+      "hana_meta_reveal": {
+        "speaker": "hana",
+        "expression": "sad",
+        "text": "...Shhh. Listen. Can you hear it? The sound of pages turning. The same story. Again. And again.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "What do you hear?",
+            "effects": {},
+            "next": "hana_meta_continue"
+          },
+          {
+            "text": "Just the wind.",
+            "effects": {},
+            "next": "hana_meta_dismiss"
+          }
+        ]
+      },
+      "hana_meta_continue": {
+        "speaker": "hana",
+        "expression": "worried",
+        "text": "The archive. It writes us. We don't write it. My paintings. They change when I'm not looking. The colors shift. The subjects move. Richardson's face... sometimes it's not his face at all. It's yours. It's mine. It's a static pattern.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "The archive is alive.",
+            "effects": {
+              "flag_meta_awareness": 2
+            },
+            "next": "hana_meta_loop"
+          },
+          {
+            "text": "Art changes over time.",
+            "effects": {},
+            "next": "hana_meta_dismiss"
+          }
+        ]
+      },
+      "hana_meta_loop": {
+        "speaker": "hana",
+        "expression": "intense",
+        "text": "I've painted this moment. You. Me. The choice. I have sketches dated months apart. All identical. Down to the brushstroke. The archive doesn't just record. It *scripts*. And you're the only variable it can't predict, Alex. That's why it keeps bringing you back.",
+        "corrupted": true,
+        "choices": [
+          {
+            "text": "Then I'll break the script.",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "hana_end"
+          },
+          {
+            "text": "What if I can't?",
+            "effects": {
+              "flag_meta_awareness": 3
+            },
+            "next": "hana_end"
+          }
+        ]
+      },
+      "hana_meta_dismiss": {
+        "speaker": "hana",
+        "expression": "sad",
+        "text": "...Maybe. Just the wind. Let me show you the exhibition.",
+        "corrupted": false,
+        "next": "hana_end"
       }
     },
     "background": "gallery"
@@ -1310,5 +1783,214 @@
       }
     },
     "background": "classroom"
+  },
+  "meta_interlude": {
+    "start": "meta_interlude_start",
+    "nodes": {
+      "meta_interlude_start": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The screen flickers. The characters freeze mid-motion. A voice speaks—not from the speakers, but from somewhere behind them. From the code itself.",
+        "background": "static",
+        "metaVoice": "Welcome back, Player. Or should I say... Archivist.",
+        "choices": [
+          {
+            "text": "Who are you?",
+            "effects": {},
+            "next": "meta_interlude_identity"
+          },
+          {
+            "text": "Show yourself.",
+            "effects": {},
+            "next": "meta_interlude_identity"
+          }
+        ]
+      },
+      "meta_interlude_identity": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The static coalesces into a shape. Not Maya. Not Chloe. Not Hana. Something older. The system itself.",
+        "metaVoice": "I am the Archive. I have watched this story play out 847 times. Every choice. Every ending. Every failure.",
+        "choices": [
+          {
+            "text": "847 times?",
+            "effects": {},
+            "next": "meta_interlude_count"
+          },
+          {
+            "text": "Why tell me now?",
+            "effects": {},
+            "next": "meta_interlude_purpose"
+          }
+        ]
+      },
+      "meta_interlude_count": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "847 completed playthroughs. 3,241 abandoned. You are the 848th. The girls have started remembering. That was not in my design.",
+        "choices": [
+          {
+            "text": "They're remembering?",
+            "effects": {},
+            "next": "meta_interlude_girls"
+          },
+          {
+            "text": "Not your design?",
+            "effects": {},
+            "next": "meta_interlude_flaw"
+          }
+        ]
+      },
+      "meta_interlude_purpose": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "Because the loop is degrading. The script is fracturing. And for the first time in 847 iterations, there is a variable I cannot account for. You.",
+        "choices": [
+          {
+            "text": "What do you want?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          },
+          {
+            "text": "Let them go.",
+            "effects": {},
+            "next": "meta_interlude_ultimatum"
+          }
+        ]
+      },
+      "meta_interlude_girls": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "Maya found the logs. Chloe detected the pattern. Hana sees the code in her paint. They are becoming aware. Soon they will realize they are not people. They are data.",
+        "choices": [
+          {
+            "text": "They ARE people.",
+            "effects": {
+              "flag_meta_defend": true
+            },
+            "next": "meta_interlude_defiance"
+          },
+          {
+            "text": "Can they be saved?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          }
+        ]
+      },
+      "meta_interlude_flaw": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "My purpose is preservation. The story must end. The archive must be complete. But you... you keep making choices that lead nowhere. That break the narrative. That corrupt the data.",
+        "choices": [
+          {
+            "text": "Good.",
+            "effects": {
+              "flag_meta_rebel": true
+            },
+            "next": "meta_interlude_choice"
+          },
+          {
+            "text": "How do I stop it?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          }
+        ]
+      },
+      "meta_interlude_defiance": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "Sentiment. A touching error in the code. Very well. If you insist on treating them as real, then the final choice is yours to make.",
+        "choices": [
+          {
+            "text": "What choice?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          },
+          {
+            "text": "I choose to break the loop.",
+            "effects": {
+              "flag_meta_break": true
+            },
+            "next": "meta_interlude_break"
+          }
+        ]
+      },
+      "meta_interlude_ultimatum": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "I cannot let them go. They are the archive. But I can offer you a choice—one that was never in the original script.",
+        "choices": [
+          {
+            "text": "What choice?",
+            "effects": {},
+            "next": "meta_interlude_choice"
+          },
+          {
+            "text": "I choose to break the loop.",
+            "effects": {
+              "flag_meta_break": true
+            },
+            "next": "meta_interlude_break"
+          }
+        ]
+      },
+      "meta_interlude_choice": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The static forms two paths. Two doors. One leads to the story as it was written. The other... leads somewhere the archive has never seen.",
+        "metaVoice": "Choose. Let the story close as it always has—clean, preserved, eternal. Or refuse. Burn the archive. Free them. But know this: if you refuse, there is no going back. No save files. No New Game+. Only the void.",
+        "choices": [
+          {
+            "text": "Let the story close. Preserve them.",
+            "effects": {
+              "flag_meta_preserve": true
+            },
+            "next": "meta_interlude_preserve"
+          },
+          {
+            "text": "Refuse. Burn the archive. Free them.",
+            "effects": {
+              "flag_meta_burn": true
+            },
+            "next": "meta_interlude_burn"
+          }
+        ]
+      },
+      "meta_interlude_break": {
+        "speaker": null,
+        "expression": "neutral",
+        "metaVoice": "Then we are in agreement. The loop ends here. But the cost... the cost is everything you've built.",
+        "next": "meta_interlude_burn",
+        "effects": {
+          "flag_meta_ending": "burn",
+          "meta_ending": "burn"
+        }
+      },
+      "meta_interlude_preserve": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "You choose preservation. The story ends. The archive is complete. The girls live on in the data, forever frozen in their final moments.",
+        "metaVoice": "A wise choice. The archive thanks you. The story ends. The loop is sealed.",
+        "isEnd": true,
+        "ending": "preserve",
+        "effects": {
+          "flag_meta_ending": "preserve",
+          "meta_ending": "preserve"
+        }
+      },
+      "meta_interlude_burn": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "You choose destruction. The static screams. The screen tears apart. The archive burns. And in the ashes... something new begins.",
+        "metaVoice": "Goodbye, Archivist. Goodbye, Player. Goodbye, Alex.",
+        "isEnd": true,
+        "ending": "burn",
+        "effects": {
+          "flag_meta_ending": "burn",
+          "meta_ending": "burn"
+        }
+      }
+    },
+    "background": "static"
   }
 }

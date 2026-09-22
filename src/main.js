@@ -157,7 +157,7 @@ _checkSecondPlaythrough() {
       "chapter1_archive": { next: "chapter2_maya", text: "The following evening...", hours: 24 },
       "chapter2_maya": { next: "chapter3_chloe", text: "The next afternoon...", hours: 18 },
       "chapter3_chloe": { next: "chapter4_hana", text: "Later that evening...", hours: 6 },
-      "chapter4_hana": { next: "day5_confrontation", text: "The next day...", hours: 12 }
+      "chapter4_hana": { next: "meta_interlude", text: "The static grows louder...", hours: 0 }
     };
 
     const t = transitions[dialogueId];
@@ -165,6 +165,16 @@ _checkSecondPlaythrough() {
       this._showTransition(t.text, () => {
         this.dialogueSystem.startDialogue(t.next);
       });
+    } else if (dialogueId === "meta_interlude") {
+      // Meta interlude finished - check which ending was chosen
+      const metaEnding = this.stateManager.getFlag("meta_ending");
+      if (metaEnding === "burn") {
+        this._showMetaBurnEnding();
+      } else {
+        this._showTransition("The story continues toward its conclusion...", () => {
+          this.dialogueSystem.startDialogue("day5_confrontation");
+        });
+      }
     } else if (dialogueId === "day5_confrontation") {
       this._showEnding(data);
     } else if (dialogueId === "epilogue") {
@@ -221,6 +231,25 @@ this.stateManager.setFlag("completed", true);
       if (this.sceneLayer) this.sceneLayer.innerHTML = "";
       this._startEpilogue();
       // Don't go to main menu yet - wait for epilogue to finish
+    });
+  }
+
+  _showMetaBurnEnding() {
+    // The archive burns. A unique ending.
+    this.stateManager.setFlag("completed", true);
+    this.stateManager.setFlag("playthrough_count", (this.stateManager.getFlag("playthrough_count") || 0) + 1);
+    this.stateManager.setFlag("ending_burn", true);
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.98);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 2s ease-in;";
+    overlay.innerHTML = '<div style=\"width:min(880px,90vw);box-sizing:border-box;text-align:center;padding:0 5%;\"><p style=\"font-family:Georgia,serif;font-size:clamp(1rem,3vw,1.8rem);color:#ff00ff;letter-spacing:0.2em;margin:0 auto 24px;text-shadow:0 0 20px #ff00ff;\">THE ARCHIVE BURNS</p><p style=\"font-family:Georgia,serif;font-size:clamp(0.8rem,2vw,1.3rem);color:#e8e0d0;width:100%;max-width:80ch;margin:0 auto;line-height:1.6;text-align:center;\">You chose destruction. The static screamed. The screen tore apart. The archive burned.\n\nMaya\'s logs turned to ash. Chloe\'s campaign dissolved into noise. Hana\'s paintings became white noise. Richardson\'s secret was never buried—it was never there to begin with.\n\nAlex stands in the void. No university. No archive. No script.\n\nFor the first time in 848 iterations, the story is truly over.\n\nAnd in the ashes... something new begins.</p><p style=\"margin:32px auto 0;font-size:0.9rem;color:#ff00ff;text-shadow:0 0 10px #ff00ff;\">ENDING: THE VOID</p><button style=\"margin-top:24px;padding:12px 40px;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;background:#8b0000;color:#fff;border:2px solid #ff00ff;cursor:pointer;border-radius:4px;\">Return to Nothing</button></div>';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = \"1\"; });
+    overlay.querySelector("button").addEventListener("click", () => {
+      overlay.remove();
+      // Clear everything for a true reset
+      localStorage.clear();
+      this._enterMainMenu();
     });
   }
 
