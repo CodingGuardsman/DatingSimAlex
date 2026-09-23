@@ -48,28 +48,6 @@ export class DialogueSystem {
     this.currentNodeId = this.activeDialogue.start || Object.keys(this.activeDialogue.nodes)[0];
     this.stateManager.setDialogue(dialogueId);
 
-    // Second playthrough detection: show warning before prologue
-    try {
-      if (dialogueId === 'prologue' && localStorage.getItem('afterclass_completed') === 'true') {
-        // Get the actual player name for the meta message
-        let playerName = "Alex";
-        if (this.stateManager && this.stateManager.getPlayerName) {
-          playerName = this.stateManager.getPlayerName();
-        }
-        const spNode = {
-          speaker: null,
-          expression: 'neutral',
-          text: `⚠ SECOND PLAYTHROUGH DETECTED ⚠\n\nThe archive remembers. Things have changed...\n\nWelcome back, ${playerName}.`,
-          choices: [
-            { text: 'Begin again.', effects: {}, next: 'prologue_start' }
-          ]
-        };
-        this._emitNode(spNode);
-        this.pendingChoiceAdvance = { next: 'prologue_start' };
-        return true;
-      }
-    } catch(e) {}
-
     const node = this._getNode(this.currentNodeId);
     this._applyNodeEffects(node);
 

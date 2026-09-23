@@ -199,6 +199,9 @@ export class Game {
     } else if (dialogueId === "epilogue") {
       // Epilogue dialogue finished - go back to main menu
       await this._enterMainMenu();
+    } else if (dialogueId === "meta_true_ending") {
+      // Secret true ending - go back to main menu after a delay
+      setTimeout(() => this._enterMainMenu(), 3000);
     }
   }
 

@@ -114,7 +114,7 @@ m.appendChild(subtleHint);
     // Clear second playthrough flags for a truly fresh start
     // (Only if they're starting a new game, not continuing)
     try {
-      localStorage.removeItem('afterclass_completed');
+      // Keep afterclass_completed for second playthrough detection
       localStorage.removeItem('afterclass_meta_voice_triggered');
     } catch(e) {}
     // Start music on user click (browsers require user gesture for autoplay)
@@ -123,7 +123,7 @@ m.appendChild(subtleHint);
     }
     // If player entered the secret key, go directly to true ending
     if (isTrueEndingKey && window.gameInstance && window.gameInstance.dialogueSystem) {
-      window.gameInstance.dialogueSystem.startDialogue("meta_interlude_true_ending");
+      window.gameInstance.dialogueSystem.startDialogue("meta_true_ending");
     } else {
       this.eventBus.emit("menu:action",{action:"new_game"});
     } }

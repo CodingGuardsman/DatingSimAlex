@@ -111,10 +111,10 @@ export class UIManager {
     slot.style.bottom = "110px";
     slot.style.left = "auto";
     slot.style.right = "auto";
-    slot.style.width = "600px";
-    slot.style.height = "1040px";
-    slot.style.maxWidth = "68vw";
-    slot.style.maxHeight = "136vh";
+    slot.style.width = "1200px";
+    slot.style.height = "1200px";
+    slot.style.maxWidth = "136vw";
+    slot.style.maxHeight = "90vh";
     if (isLeft) {
       slot.style.left = "24px";
       slot.style.right = "auto";
@@ -218,8 +218,9 @@ export class UIManager {
     // Stop normal background music when meta voice speaks
     this._stopBgMusic();
     
-    // Check if this is the password hint (contains RICHARDSON_7734)
-    const isPasswordHint = text.includes('RICHARDSON_7734');
+    // Check if this is the password hint (specific metaVoice from meta_interlude_password_hint)
+    // Not the true ending which also mentions RICHARDSON_7734
+    const isPasswordHint = text.includes('Copy it. Paste it where the terminal demands it');
     
     if (isPasswordHint) {
       // Add "Continue" button at bottom for password hint
@@ -248,7 +249,7 @@ export class UIManager {
       // Normal meta voice - wait for player to click Continue
       const btn = document.createElement('button');
       btn.textContent = 'Continue';
-      btn.style.cssText = 'margin-top:1.5rem;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
+      btn.style.cssText = 'display:block;margin:1.5rem auto 0;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
       btn.onmouseover = () => { btn.style.background = '#fff'; btn.style.color = '#8b0000'; btn.style.boxShadow = '0 0 25px rgba(255,0,255,0.8)'; };
       btn.onmouseout = () => { btn.style.background = '#ff00ff'; btn.style.color = '#0a0816'; btn.style.boxShadow = '0 0 15px rgba(255,0,255,0.5)'; };
       btn.onclick = () => {
@@ -450,7 +451,13 @@ export class UIManager {
     const { node, choices, expression, speaker, text } = data;
 
     const box = document.getElementById("dialogue-box");
-    if (!box) return;
+    if (!box) {
+      // Dialogue box doesn't exist - create it (fallback for timing issues)
+      this._showDialogueBox();
+      // Re-query after creation
+      const newBox = document.getElementById("dialogue-box");
+      if (!newBox) return;
+    }
 
     const speakerEl = document.getElementById("dialogue-speaker");
     const textEl = document.getElementById("dialogue-text");
@@ -1127,16 +1134,22 @@ export class UIManager {
 
     const label = `${this._getCharacterName(charId)}`;
     const bgColor = this._getCharacterColor(charId);
+    const isAlex = charId === "alex";
 
-    // The slot defines the portrait's maximum frame. The image is always
-    // contained inside it, so intrinsic image dimensions cannot make it oversized.
+    // The slot defines the portrait's maximum frame.
+    // Alex: use cover + top to crop pants (show head-to-torso).
+    // Girls: use contain + bottom to show full figure.
+    const objectFit = isAlex ? "cover" : "contain";
+    const objectPosition = isAlex
+      ? (isLeft ? "left top" : "right top")
+      : (isLeft ? "left bottom" : "right bottom");
     const portraitSize = [
       "position:absolute",
       "inset:0",
       "width:100%",
       "height:100%",
-      "object-fit:contain",
-      `object-position:${isLeft ? "left bottom" : "right bottom"}`,
+      `object-fit:${objectFit}`,
+      `object-position:${objectPosition}`,
       "display:block",
       "transform:none"
     ].join(";") + ";";

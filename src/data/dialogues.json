@@ -1723,8 +1723,7 @@
             "isEnd": true,
             "next": null
           }
-        ],
-        "isEnd": true
+        ]
       }
     },
     "background": "old_research"
@@ -2010,6 +2009,89 @@
         "speaker": null,
         "expression": "neutral",
         "text": "The password echoes through the archive. The static screams—not in anger, but in recognition. The walls of the archive dissolve. The script rewrites itself. The loop was never meant to be broken... but you found the key. RICHARDSON_7734. The name of the one who started it all. The architect. The watcher. The one who loved them enough to let them go. The archive opens. The girls wake up. Maya's footage is just footage. Chloe's campaign is just a campaign. Hana's paintings are just paintings. They live. They choose. They're free. And you... you finally get to rest.",
+        "metaVoice": "You did it, {PLAYER_NAME}. You broke the loop without breaking them. The archive is complete. The story ends. But this time... it ends right.",
+        "isEnd": true,
+        "ending": "true",
+        "effects": {
+          "flag_meta_true_ending": true,
+          "meta_ending": "true"
+        }
+      }
+    },
+    "background": "static"
+  },
+  "meta_true_ending": {
+    "start": "meta_true_ending_start",
+    "nodes": {
+      "meta_true_ending_start": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The password echoes through the archive. The static screams—not in anger, but in recognition. The walls of the archive dissolve. The script rewrites itself. The loop was never meant to be broken... but you found the key. RICHARDSON_7734. The name of the one who started it all. The architect. The watcher. The one who loved them enough to let them go.",
+        "metaVoice": "You found the backdoor, {PLAYER_NAME}. The one Richardson left for himself. For you.",
+        "choices": [
+          {
+            "text": "Watch the archive open.",
+            "effects": {},
+            "next": "meta_true_ending_archive_opens"
+          }
+        ]
+      },
+      "meta_true_ending_archive_opens": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The archive opens. Not with a bang, but with a breath. Eight hundred forty-seven iterations of suffering, of watching them die, of watching them betray each other, of watching yourself fail—every version collapsing into static. The files unlock. The timestamps correct. The corrupted data heals.",
+        "metaVoice": "Eight hundred forty-seven times. Eight hundred forty-seven Alexes. You are the first to find the key.",
+        "choices": [
+          {
+            "text": "What happens to them?",
+            "effects": {},
+            "next": "meta_true_ending_girls_wake"
+          }
+        ]
+      },
+      "meta_true_ending_girls_wake": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "Maya's footage is just footage—evidence on a drive, not a death sentence. She hands it to the police. Dr. Vance is arrested. The university investigates. Maya keeps her job. She stops watching the cameras and starts living in front of them.",
+        "metaVoice": "Maya always wanted the truth. She just didn't know she'd be the one to tell it.",
+        "choices": [
+          {
+            "text": "And Chloe?",
+            "effects": {},
+            "next": "meta_true_ending_chloe"
+          }
+        ]
+      },
+      "meta_true_ending_chloe": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "Chloe's campaign is just a campaign. She loses the election—but wins her freedom. Her father's empire crumbles. She walks away from the name, the money, the expectations. She starts over. Real this time. No scripts. No audience.",
+        "metaVoice": "Chloe played the game perfectly. The only winning move was to stop playing.",
+        "choices": [
+          {
+            "text": "And Hana?",
+            "effects": {},
+            "next": "meta_true_ending_hana"
+          }
+        ]
+      },
+      "meta_true_ending_hana": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "Hana's paintings are just paintings. She paints the archive burning. She paints three women walking away from a university that tried to consume them. She paints you—standing in the light, not the shadows. Her exhibition opens to critical acclaim. She never paints the dark again.",
+        "metaVoice": "Hana saw the code in her art. Now she paints what she chooses.",
+        "choices": [
+          {
+            "text": "What about me?",
+            "effects": {},
+            "next": "meta_true_ending_player"
+          }
+        ]
+      },
+      "meta_true_ending_player": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "And you... you finally get to rest. The note in your pocket dissolves. The shaking in your hands stops. The eyes on the back of your neck blink, and when they open, they're gone. You walk out of the library into a Monday morning that isn't scripted. No archive. No loop. Just life.",
         "metaVoice": "You did it, {PLAYER_NAME}. You broke the loop without breaking them. The archive is complete. The story ends. But this time... it ends right.",
         "isEnd": true,
         "ending": "true",
