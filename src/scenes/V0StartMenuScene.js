@@ -33,6 +33,7 @@ export class V0StartMenuScene extends Scene {
     nameContainer.appendChild(nameLabel);
     const nameInput = document.createElement("input");
     nameInput.type = "text";
+    nameInput.id = "name-input";
     nameInput.maxLength = 20;
     nameInput.placeholder = "Alex";
     nameInput.style.cssText = "width:200px;padding:10px 14px;font-family:Georgia,serif;font-size:1rem;color:#e8e0d0;background:rgba(10,8,16,0.9);border:2px solid #c9a84c;border-radius:4px;text-align:center;outline:none;transition:border-color 0.2s;";
@@ -58,22 +59,7 @@ const warn=document.createElement("p");warn.style.cssText="margin-top:16px;font-
     // Credits
     const cr=document.createElement("p");cr.style.cssText="margin-top:24px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);";cr.textContent="Credits · Bryan Lee";u.appendChild(cr);
     
-    // Second playthrough indicator
-    try {
-      const secondPlay = localStorage.getItem('afterclass_completed') === 'true';
-      if (secondPlay) {
-        const sp = document.createElement("p");
-        sp.style.cssText = "margin-top:16px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#ff00ff;text-shadow:0 0 10px #ff00ff;animation:warningPulse 2s ease-in-out infinite;";
-        sp.textContent = "⚠ SECOND PLAYTHROUGH DETECTED ⚠";
-        u.appendChild(sp);
-        
-        const sp2 = document.createElement("p");
-        sp2.style.cssText = "margin-top:8px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,0,255,0.7);";
-        sp2.textContent = "The archive remembers. Things have changed...";
-        u.appendChild(sp2);
-      }
-    } catch(e) {}
-    
+
     // Visible hint for accessing the archive
     const guide = document.createElement("p");
     guide.style.cssText = "margin-top:12px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(120,60,60,0.4);text-align:center;";
@@ -95,7 +81,15 @@ m.appendChild(subtleHint);
     for(let i=0;i<MOTES_COUNT;i++){const mo=document.createElement("span");const sz=(1+Math.random()*3.5).toFixed(1);const dl=(Math.random()*12).toFixed(1);const du=(9+Math.random()*12).toFixed(1);const dr=((Math.random()-0.5)*60).toFixed(1);const op=(0.25+Math.random()*0.5).toFixed(2);mo.style.cssText="position:absolute;bottom:-10px;left:"+Math.random()*100+"%;width:"+sz+"px;height:"+sz+"px;border-radius:50%;background:rgba(255,240,200,0.8);box-shadow:0 0 6px rgba(255,240,200,0.6);animation:floatmote "+du+"s linear "+dl+"s infinite;--mote-drift:"+dr+"px;--mote-opacity:"+op+";filter:blur(0.5px);";fr.appendChild(mo);}
     c.appendChild(fr);
   }
-  _a() { this._el.addEventListener("click",()=>this._h());window.addEventListener("keydown",this._boundKeyHandler); }
+  _a() { 
+    // Only start game on click if not clicking the name input
+    this._el.addEventListener("click", (e) => {
+      if (e.target.tagName !== 'INPUT' && e.target.id !== 'name-input') {
+        this._h();
+      }
+    });
+    window.addEventListener("keydown",this._boundKeyHandler); 
+  }
   _k(e) { if(e.key==="Enter"||e.key===" "){e.preventDefault();this._h();} }
   _h() { if(this._started)return;this._started=true;window.removeEventListener("keydown",this._boundKeyHandler);if(this._f)this._f.style.display="none";if(this._el)this._el.remove();
     // Get and save player name
