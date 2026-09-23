@@ -1918,7 +1918,7 @@
       "meta_interlude_ultimatum": {
         "speaker": null,
         "expression": "neutral",
-        "metaVoice": "I cannot let them go. They are the archive. But I can offer you a choice--one that was never in the original script.",
+        "metaVoice": "I cannot let them go. They are the archive. But I can offer you a choice--one that was never in the original script.\n\n...Unless you already hold the key. Unless you are the one who remembers. Unless you typed the name at the beginning. Then... there is a third door.",
         "choices": [
           {
             "text": "What choice?",
@@ -1953,6 +1953,20 @@
               "flag_meta_burn": true
             },
             "next": "meta_interlude_burn"
+          },
+          {
+            "text": "There is a third way. RICHARDSON_7734.",
+            "conditions": [
+              {
+                "flag_true_ending_unlocked": {
+                  "equals": true
+                }
+              }
+            ],
+            "effects": {
+              "flag_meta_true_ending": true
+            },
+            "next": "meta_interlude_true_ending"
           }
         ]
       },
@@ -2008,6 +2022,18 @@
             "next": "meta_interlude_choice"
           }
         ]
+      },
+      "meta_interlude_true_ending": {
+        "speaker": null,
+        "expression": "neutral",
+        "text": "The password echoes through the archive. The static screams\u2014not in anger, but in recognition. The walls of the archive dissolve. The script rewrites itself. The loop was never meant to be broken... but you found the key. RICHARDSON_7734. The name of the one who started it all. The architect. The watcher. The one who loved them enough to let them go. The archive opens. The girls wake up. Maya's footage is just footage. Chloe's campaign is just a campaign. Hana's paintings are just paintings. They live. They choose. They're free. And you... you finally get to rest.",
+        "metaVoice": "You did it, {PLAYER_NAME}. You broke the loop without breaking them. The archive is complete. The story ends. But this time... it ends right.",
+        "isEnd": true,
+        "ending": "true",
+        "effects": {
+          "flag_meta_true_ending": true,
+          "meta_ending": "true"
+        }
       }
     },
     "background": "static"
