@@ -1792,7 +1792,7 @@
         "expression": "neutral",
         "text": "The screen flickers. The characters freeze mid-motion. A voice speaks--not from the speakers, but from somewhere behind them. From the code itself.",
         "background": "static",
-        "metaVoice": "Welcome back, {PLAYER_NAME}. Or should I say... {PLAYER_NAME}.",
+        "metaVoice": "Welcome back, Alex. Or should I say... {PLAYER_NAME}.",
         "choices": [
           {
             "text": "Who are you?",
