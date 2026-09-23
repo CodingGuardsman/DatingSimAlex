@@ -1241,8 +1241,8 @@ if (!portraitPath) {
     this.sceneLayer.style.background = gradient;
     
     const backgroundAssets = {
-      bedroom: "assets/images/backgrounds/bedroom.png",
-      campus: "assets/images/backgrounds/campus.png",
+      bedroom: "assets/images/backgrounds/class.jpg",
+      campus: "assets/images/backgrounds/class.jpg",
       university: "assets/images/backgrounds/classroom-hero.jpg",
       classroom: "assets/images/backgrounds/classroom-hero.jpg",
       library: "assets/images/backgrounds/library.jpeg",

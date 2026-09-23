@@ -18,7 +18,7 @@
             "next": "day1_end"
           }
         ],
-        "cg": "assets/images/characters/alex/move-the-character-to-a-library-scene--surrounded-.png"
+        "cg": "assets/images/portraits/Alex/smart_casual_neutral.png"
       },
       "day1_end": {
         "speaker": null,
@@ -234,7 +234,7 @@
             "next": "maya_camera"
           }
         ],
-        "cg": "assets/images/characters/maksed figure.jpeg"
+        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
       },
       "maya_camera": {
         "speaker": "maya",
@@ -408,7 +408,7 @@
             "next": "maya_reflection"
           }
         ],
-        "cg": "assets/images/characters/maksed figure.jpeg"
+        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
       },
       "maya_reflection": {
         "speaker": null,
@@ -443,7 +443,7 @@
             "next": "maya_server_room"
           }
         ],
-        "cg": "assets/images/characters/maksed figure.jpeg"
+        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
       },
       "maya_server_room": {
         "speaker": "maya",
@@ -1128,7 +1128,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_richardson_mention": {
         "speaker": "hana",
@@ -1155,7 +1155,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_paintings": {
         "speaker": "hana",
@@ -1182,7 +1182,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_exhibition": {
         "speaker": "hana",
@@ -1211,7 +1211,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_archive": {
         "speaker": "hana",
@@ -1238,7 +1238,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_vance": {
         "speaker": "hana",
@@ -1265,7 +1265,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_threat": {
         "speaker": "hana",
@@ -1292,7 +1292,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_masked": {
         "speaker": "hana",
@@ -1319,7 +1319,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/maksed figure.jpeg"
+        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
       },
       "hana_photo": {
         "speaker": "hana",
@@ -1346,7 +1346,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_vance_reveal": {
         "speaker": "hana",
@@ -1373,7 +1373,7 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_key": {
         "speaker": "hana",
@@ -1402,14 +1402,14 @@
             "hidden": true
           }
         ],
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_threat2": {
         "speaker": null,
         "text": "Alex stands outside the arts building with the key in his hand. His phone vibrates. Three messages: HANA TALKS TOO MUCH. THE KEY WONT HELP YOU. ASK HER WHO OPENED THE DOOR. A shadow moves behind the gallery window. The lights turn off.",
         "expression": "panicked",
         "isEnd": true,
-        "cg": "assets/images/characters/hana/painintg.jpeg"
+        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
       },
       "hana_end": {
         "speaker": "Hana",
@@ -1504,7 +1504,7 @@
             "next": "confront_maya"
           }
         ],
-        "cg": "assets/images/characters/conmfrontiation.jpeg"
+        "cg": "assets/images/portraits/Maya/Char_Emotion_Angry_00240.png"
       },
       "confront_maya": {
         "speaker": "maya",
