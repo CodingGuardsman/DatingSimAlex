@@ -1,6 +1,6 @@
 {
   "prologue": {
-    "start": "prologue_second_playthrough",
+    "start": "prologue_start",
     "nodes": {
       "note_examine": {
         "speaker": null,
@@ -42,32 +42,6 @@
             "text": "Someone left this. They know what happened.",
             "effects": {},
             "next": "note_examine"
-          }
-        ],
-        "conditions": [
-          {
-            "flag_completed": {
-              "equals": false
-            }
-          }
-        ]
-      },
-      "prologue_second_playthrough": {
-        "speaker": null,
-        "expression": "neutral",
-        "text": "\u26a0 SECOND PLAYTHROUGH DETECTED \u26a0\n\nThe archive remembers. Things have changed...\n\nYou're back. You know how this ends. Or do you?",
-        "conditions": [
-          {
-            "flag_completed": {
-              "equals": true
-            }
-          }
-        ],
-        "choices": [
-          {
-            "text": "Begin again.",
-            "effects": {},
-            "next": "prologue_start"
           }
         ]
       }
