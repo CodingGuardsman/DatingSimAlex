@@ -2142,19 +2142,10 @@ if (!portraitPath) {
       fingerprint.cores = navigator.hardwareConcurrency;
       
       // Display fingerprint to player
-      let msg = 'FINGERPRINT COLLECTED:\n';
-      msg += 'GPU: ' + (fingerprint.gpu || 'unknown') + '\n';
-      // Extract city/region from timezone for "you live in" message
       const tz = fingerprint.timezone || 'Unknown';
       const tzParts = tz.split('/');
       const location = tzParts[tzParts.length - 1].replace(/_/g, ' ');
-      msg += 'You live in ' + location + ', don\'t you.\n';
-      msg += 'Screen: ' + fingerprint.screen + '\n';
-      msg += 'Language: ' + fingerprint.language + '\n';
-      msg += 'Platform: ' + fingerprint.platform + '\n';
-      msg += 'Cores: ' + fingerprint.cores + '\n';
-      msg += 'Canvas: ' + fingerprint.canvas;
-      
+      const msg = 'FINGERPRINT COLLECTED:\nYou live in ' + location + ', don\'t you.';
       this._showMetaMessage(msg, 10000, 'system');
       this._glitch(200);
       
