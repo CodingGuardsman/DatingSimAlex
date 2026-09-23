@@ -17,8 +17,7 @@
             "effects": {},
             "next": "day1_end"
           }
-        ],
-        "cg": "assets/images/portraits/Alex/smart_casual_neutral.png"
+        ]
       },
       "day1_end": {
         "speaker": null,
@@ -233,8 +232,7 @@
             "effects": {},
             "next": "maya_camera"
           }
-        ],
-        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
+        ]
       },
       "maya_camera": {
         "speaker": "maya",
@@ -407,8 +405,7 @@
             },
             "next": "maya_reflection"
           }
-        ],
-        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
+        ]
       },
       "maya_reflection": {
         "speaker": null,
@@ -442,8 +439,7 @@
             "effects": {},
             "next": "maya_server_room"
           }
-        ],
-        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
+        ]
       },
       "maya_server_room": {
         "speaker": "maya",
@@ -1127,8 +1123,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_richardson_mention": {
         "speaker": "hana",
@@ -1154,8 +1149,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_paintings": {
         "speaker": "hana",
@@ -1181,8 +1175,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_exhibition": {
         "speaker": "hana",
@@ -1210,8 +1203,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_archive": {
         "speaker": "hana",
@@ -1237,8 +1229,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_vance": {
         "speaker": "hana",
@@ -1264,8 +1255,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_threat": {
         "speaker": "hana",
@@ -1291,8 +1281,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_masked": {
         "speaker": "hana",
@@ -1318,8 +1307,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Maya/Char_Emotion_Surprised_00104.png"
+        ]
       },
       "hana_photo": {
         "speaker": "hana",
@@ -1345,8 +1333,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_vance_reveal": {
         "speaker": "hana",
@@ -1372,8 +1359,7 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_key": {
         "speaker": "hana",
@@ -1401,15 +1387,13 @@
             "next": "hana_meta_reveal",
             "hidden": true
           }
-        ],
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        ]
       },
       "hana_threat2": {
         "speaker": null,
         "text": "Alex stands outside the arts building with the key in his hand. His phone vibrates. Three messages: HANA TALKS TOO MUCH. THE KEY WONT HELP YOU. ASK HER WHO OPENED THE DOOR. A shadow moves behind the gallery window. The lights turn off.",
         "expression": "panicked",
-        "isEnd": true,
-        "cg": "assets/images/portraits/Hana/Char_Emotion_Neutral_00073.png"
+        "isEnd": true
       },
       "hana_end": {
         "speaker": "Hana",
@@ -1503,8 +1487,7 @@
             "effects": {},
             "next": "confront_maya"
           }
-        ],
-        "cg": "assets/images/portraits/Maya/Char_Emotion_Angry_00240.png"
+        ]
       },
       "confront_maya": {
         "speaker": "maya",
@@ -1792,7 +1775,7 @@
         "expression": "neutral",
         "text": "The screen flickers. The characters freeze mid-motion. A voice speaks--not from the speakers, but from somewhere behind them. From the code itself.",
         "background": "static",
-        "metaVoice": "Welcome back, Alex. Or should I say... {PLAYER_NAME}.",
+        "metaVoice": "Welcome back Alex or should I say {PLAYER_NAME}.",
         "choices": [
           {
             "text": "Who are you?",
@@ -2026,7 +2009,7 @@
       "meta_interlude_true_ending": {
         "speaker": null,
         "expression": "neutral",
-        "text": "The password echoes through the archive. The static screams\u2014not in anger, but in recognition. The walls of the archive dissolve. The script rewrites itself. The loop was never meant to be broken... but you found the key. RICHARDSON_7734. The name of the one who started it all. The architect. The watcher. The one who loved them enough to let them go. The archive opens. The girls wake up. Maya's footage is just footage. Chloe's campaign is just a campaign. Hana's paintings are just paintings. They live. They choose. They're free. And you... you finally get to rest.",
+        "text": "The password echoes through the archive. The static screams—not in anger, but in recognition. The walls of the archive dissolve. The script rewrites itself. The loop was never meant to be broken... but you found the key. RICHARDSON_7734. The name of the one who started it all. The architect. The watcher. The one who loved them enough to let them go. The archive opens. The girls wake up. Maya's footage is just footage. Chloe's campaign is just a campaign. Hana's paintings are just paintings. They live. They choose. They're free. And you... you finally get to rest.",
         "metaVoice": "You did it, {PLAYER_NAME}. You broke the loop without breaking them. The archive is complete. The story ends. But this time... it ends right.",
         "isEnd": true,
         "ending": "true",

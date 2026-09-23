@@ -51,10 +51,15 @@ export class DialogueSystem {
     // Second playthrough detection: show warning before prologue
     try {
       if (dialogueId === 'prologue' && localStorage.getItem('afterclass_completed') === 'true') {
+        // Get the actual player name for the meta message
+        let playerName = "Alex";
+        if (this.stateManager && this.stateManager.getPlayerName) {
+          playerName = this.stateManager.getPlayerName();
+        }
         const spNode = {
           speaker: null,
           expression: 'neutral',
-          text: '⚠ SECOND PLAYTHROUGH DETECTED ⚠\n\nThe archive remembers. Things have changed...\n\nYou\'re back. You know how this ends. Or do you?',
+          text: `⚠ SECOND PLAYTHROUGH DETECTED ⚠\n\nThe archive remembers. Things have changed...\n\nWelcome back, ${playerName}.`,
           choices: [
             { text: 'Begin again.', effects: {}, next: 'prologue_start' }
           ]
@@ -286,15 +291,10 @@ export class DialogueSystem {
   }
   
   _processMetaVoice(text) {
-    // Get player name from stateManager or localStorage
-    let playerName = "Player";
-    if (this.stateManager && this.stateManager.state && this.stateManager.state.playerName) {
-      playerName = this.stateManager.state.playerName;
-    } else {
-      try {
-        const stored = localStorage.getItem('afterclass_player_name');
-        if (stored) playerName = stored;
-      } catch(e) {}
+    // Get player name via StateManager.getPlayerName()
+    let playerName = "Alex";
+    if (this.stateManager && this.stateManager.getPlayerName) {
+      playerName = this.stateManager.getPlayerName();
     }
     
     // Calculate play time
@@ -339,19 +339,15 @@ export class DialogueSystem {
       conditionalAddition += `\n\nTotal session time: ${playTimeStr}. The archive records everything, {PLAYER_NAME}.`;
     }
     
-    // Replace placeholders
-    let result = text
+    // Build full text first, then replace ALL placeholders including those in conditionalAddition
+    let fullText = text + conditionalAddition;
+    let result = fullText
       .replace(/\{PLAYER_NAME\}/g, playerName)
       .replace(/Player/gi, playerName)
-      .replace(/Archivist/gi, playerName)
+      .replace(/Observer/gi, playerName)
       .replace(/\{PLAY_TIME\}/g, playTimeStr)
       .replace(/\{SKIP_COUNT\}/g, this.dialogueSkipCount)
       .replace(/\{DIALOGUE_TIME\}/g, playTimeStr);
-    
-    // Append conditional addition if in meta interlude
-    if (conditionalAddition) {
-      result += conditionalAddition;
-    }
     
     return result;
   }

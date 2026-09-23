@@ -11,7 +11,7 @@ import { TimeSystem } from "./systems/TimeSystem.js";
 import { StatSystem } from "./systems/StatSystem.js";
 import { RelationshipSystem } from "./systems/RelationshipSystem.js";
 import { DialogueSystem } from "./systems/DialogueSystem.js";
-import { UIManager } from "./systems/UIManager.js";
+import { UIManager } from "./systems/UIManager.js?v=20260923-3";
 import { SceneManager } from "./systems/SceneManager.js";
 import { CharacterFactory } from "./characters/CharacterFactory.js";
 import { V0StartMenuScene } from "./scenes/V0StartMenuScene.js";
@@ -72,8 +72,11 @@ export class Game {
     this.sceneManager.registerScene("start_menu", V0StartMenuScene);
     this.sceneManager.registerScene("end_of_day", EndOfDayScene);
     this._bindGameEvents();
-this._checkSecondPlaythrough();
+    this._checkSecondPlaythrough();
     this.isInitialized = true;
+    // Start meta/ambient systems
+    this.uiManager._startAmbientMeta();
+    this._startFourthWallTimer();
     console.log("[Game] Initialization complete.");
     await await this._enterMainMenu();
   }
@@ -91,15 +94,27 @@ this._checkSecondPlaythrough();
       this.dialogueSystem.trackSkip();
       this.dialogueSystem.advance();
     });
+    this.eventBus.subscribe("META_SECOND_PLAYTHROUGH", (data) => {
+      console.log("[Game] Second playthrough detected:", data.count);
+    });
   }
-_checkSecondPlaythrough() {
+
+  _startFourthWallTimer() {
+    setInterval(() => {
+      if (this.uiManager && this.uiManager._triggerFourthWall) {
+        this.uiManager._triggerFourthWall();
+      }
+    }, 300000);
+  }
+
+  _checkSecondPlaythrough() {
     const count = this.stateManager.getFlag("playthrough_count") || 0;
     if (count >= 1) {
       this.eventBus.emit("META_SECOND_PLAYTHROUGH", { count });
     }
   }
 
-    async _enterMainMenu() {
+  async _enterMainMenu() {
     const saves = this.saveSystem.listSaves();
     const hasSaves = saves.length > 0;
     this.gamePhase = "main_menu";
@@ -117,7 +132,10 @@ _checkSecondPlaythrough() {
   }
 
   _startNewGame() {
+    // Preserve the player name set in the start menu before reset wipes it
+    const playerName = this.stateManager.state.playerName;
     this.stateManager.reset();
+    this.stateManager.state.playerName = playerName;
     this.currentSaveSlot = null;
     this.gamePhase = "visual_novel";
     console.log("[Game] New game started!");

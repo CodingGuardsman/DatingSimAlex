@@ -79,19 +79,48 @@ export class UIManager {
   }
 
   _setupContainers() {
-    // Character sprite slot
+    // Character sprite slot (main/dialogue portrait) — left side
     let slot = document.getElementById("character-sprite-slot");
     if (!slot) {
       slot = document.createElement("div");
       slot.id = "character-sprite-slot";
-      slot.style.position = "absolute";
-      slot.style.right = "40px";
-      slot.style.bottom = "120px";
-      slot.style.zIndex = "3";
-      slot.style.display = "flex";
-      slot.style.justifyContent = "center";
-      slot.style.alignItems = "center";
       this.sceneLayer.appendChild(slot);
+    }
+    this._stylePortraitSlot(slot, true);
+
+    // Side character portrait slot (for campus encounters) — right side
+    let sideSlot = document.getElementById("character-sprite-slot-side");
+    if (!sideSlot) {
+      sideSlot = document.createElement("div");
+      sideSlot.id = "character-sprite-slot-side";
+      this.sceneLayer.appendChild(sideSlot);
+    }
+    this._stylePortraitSlot(sideSlot, false);
+  }
+
+  _stylePortraitSlot(slot, isLeft) {
+    slot.style.position = "absolute";
+    slot.style.zIndex = "5";
+    slot.style.display = "block";
+    slot.style.pointerEvents = "none";
+    slot.style.overflow = "hidden";
+    slot.style.boxSizing = "border-box";
+    slot.style.transform = "none";
+    slot.style.justifyContent = "";
+    slot.style.alignItems = "";
+    slot.style.bottom = "110px";
+    slot.style.left = "auto";
+    slot.style.right = "auto";
+    slot.style.width = "600px";
+    slot.style.height = "1040px";
+    slot.style.maxWidth = "68vw";
+    slot.style.maxHeight = "136vh";
+    if (isLeft) {
+      slot.style.left = "24px";
+      slot.style.right = "auto";
+    } else {
+      slot.style.right = "24px";
+      slot.style.left = "auto";
     }
   }
 
@@ -216,11 +245,13 @@ export class UIManager {
       };
       textEl.appendChild(btn);
     } else {
-      // Normal meta voice - remove after duration
-      setTimeout(() => {
-        overlay.remove();
-        textEl.remove();
-        
+      // Normal meta voice - wait for player to click Continue
+      const btn = document.createElement('button');
+      btn.textContent = 'Continue';
+      btn.style.cssText = 'margin-top:1.5rem;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
+      btn.onmouseover = () => { btn.style.background = '#fff'; btn.style.color = '#8b0000'; btn.style.boxShadow = '0 0 25px rgba(255,0,255,0.8)'; };
+      btn.onmouseout = () => { btn.style.background = '#ff00ff'; btn.style.color = '#0a0816'; btn.style.boxShadow = '0 0 15px rgba(255,0,255,0.5)'; };
+      btn.onclick = () => {
         // Mark that meta voice has been triggered
         this._metaVoiceTriggered = true;
         
@@ -231,7 +262,11 @@ export class UIManager {
         try {
           localStorage.setItem('afterclass_meta_voice_triggered', 'true');
         } catch(e) {}
-      }, 5000);
+        
+        overlay.remove();
+        textEl.remove();
+      };
+      textEl.appendChild(btn);
     }
   }
 
@@ -331,10 +366,10 @@ export class UIManager {
     }
 
     this._showDialogueBox();
-    // Start the first dialogue with the protagonist on the left.
+    // Start the first dialogue with the protagonist on the left; other characters on the right.
     const startSpeaker = (data.node && data.node.speaker) || 'alex';
     const startExpression = (data.node && data.node.expression) || 'neutral';
-    this.renderCharacterSprite(startSpeaker, startExpression, 'left');
+    this.renderCharacterSprite(startSpeaker, startExpression, startSpeaker === "alex" ? "left" : "right");
   }
 
   _onDialogueAdvance(data) {
@@ -368,7 +403,7 @@ export class UIManager {
     // Meta voice detection
     if (data.node && data.node.metaVoice) {
       this._playMetaVoice();
-      this._showMetaVoiceOverlay(data.node.metaVoice);
+      this._showMetaVoiceOverlay(data.metaVoice || data.node.metaVoice);
     }
     this.renderDialogueNode(data);
   }
@@ -480,7 +515,11 @@ export class UIManager {
   }
 
   _formatDialogueText(value, speaker = null) {
+    // Girls always address the player as Alex
+    const playerName = "Alex";
     const text = String(value || "")
+      .replace(/\{PLAYER_NAME\}/g, playerName)
+      .replace(/Player/gi, playerName)
       .replace(/\b(isnt|isnt)\b/gi, "isn't")
       .replace(/\b(doesnt)\b/gi, "doesn't")
       .replace(/\b(dont)\b/gi, "don't")
@@ -551,10 +590,9 @@ export class UIManager {
 
   _clearCharacterSprite() {
     const slot = document.getElementById("character-sprite-slot");
-    if (slot) {
-      slot.innerHTML = "";
-      slot.style.display = "none";
-    }
+    if (slot) { slot.innerHTML = ""; slot.style.display = "none"; }
+    const sideSlot = document.getElementById("character-sprite-slot-side");
+    if (sideSlot) { sideSlot.innerHTML = ""; sideSlot.style.display = "none"; }
   }
 
   _getCharacterName(charId) {
@@ -816,22 +854,27 @@ export class UIManager {
   }
 
   _triggerPortraitCorruption(charId, duration) {
-    const container = document.getElementById('character-sprite-slot');
-    if (!container) return;
-    
+    // Target whichever slot currently has a portrait
+    const slot = document.getElementById('character-sprite-slot-side');
+    if (slot && slot.querySelector('img')) {
+      this._applyCorruptionToSlot(slot, charId, duration);
+      return;
+    }
+    const mainSlot = document.getElementById('character-sprite-slot');
+    if (mainSlot && mainSlot.querySelector('img')) {
+      this._applyCorruptionToSlot(mainSlot, charId, duration);
+    }
+  }
+
+  _applyCorruptionToSlot(container, charId, duration) {
     const img = container.querySelector('img');
     if (!img) return;
-    
-    // Add jitter class
     container.classList.add('portrait-corrupted');
     container.style.animation = 'portraitJitter 0.05s infinite';
-    
-    // Create corrupted version
+    const originalSrc = img.src;
     if (img.complete) {
-      const corruptedSrc = this._applyCorruptedPortrait(img, charId);
-      const originalSrc = img.src;
+      const corruptedSrc = this._applyCorruptedPortrait(img, charId || '');
       img.src = corruptedSrc;
-      
       setTimeout(() => {
         container.classList.remove('portrait-corrupted');
         container.style.animation = '';
@@ -841,16 +884,20 @@ export class UIManager {
   }
 
   _triggerPortraitJitterOnly(charId) {
-    const container = document.getElementById('character-sprite-slot');
-    if (!container) return;
-    
-    container.classList.add('portrait-jitter');
-    container.style.animation = 'portraitJitter 0.03s infinite';
-    
-    setTimeout(() => {
-      container.classList.remove('portrait-jitter');
-      container.style.animation = '';
-    }, 1000);
+    // Target whichever slot currently has a portrait
+    const slot = document.getElementById('character-sprite-slot-side');
+    if (slot && slot.querySelector('img')) {
+      slot.classList.add('portrait-jitter');
+      slot.style.animation = 'portraitJitter 0.03s infinite';
+      setTimeout(() => { slot.classList.remove('portrait-jitter'); slot.style.animation = ''; }, 1000);
+      return;
+    }
+    const mainSlot = document.getElementById('character-sprite-slot');
+    if (mainSlot) {
+      mainSlot.classList.add('portrait-jitter');
+      mainSlot.style.animation = 'portraitJitter 0.03s infinite';
+      setTimeout(() => { mainSlot.classList.remove('portrait-jitter'); mainSlot.style.animation = ''; }, 1000);
+    }
   }
 
 /* ==================== DIALOGUE SOUND SYSTEM ==================== */
@@ -1062,29 +1109,37 @@ export class UIManager {
   }
 
   renderCharacterSprite(charId, expression = "neutral", position = "right") {
-    const container = document.getElementById("character-sprite-slot") || this._createCharSlot();
+    // Use side slot for right-positioned characters, main slot for left-positioned characters
+    const slotId = (position === "right") ? "character-sprite-slot-side" : "character-sprite-slot";
+    let container = document.getElementById(slotId);
+    if (!container) {
+      container = this._createCharSlot(slotId);
+    }
     container.innerHTML = "";
-    container.id = "character-sprite-slot";
-    // Position container at bottom right/left like original setup
-    container.style.position = "absolute";
-    container.style.zIndex = "5";
-    container.style.display = "flex";
-    container.style.justifyContent = "center";
-    container.style.alignItems = "flex-end";
-    container.style.pointerEvents = "none";
-    // Only set width/height when there's content - use auto so empty container collapses
-    container.style.width = "auto";
-    container.style.height = "auto";
-    container.style.bottom = "120px";
-    container.style.left = position === "left" ? "40px" : "auto";
-    container.style.right = position === "right" ? "40px" : "auto";
+    container.id = slotId;
+    const isLeft = position === "left";
+    this._stylePortraitSlot(container, isLeft);
+
+    // Hide the OTHER slot so both containers never overlap
+    const otherSlotId = isLeft ? "character-sprite-slot-side" : "character-sprite-slot";
+    const otherSlot = document.getElementById(otherSlotId);
+    if (otherSlot && otherSlot.id !== container.id) { otherSlot.style.display = "none"; }
 
     const label = `${this._getCharacterName(charId)}`;
     const bgColor = this._getCharacterColor(charId);
-    const isAlex = charId === "alex";
-    const portraitSize = isAlex
-      ? "width:36vw;height:68vh;object-fit:cover;object-position:center top;transform:scale(1.15);transform-origin:bottom left;"
-      : "width:28vw;height:59vh;object-fit:contain;object-position:center bottom;transform:scale(1.15);transform-origin:bottom right;";
+
+    // The slot defines the portrait's maximum frame. The image is always
+    // contained inside it, so intrinsic image dimensions cannot make it oversized.
+    const portraitSize = [
+      "position:absolute",
+      "inset:0",
+      "width:100%",
+      "height:100%",
+      "object-fit:contain",
+      `object-position:${isLeft ? "left bottom" : "right bottom"}`,
+      "display:block",
+      "transform:none"
+    ].join(";") + ";";
 
     const expressionMap = {
       alex: {
@@ -1173,21 +1228,27 @@ if (!portraitPath) {
     if (this._portraitCache[cacheKey]) {
       const cached = this._portraitCache[cacheKey].cloneNode(true);
       cached.style.cssText = portraitSize;
+      container.innerHTML = "";
       container.appendChild(cached);
       return;
     }
 
     const img = new Image();
+    img.alt = label;
+    img.style.cssText = portraitSize;
     img.onload = () => {
-      // Cache the loaded image
+      // Cache the loaded image for future use
       this._portraitCache[cacheKey] = img.cloneNode(true);
-      container.innerHTML = "";
-      img.alt = label;
-      img.style.cssText = portraitSize;
-      container.appendChild(img);
+      // Only append if this is still the active container
+      if (container.isConnected && container.id === slotId) {
+        container.innerHTML = "";
+        container.appendChild(img);
+      }
     };
     img.onerror = () => {
-      this._renderPortraitFallback(container, label, bgColor);
+      if (container.isConnected && container.id === slotId) {
+        this._renderPortraitFallback(container, label, bgColor);
+      }
     };
     img.src = portraitPath;
   }
@@ -1196,14 +1257,15 @@ if (!portraitPath) {
     container.innerHTML = "";
     const fallback = document.createElement("div");
     fallback.textContent = label[0];
-    fallback.style.cssText = "width:140px;height:180px;border-radius:12px;background:" + bgColor + ";display:flex;align-items:center;justify-content:center;color:#fff;font-size:4rem;font-weight:bold;border:2px solid rgba(255,255,255,0.7);";
+    fallback.style.cssText = "position:absolute;inset:0;width:140px;height:180px;margin:auto;border-radius:12px;background:" + bgColor + ";display:flex;align-items:center;justify-content:center;color:#fff;font-size:4rem;font-weight:bold;border:2px solid rgba(255,255,255,0.7);";
     container.appendChild(fallback);
   }
 
-  _createCharSlot() {
+  _createCharSlot(slotId = "character-sprite-slot") {
     const slot = document.createElement("div");
-    slot.id = "character-sprite-slot";
+    slot.id = slotId;
     this.sceneLayer.appendChild(slot);
+    this._stylePortraitSlot(slot, slotId !== "character-sprite-slot-side");
     return slot;
   }
 

@@ -1,21 +1,4 @@
 /* Component-specific styles */
-.character-sprite {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  right: auto;
-  width: min(82vw, 760px);
-  max-width: none;
-  max-height: 72vh;
-  height: auto;
-  object-fit: contain;
-  object-position: bottom center;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 10px 18px rgba(53, 28, 31, 0.35));
-  image-rendering: auto;
-  z-index: 2;
-}
-.character-sprite.left { left: 28%; transform: translateX(-50%); }
 .background-image {
   position: absolute;
   top: 0;

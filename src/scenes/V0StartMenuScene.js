@@ -29,7 +29,7 @@ export class V0StartMenuScene extends Scene {
     nameContainer.style.cssText = "margin-top:24px;animation:fadeup 1.2s ease-out both;animation-delay:0.6s;display:flex;flex-direction:column;align-items:center;gap:8px;";
     const nameLabel = document.createElement("p");
     nameLabel.style.cssText = "font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(201,168,76,0.8);margin:0;";
-    nameLabel.textContent = "Enter your name, Archivist:";
+    nameLabel.textContent = "Enter your name, Observer:";
     nameContainer.appendChild(nameLabel);
     const nameInput = document.createElement("input");
     nameInput.type = "text";
@@ -121,7 +121,12 @@ m.appendChild(subtleHint);
     if(window.gameInstance && window.gameInstance._startBgMusic) {
       window.gameInstance._startBgMusic();
     }
-    this.eventBus.emit("menu:action",{action:"new_game"}); }
+    // If player entered the secret key, go directly to true ending
+    if (isTrueEndingKey && window.gameInstance && window.gameInstance.dialogueSystem) {
+      window.gameInstance.dialogueSystem.startDialogue("meta_interlude_true_ending");
+    } else {
+      this.eventBus.emit("menu:action",{action:"new_game"});
+    } }
   exit() { window.removeEventListener("keydown",this._boundKeyHandler);super.exit(); }
 }
 export default V0StartMenuScene;

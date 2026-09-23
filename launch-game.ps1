@@ -22,7 +22,7 @@ if ($existing) {
 
 $server = Start-Process -FilePath $py.Source -ArgumentList '-m', 'http.server', $port -WorkingDirectory $root -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 2
-Start-Process "http://localhost:$port/?v=20260921-5"
+Start-Process "http://localhost:$port/?v=20260923-3"
 
 Write-Host "Game server started on http://localhost:$port/"
 Write-Host "PID: $($server.Id)"

@@ -154,6 +154,17 @@ export class StateManager {
     this.state = this.createDefaultState();
   }
 
+  getPlayerName() {
+    if (this.state.playerName && this.state.playerName !== "Alex") {
+      return this.state.playerName;
+    }
+    try {
+      const stored = localStorage.getItem('afterclass_player_name');
+      if (stored) return stored;
+    } catch(e) {}
+    return "Alex";
+  }
+
   getFullState() {
     return deepClone(this.state);
   }
