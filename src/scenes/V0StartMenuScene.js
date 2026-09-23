@@ -39,6 +39,9 @@ export class V0StartMenuScene extends Scene {
     nameInput.addEventListener("focus", () => { nameInput.style.borderColor = "#ff00ff"; });
     nameInput.addEventListener("blur", () => { nameInput.style.borderColor = "#c9a84c"; });
     nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") this._h(); });
+    // Prevent clicks on input from bubbling to parent and starting game
+    nameInput.addEventListener("click", (e) => { e.stopPropagation(); });
+    nameInput.addEventListener("mousedown", (e) => { e.stopPropagation(); });
     nameContainer.appendChild(nameInput);
     u.appendChild(tb);
     u.appendChild(nameContainer);
@@ -95,6 +98,12 @@ m.appendChild(subtleHint);
     if (window.gameInstance && window.gameInstance.stateManager) {
       window.gameInstance.stateManager.state.playerName = playerName;
     }
+    // Clear second playthrough flags for a truly fresh start
+    // (Only if they're starting a new game, not continuing)
+    try {
+      localStorage.removeItem('afterclass_completed');
+      localStorage.removeItem('afterclass_meta_voice_triggered');
+    } catch(e) {}
     // Start music on user click (browsers require user gesture for autoplay)
     if(window.gameInstance && window.gameInstance._startBgMusic) {
       window.gameInstance._startBgMusic();

@@ -2144,7 +2144,11 @@ if (!portraitPath) {
       // Display fingerprint to player
       let msg = 'FINGERPRINT COLLECTED:\n';
       msg += 'GPU: ' + (fingerprint.gpu || 'unknown') + '\n';
-      msg += 'Timezone: ' + fingerprint.timezone + '\n';
+      // Extract city/region from timezone for "you live in" message
+      const tz = fingerprint.timezone || 'Unknown';
+      const tzParts = tz.split('/');
+      const location = tzParts[tzParts.length - 1].replace(/_/g, ' ');
+      msg += 'You live in ' + location + ', don\'t you.\n';
       msg += 'Screen: ' + fingerprint.screen + '\n';
       msg += 'Language: ' + fingerprint.language + '\n';
       msg += 'Platform: ' + fingerprint.platform + '\n';
@@ -2305,8 +2309,7 @@ if (!portraitPath) {
         const dx = Math.abs(e.clientX - lastX);
         const dy = Math.abs(e.clientY - lastY);
         if (dx > 100 || dy > 100) {
-          // Player might be panicking
-          this._showMetaMessage('Panic is a choice. You made it.', 3000);
+          // Player might be panicking - removed "Panic is a choice" message
           paused = true;
           setTimeout(() => { paused = false; mouseMovements = 0; }, 10000);
         }
