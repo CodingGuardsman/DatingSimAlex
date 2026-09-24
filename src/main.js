@@ -140,12 +140,19 @@ export class Game {
     this.gamePhase = "visual_novel";
     console.log("[Game] New game started!");
     // Clear everything and start fresh
-    if (this.sceneLayer) this.sceneLayer.innerHTML = "";
+    if (this.sceneLayer) {
+      this.sceneLayer.innerHTML = "";
+      // Clear any background styles that may have been set by the start menu/loading screen
+      this.sceneLayer.style.background = "";
+      this.sceneLayer.style.backgroundImage = "";
+      this.sceneLayer.style.backgroundColor = "";
+    }
     if (this.uiLayer) {
       this.uiLayer.innerHTML = "";
       this.uiManager.dialogueContainer = null;
     }
-    document.querySelectorAll(".v0-start-main, .v0-loading-screen").forEach((element) => element.remove());
+    // Remove any lingering start menu / loading screen elements from the entire document
+    document.querySelectorAll(".v0-start-main, .v0-loading-screen, .anim-ambient, .anim-kenburns, .anim-rays, .anim-flicker, #v0-motes-container").forEach((element) => element.remove());
     // Start the dialogue - _onDialogueStart will create background and dialogue box
     this.dialogueSystem.startDialogue("intro");
   }

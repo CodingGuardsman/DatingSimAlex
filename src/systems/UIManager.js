@@ -18,6 +18,15 @@ export class UIManager {
     this._creepyAudioContext = null;
     this._creepySourceNode = null;
     this._creepyGainNode = null;
+    
+    // Track which fourth wall messages have been shown (to prevent repeats) - persist across sessions
+    this._shownFourthWallMessages = new Set();
+    try {
+      const stored = localStorage.getItem('afterclass_shown_fourth_wall_messages');
+      if (stored) {
+        JSON.parse(stored).forEach(id => this._shownFourthWallMessages.add(id));
+      }
+    } catch(e) {}
 
     // Create sub-containers
     this._setupContainers();
@@ -193,27 +202,68 @@ export class UIManager {
     const style = styles[type] || styles.normal;
     const textShadow = style.textShadow || '0 0 10px ' + style.border.replace('2px solid ', '');
     
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:' + style.bg + ';color:' + style.color + ';padding:2rem 3rem;border:' + style.border + ';border-radius:4px;font-family:' + style.font + ';font-size:' + style.size + ';max-width:85vw;line-height:1.7;text-align:center;opacity:0;transition:opacity 1s;box-shadow:' + style.shadow + ';text-shadow:' + textShadow + ';';
-    el.textContent = text;
-    document.body.appendChild(el);
-    requestAnimationFrame(() => { el.style.opacity = '1'; });
-    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 1500); }, duration || 6000);
+    // Create full-screen overlay with the glowing red background image
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9998;background:url("assets/images/backgrounds/glowing%20red%20background.jpg") center/cover no-repeat;opacity:0;transition:opacity 1s;display:flex;align-items:center;justify-content:center;';
+    
+    // Add a dark overlay on top of the image for readability
+    const darkOverlay = document.createElement('div');
+    darkOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);';
+    
+    // Message container
+    const msgContainer = document.createElement('div');
+    msgContainer.style.cssText = 'position:relative;z-index:1;background:' + style.bg + ';color:' + style.color + ';padding:2rem 3rem;border:' + style.border + ';border-radius:4px;font-family:' + style.font + ';font-size:' + style.size + ';max-width:85vw;line-height:1.7;text-align:center;box-shadow:' + style.shadow + ';text-shadow:' + textShadow + ';opacity:0;transform:scale(0.9);transition:opacity 0.5s,transform 0.5s;';
+    msgContainer.textContent = text;
+    
+    overlay.appendChild(darkOverlay);
+    overlay.appendChild(msgContainer);
+    document.body.appendChild(overlay);
+    
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      requestAnimationFrame(() => {
+        msgContainer.style.opacity = '1';
+        msgContainer.style.transform = 'scale(1)';
+      });
+    });
+    
+    // Fade out and remove
+    setTimeout(() => {
+      overlay.style.opacity = '0';
+      msgContainer.style.opacity = '0';
+      msgContainer.style.transform = 'scale(0.9)';
+      setTimeout(() => overlay.remove(), 1500);
+    }, duration || 6000);
   }
 
   _showMetaVoiceOverlay(text) {
-    // Create overlay for meta voice
+    // Create full-screen overlay with the glowing red background image (persists for entire dialogue)
     const overlay = document.createElement('div');
-    overlay.className = 'meta-voice-overlay';
-    overlay.id = 'meta-voice-overlay';
-    document.body.appendChild(overlay);
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9998;background:url("assets/images/backgrounds/glowing%20red%20background.jpg") center/cover no-repeat;opacity:0;transition:opacity 1s;display:flex;align-items:center;justify-content:center;';
+    
+    // Add a dark overlay on top of the image for readability
+    const darkOverlay = document.createElement('div');
+    darkOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);';
     
     // Create text element
     const textEl = document.createElement('div');
-    textEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(10,8,16,0.95);color:#ff00ff;padding:2rem 3rem;border:2px solid #ff00ff;border-radius:4px;font-family:Georgia,serif;font-size:1.2rem;line-height:1.6;max-width:80vw;text-align:center;text-shadow:0 0 20px #ff00ff;';
+    textEl.style.cssText = 'position:relative;z-index:1;background:rgba(10,8,16,0.95);color:#ff00ff;padding:2rem 3rem;border:2px solid #ff00ff;border-radius:4px;font-family:Georgia,serif;font-size:1.2rem;line-height:1.6;max-width:80vw;text-align:center;text-shadow:0 0 20px #ff00ff;opacity:0;transform:scale(0.9);transition:opacity 0.5s,transform 0.5s;';
     textEl.className = 'corrupted-text';
     textEl.textContent = text;
-    document.body.appendChild(textEl);
+    
+    overlay.appendChild(darkOverlay);
+    overlay.appendChild(textEl);
+    document.body.appendChild(overlay);
+    
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      requestAnimationFrame(() => {
+        textEl.style.opacity = '1';
+        textEl.style.transform = 'scale(1)';
+      });
+    });
     
     // Stop normal background music when meta voice speaks
     this._stopBgMusic();
@@ -222,33 +272,9 @@ export class UIManager {
     // Not the true ending which also mentions RICHARDSON_7734
     const isPasswordHint = text.includes('Copy it. Paste it where the terminal demands it');
     
-    if (isPasswordHint) {
-      // Add "Continue" button at bottom for password hint
+    const addButton = (btnText, onClick) => {
       const btn = document.createElement('button');
-      btn.textContent = 'I copied it — Continue';
-      btn.style.cssText = 'margin-top:1.5rem;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
-      btn.onmouseover = () => { btn.style.background = '#fff'; btn.style.color = '#8b0000'; btn.style.boxShadow = '0 0 25px rgba(255,0,255,0.8)'; };
-      btn.onmouseout = () => { btn.style.background = '#ff00ff'; btn.style.color = '#0a0816'; btn.style.boxShadow = '0 0 15px rgba(255,0,255,0.5)'; };
-      btn.onclick = () => {
-        // Mark that meta voice has been triggered
-        this._metaVoiceTriggered = true;
-        
-        // Start creepy music after meta voice ends
-        this._startCreepyBgMusic();
-        
-        // Also persist this in localStorage so it survives page reloads
-        try {
-          localStorage.setItem('afterclass_meta_voice_triggered', 'true');
-        } catch(e) {}
-        
-        overlay.remove();
-        textEl.remove();
-      };
-      textEl.appendChild(btn);
-    } else {
-      // Normal meta voice - wait for player to click Continue
-      const btn = document.createElement('button');
-      btn.textContent = 'Continue';
+      btn.textContent = btnText;
       btn.style.cssText = 'display:block;margin:1.5rem auto 0;padding:0.75rem 2rem;font-family:Georgia,serif;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;color:#0a0816;background:#ff00ff;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 0 15px rgba(255,0,255,0.5);';
       btn.onmouseover = () => { btn.style.background = '#fff'; btn.style.color = '#8b0000'; btn.style.boxShadow = '0 0 25px rgba(255,0,255,0.8)'; };
       btn.onmouseout = () => { btn.style.background = '#ff00ff'; btn.style.color = '#0a0816'; btn.style.boxShadow = '0 0 15px rgba(255,0,255,0.5)'; };
@@ -264,10 +290,25 @@ export class UIManager {
           localStorage.setItem('afterclass_meta_voice_triggered', 'true');
         } catch(e) {}
         
-        overlay.remove();
-        textEl.remove();
+        // Fade out and remove
+        overlay.style.opacity = '0';
+        textEl.style.opacity = '0';
+        textEl.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          overlay.remove();
+          textEl.remove();
+        }, 1500);
+        
+        if (onClick) onClick();
       };
       textEl.appendChild(btn);
+    };
+    
+    if (isPasswordHint) {
+      addButton('I copied it — Continue');
+    } else {
+      // Normal meta voice - wait for player to click Continue
+      addButton('Continue');
     }
   }
 
@@ -293,12 +334,21 @@ export class UIManager {
   _triggerFourthWall() {
     const t = this._getPlayTime();
     const msgs = [];
-    if (t > 120) msgs.push('Youve been playing for ' + Math.floor(t/60) + ' minutes. Are you okay?');
-    if (this._getSaveCount() > 3) msgs.push('Youve saved ' + this._getSaveCount() + ' times. Looking for something you missed?');
-    if (t > 300) msgs.push('Most people would have given up by now. Youre different.');
-    if (t > 600) msgs.push('You keep coming back. I see you.');
-    if (msgs.length > 0 && Math.random() < 0.5) {
-      this._showMetaMessage(msgs[Math.floor(Math.random() * msgs.length)], 6000);
+    if (t > 120) msgs.push({ id: 'playtime_2min', text: 'Youve been playing for ' + Math.floor(t/60) + ' minutes. Are you okay?' });
+    if (this._getSaveCount() > 3) msgs.push({ id: 'save_count', text: 'Youve saved ' + this._getSaveCount() + ' times. Looking for something you missed?' });
+    if (t > 300) msgs.push({ id: 'playtime_5min', text: 'Most people would have given up by now. Youre different.' });
+    if (t > 600) msgs.push({ id: 'playtime_10min', text: 'You keep coming back. I see you.' });
+    
+    // Filter out messages that have already been shown
+    const newMsgs = msgs.filter(m => !this._shownFourthWallMessages.has(m.id));
+    if (newMsgs.length > 0 && Math.random() < 0.5) {
+      const msg = newMsgs[Math.floor(Math.random() * newMsgs.length)];
+      this._shownFourthWallMessages.add(msg.id);
+      // Persist to localStorage
+      try {
+        localStorage.setItem('afterclass_shown_fourth_wall_messages', JSON.stringify([...this._shownFourthWallMessages]));
+      } catch(e) {}
+      this._showMetaMessage(msg.text, 6000);
     }
   }
 
@@ -1328,6 +1378,7 @@ if (!portraitPath) {
       research: "assets/images/backgrounds/research_building.jpeg",
       old_research: "assets/images/backgrounds/old research builkding.jpeg",
       static: "assets/images/backgrounds/classroom-hero.jpg",
+      meta: "assets/images/backgrounds/glowing%20red%20background.jpg",
       default: "assets/images/backgrounds/classroom-hero.jpg"
     };
     

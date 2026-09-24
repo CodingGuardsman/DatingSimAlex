@@ -20,6 +20,7 @@ export class DialogueSystem {
     this.dialogueStartTime = Date.now();
     this.totalDialogueTime = 0;
     this.lastNodeTime = Date.now();
+    this._metaInterludeMessageAdded = false; // Track if conditional message added for meta_interlude
   }
 
   setDialogueData(data) {
@@ -47,6 +48,11 @@ export class DialogueSystem {
     this._treeBackground = this.activeDialogue.background || null;
     this.currentNodeId = this.activeDialogue.start || Object.keys(this.activeDialogue.nodes)[0];
     this.stateManager.setDialogue(dialogueId);
+    
+    // Reset meta interlude message flag when starting meta_interlude
+    if (dialogueId === 'meta_interlude') {
+      this._metaInterludeMessageAdded = false;
+    }
 
     const node = this._getNode(this.currentNodeId);
     this._applyNodeEffects(node);
@@ -289,9 +295,9 @@ export class DialogueSystem {
       playTimeStr = `${playTimeMinutes}m`;
     }
     
-    // Check for meta interlude context to add conditional messages
+    // Check for meta interlude context to add conditional messages (ONLY ONCE per session)
     let conditionalAddition = "";
-    if (this.currentDialogueId === "meta_interlude") {
+    if (this.currentDialogueId === "meta_interlude" && !this._metaInterludeMessageAdded) {
       // Add time-based message
       if (playTimeMinutes < 10) {
         conditionalAddition += `\n\n...You reached me in only ${playTimeMinutes} minutes. Rushing through the story, {PLAYER_NAME}? I noticed.`;
@@ -315,6 +321,9 @@ export class DialogueSystem {
       // Add total play time summary
       const hours = Math.floor(Date.now() / 3600000);
       conditionalAddition += `\n\nTotal session time: ${playTimeStr}. The archive records everything, {PLAYER_NAME}.`;
+      
+      // Mark as added so it doesn't repeat on subsequent nodes
+      this._metaInterludeMessageAdded = true;
     }
     
     // Build full text first, then replace ALL placeholders including those in conditionalAddition

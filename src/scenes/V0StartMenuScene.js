@@ -82,12 +82,43 @@ m.appendChild(subtleHint);
     c.appendChild(fr);
   }
   _a() { 
-    // Only start game on click if not clicking the name input
-    this._el.addEventListener("click", (e) => {
-      if (e.target.tagName !== 'INPUT' && e.target.id !== 'name-input') {
-        this._h();
-      }
-    });
+    // Start game on click anywhere on the start screen
+    console.log('[V0StartMenuScene] _a() called, _el:', this._el);
+    if (this._el) {
+      console.log('[V0StartMenuScene] Adding click listener to', this._el);
+      // Add listener on the element itself (bubble phase)
+      this._el.addEventListener("click", (e) => {
+        console.log('[V0StartMenuScene] Click detected (bubble), target:', e.target.tagName, e.target.id);
+        try {
+          this._h();
+        } catch (err) {
+          console.error('[V0StartMenuScene] Click handler error:', err);
+          if (this.eventBus) {
+            this.eventBus.emit("menu:action", { action: "new_game" });
+          }
+        }
+      });
+      // Also add capture-phase listener on document as fallback
+      // This fires before any stopPropagation() in the event chain
+      this._docClickHandler = (e) => {
+        if (this._started) return;
+        // Check if click is within the start menu
+        if (this._el && this._el.contains(e.target)) {
+          console.log('[V0StartMenuScene] Document capture click, target:', e.target.tagName, e.target.id);
+          try {
+            this._h();
+          } catch (err) {
+            console.error('[V0StartMenuScene] Capture click handler error:', err);
+            if (this.eventBus) {
+              this.eventBus.emit("menu:action", { action: "new_game" });
+            }
+          }
+        }
+      };
+      document.addEventListener("click", this._docClickHandler, true); // capture phase
+    } else {
+      console.error('[V0StartMenuScene] _el is null in _a()!');
+    }
     window.addEventListener("keydown",this._boundKeyHandler); 
   }
   _k(e) { if(e.key==="Enter"||e.key===" "){e.preventDefault();this._h();} }
@@ -127,6 +158,13 @@ m.appendChild(subtleHint);
     } else {
       this.eventBus.emit("menu:action",{action:"new_game"});
     } }
-  exit() { window.removeEventListener("keydown",this._boundKeyHandler);super.exit(); }
+  exit() { 
+    window.removeEventListener("keydown",this._boundKeyHandler);
+    if (this._docClickHandler) {
+      document.removeEventListener("click", this._docClickHandler, true);
+      this._docClickHandler = null;
+    }
+    super.exit(); 
+  }
 }
 export default V0StartMenuScene;
