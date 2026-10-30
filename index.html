@@ -4,25 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>After Class</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230a0a0a' width='32' height='32'/><circle fill='%238b0000' cx='16' cy='16' r='8'/><circle fill='%23ff0000' cx='16' cy='16' r='4'/></svg>" />
+  <meta name="description" content="A meta-horror dating sim about the last week before summer." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23f39a52'/><circle cx='16' cy='16' r='6' fill='%23fff6e0'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="styles/reset.css" />
-  <link rel="stylesheet" href="styles/base.css?v=20261031-1" />
-  <link rel="stylesheet" href="styles/layout.css?v=20261031-1" />
-  <link rel="stylesheet" href="styles/components.css?v=20261031-1" />
-  <link rel="stylesheet" href="styles/themes.css?v=20260923-1" />
-  <link rel="stylesheet" href="styles/animations.css?v=20260923-1" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap" />
+  <link rel="stylesheet" href="styles/game.css?v=20261031-2" />
 </head>
 <body>
-  <div id="game-container">
-    <div id="scene-layer"></div>
-    <div id="ui-layer">
-      <div id="dialogue-box-container"></div>
-      <div id="overlay-container"></div>
+  <div id="game">
+    <div id="stage">
+      <div id="bg"></div>
+      <div id="sprites"></div>
     </div>
+    <div id="ui" style="display:none">
+      <div id="choices"></div>
+      <div id="say" class="narration">
+        <div id="say-name"></div>
+        <div id="say-text"></div>
+        <div class="say-arrow">▼</div>
+      </div>
+      <div id="quick">
+        <button data-q="log">Log</button>
+        <button data-q="auto">Auto</button>
+        <button data-q="skip">Skip</button>
+        <button data-q="save">Save</button>
+        <button data-q="load">Load</button>
+        <button data-q="settings">Settings</button>
+      </div>
+    </div>
+    <div id="fx"></div>
+    <div id="screen"></div>
+    <div id="reticle"></div>
   </div>
-  <script type="module" src="src/main.js?v=20261031-1"></script>
+  <noscript>After Class needs JavaScript to run.</noscript>
+  <script type="module" src="src/main.js?v=20261031-2"></script>
 </body>
 </html>
