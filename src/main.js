@@ -11,7 +11,7 @@ import { TimeSystem } from "./systems/TimeSystem.js";
 import { StatSystem } from "./systems/StatSystem.js";
 import { RelationshipSystem } from "./systems/RelationshipSystem.js";
 import { DialogueSystem } from "./systems/DialogueSystem.js";
-import { UIManager } from "./systems/UIManager.js?v=20260923-3";
+import { UIManager } from "./systems/UIManager.js?v=20261031-1";
 import { SceneManager } from "./systems/SceneManager.js";
 import { CharacterFactory } from "./characters/CharacterFactory.js";
 import { V0StartMenuScene } from "./scenes/V0StartMenuScene.js";
@@ -136,6 +136,16 @@ export class Game {
     const playerName = this.stateManager.state.playerName;
     this.stateManager.reset();
     this.stateManager.state.playerName = playerName;
+    // Carry cross-playthrough knowledge into the fresh state
+    try {
+      if (localStorage.getItem("afterclass_true_ending_unlocked") === "true") {
+        this.stateManager.setFlag("true_ending_unlocked", true);
+      }
+      // After a finished run the girls start to remember: hidden "???" choices appear
+      if (localStorage.getItem("afterclass_completed") === "true") {
+        this.stateManager.setFlag("meta_awareness", 1);
+      }
+    } catch(e) {}
     this.currentSaveSlot = null;
     this.gamePhase = "visual_novel";
     console.log("[Game] New game started!");
@@ -196,6 +206,8 @@ export class Game {
       const metaEnding = this.stateManager.getFlag("meta_ending");
       if (metaEnding === "burn") {
         this._showMetaBurnEnding();
+      } else if (metaEnding === "true") {
+        this._showMetaTrueEnding();
       } else {
         this._showTransition("The story continues toward its conclusion...", () => {
           this.dialogueSystem.startDialogue("day5_confrontation");
@@ -217,15 +229,12 @@ this.stateManager.setFlag("completed", true);
     // Set completion flag in localStorage for meta systems
     try { localStorage.setItem("afterclass_completed", "true"); } catch(e) {}
     this.stateManager.setFlag("playthrough_count", (this.stateManager.getFlag("playthrough_count") || 0) + 1);
-    let chosenEnding = "ending_truth";
-    if (this.stateManager.getFlag("flag_ending_maya")) chosenEnding = "ending_maya";
-    else if (this.stateManager.getFlag("flag_ending_chloe")) chosenEnding = "ending_chloe";
-    else if (this.stateManager.getFlag("flag_ending_hana")) chosenEnding = "ending_hana";
+    // Flags are stored without the "flag_" prefix used in dialogues.json
+    const finalEnding = this.stateManager.getFlag("final_ending") || "truth";
+    const chosenEnding = "ending_" + finalEnding;
 
     let trustPoints = 0;
-    if (chosenEnding === "ending_maya") trustPoints = this.stateManager.getFlag("flag_maya_trust") || 0;
-    else if (chosenEnding === "ending_chloe") trustPoints = this.stateManager.getFlag("flag_chloe_trust") || 0;
-    else if (chosenEnding === "ending_hana") trustPoints = this.stateManager.getFlag("flag_hana_trust") || 0;
+    if (finalEnding !== "truth") trustPoints = Number(this.stateManager.getFlag(finalEnding + "_trust")) || 0;
 
     const TRUST_THRESHOLD = 3;
     let endingKey = chosenEnding;
@@ -278,6 +287,27 @@ this.stateManager.setFlag("completed", true);
       overlay.remove();
       // Clear everything for a true reset
       localStorage.clear();
+      await this._enterMainMenu();
+    });
+  }
+
+  _showMetaTrueEnding() {
+    // RICHARDSON_7734: the loop breaks without breaking them.
+    this.stateManager.setFlag("completed", true);
+    this.stateManager.setFlag("ending_true", true);
+    try {
+      localStorage.setItem("afterclass_completed", "true");
+      localStorage.setItem("afterclass_true_ending_seen", "true");
+    } catch(e) {}
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 2s ease-in;";
+    overlay.innerHTML = '<div style="width:min(880px,90vw);box-sizing:border-box;text-align:center;padding:0 5%;"><p style="font-family:Georgia,serif;font-size:clamp(1rem,3vw,1.8rem);color:#e8e0d0;letter-spacing:0.2em;margin:0 auto 24px;text-shadow:0 0 20px rgba(232,224,208,0.4);">THE LOOP IS BROKEN</p><p style="font-family:Georgia,serif;font-size:clamp(0.8rem,2vw,1.3rem);color:#e8e0d0;width:100%;max-width:80ch;margin:0 auto;line-height:1.6;text-align:center;white-space:pre-line;">Maya\'s footage is just footage. Chloe\'s campaign is just a campaign. Hana\'s paintings are just paintings.\n\nThey live. They choose. They\'re free.\n\nAnd you finally get to rest.</p><p style="margin:32px auto 0;font-size:0.9rem;color:#c9a84c;letter-spacing:0.15em;">TRUE ENDING: RICHARDSON_7734</p><button style="margin-top:24px;padding:12px 40px;font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;background:#2a2040;color:#e8c97a;border:1px solid #c9a84c;cursor:pointer;border-radius:4px;">Return to Start</button></div>';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = "1"; });
+    overlay.querySelector("button").addEventListener("click", async () => {
+      overlay.remove();
+      if (this.sceneLayer) this.sceneLayer.innerHTML = "";
       await this._enterMainMenu();
     });
   }

@@ -44,13 +44,6 @@ export class V0StartMenuScene extends Scene {
     nameInput.addEventListener("click", (e) => { e.stopPropagation(); });
     nameInput.addEventListener("mousedown", (e) => { e.stopPropagation(); });
     nameContainer.appendChild(nameInput);
-    
-    // Subtle hint about the password
-    const hint = document.createElement("p");
-    hint.style.cssText = "margin-top:8px;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,0,255,0.3);text-align:center;animation:hintPulse 4s ease-in-out infinite;";
-    hint.textContent = "The archive remembers... RICHARDSON_7734";
-    nameContainer.appendChild(hint);
-    
     u.appendChild(tb);
     u.appendChild(nameContainer);
     const bt=document.createElement("button");bt.type="button";bt.id="v0-press-start-btn";bt.className="anim-press";bt.style.cssText="margin-top:40px;cursor:pointer;font-size:clamp(12px,2vw,16px);font-weight:500;letter-spacing:0.4em;text-transform:uppercase;color:rgba(255,255,255,0.9);background:none;border:none;outline:none;padding:8px 24px;animation:presspulse 1.6s ease-in-out infinite;animation-delay:1s;";bt.textContent="Press Start";u.appendChild(bt);
@@ -152,12 +145,8 @@ m.appendChild(subtleHint);
     if(window.gameInstance && window.gameInstance._startBgMusic) {
       window.gameInstance._startBgMusic();
     }
-    // If player entered the secret key, go directly to true ending
-    if (isTrueEndingKey && window.gameInstance && window.gameInstance.dialogueSystem) {
-      window.gameInstance.dialogueSystem.startDialogue("meta_true_ending");
-    } else {
-      this.eventBus.emit("menu:action",{action:"new_game"});
-    } }
+    // The secret key only unlocks the third door in the meta interlude; the story still has to be played
+    this.eventBus.emit("menu:action",{action:"new_game"}); }
   exit() { 
     window.removeEventListener("keydown",this._boundKeyHandler);
     if (this._docClickHandler) {

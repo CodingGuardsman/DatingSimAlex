@@ -266,7 +266,8 @@
           {
             "text": "I need to see the footage.",
             "effects": {
-              "flag_maya_footage_seen": true
+              "flag_maya_footage_seen": true,
+              "flag_maya_trust": 1
             },
             "next": "maya_end"
           }
@@ -835,7 +836,9 @@
           },
           {
             "text": "What did Richardson say?",
-            "effects": {},
+            "effects": {
+              "flag_chloe_trust": 1
+            },
             "next": "chloe_dangerous"
           },
           {
@@ -995,7 +998,8 @@
           {
             "text": "I will be there.",
             "effects": {
-              "flag_chloe_tomorrow": true
+              "flag_chloe_tomorrow": true,
+              "flag_chloe_trust": 1
             },
             "next": "chloe_threat2"
           },
@@ -1274,7 +1278,9 @@
         "choices": [
           {
             "text": "What did you see?",
-            "effects": {},
+            "effects": {
+              "flag_hana_trust": 1
+            },
             "next": "hana_masked"
           },
           {
@@ -1383,7 +1389,8 @@
           {
             "text": "Here. Take this key.",
             "effects": {
-              "flag_hana_key": true
+              "flag_hana_key": true,
+              "flag_hana_trust": 1
             },
             "next": "hana_threat2"
           },
@@ -1592,28 +1599,28 @@
           {
             "text": "Release Mayas footage and expose Chloes father.",
             "effects": {
-              "flag_ending_maya": true
+              "flag_final_ending": "maya"
             },
             "next": "ending_maya"
           },
           {
             "text": "Help Chloe bury the scandal.",
             "effects": {
-              "flag_ending_chloe": true
+              "flag_final_ending": "chloe"
             },
             "next": "ending_chloe"
           },
           {
             "text": "Let Hana reveal the truth through her exhibition.",
             "effects": {
-              "flag_ending_hana": true
+              "flag_final_ending": "hana"
             },
             "next": "ending_hana"
           },
           {
             "text": "Publish everything and expose everyone.",
             "effects": {
-              "flag_ending_truth": true
+              "flag_final_ending": "truth"
             },
             "next": "ending_truth"
           }
@@ -2032,7 +2039,8 @@
         "ending": "true",
         "effects": {
           "flag_meta_true_ending": true,
-          "meta_ending": "true"
+          "meta_ending": "true",
+          "flag_meta_ending": "true"
         }
       }
     },

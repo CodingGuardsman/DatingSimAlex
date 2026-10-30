@@ -514,9 +514,10 @@ export class UIManager {
     const choicesEl = document.getElementById("dialogue-choices");
 
     // Narration is presented through Alex on the left; named characters stay on the right.
+    // Narration (no speaker) gets no name plate.
     const effectiveSpeaker = speaker || "alex";
-    speakerEl.textContent = this._getCharacterName(effectiveSpeaker);
-    speakerEl.style.display = "block";
+    speakerEl.textContent = speaker ? this._getCharacterName(speaker) : "";
+    speakerEl.style.display = speaker ? "block" : "none";
 
     // Text
     textEl.textContent = this._formatDialogueText(text, effectiveSpeaker);

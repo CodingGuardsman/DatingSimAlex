@@ -143,29 +143,10 @@ export class DialogueSystem {
     this._applyEffects(choice.effects);
     this.eventBus.emit(EVENTS.CHOICE_MADE, { choice, nodeId: this.currentNodeId });
 
-    this.pendingChoiceAdvance = {
-      next: choice.next || null,
-      isEnd: Boolean(choice.isEnd || node.isEnd)
-    };
-    this.playerLineActive = true;
-    this.eventBus.emit(EVENTS.DIALOGUE_ADVANCE, {
-      node: {
-        speaker: "alex",
-        text: choice.text,
-        expression: "neutral",
-        choices: []
-      },
-      speaker: "alex",
-      text: choice.text,
-      expression: "neutral",
-      choices: [],
-      isEnd: false,
-      characterId: "alex",
-      cg: null,
-      background: this._treeBackground || null,
-      isPlayerLine: true
-    });
-    return this.getCurrentContext();
+    // Go straight to the next node; the chosen line is not echoed back as a separate Alex line
+    if (choice.next) return this.jumpTo(choice.next);
+    this.endDialogue();
+    return null;
   }
 
   endDialogue() {
@@ -221,7 +202,7 @@ export class DialogueSystem {
 
   _getAvailableChoices(node) {
     if (!node.choices) return [];
-    const hasMetaAwareness = this.stateManager.getFlag('flag_meta_awareness') >= 1;
+    const hasMetaAwareness = this.stateManager.getFlag('meta_awareness') >= 1;
     return node.choices.filter(choice => {
       // Hidden choices only appear with meta awareness
       if (choice.hidden && !hasMetaAwareness) return false;
@@ -241,7 +222,12 @@ export class DialogueSystem {
         this.stateManager.modifyRelationship(charId, value);
       } else if (key.startsWith("flag_")) {
         const flagName = key.substring(5);
-        this.stateManager.setFlag(flagName, value);
+        // Trust flags accumulate (each trusting choice adds a point); other flags are set
+        if (flagName.endsWith("_trust") && typeof value === "number") {
+          this.stateManager.setFlag(flagName, (Number(this.stateManager.getFlag(flagName)) || 0) + value);
+        } else {
+          this.stateManager.setFlag(flagName, value);
+        }
       } else if (key.startsWith("set_")) {
         const field = key.substring(4);
         this.stateManager.state[field] = value;
