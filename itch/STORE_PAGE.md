@@ -6,14 +6,14 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 | File | Where it goes |
 |---|---|
 | `AfterClass-windows.zip` | **Uploads**: tick "Executable → Windows". It's built by `npm run dist` and then zipped, and it isn't committed to git. |
-| `cover-630x500.png` | **Cover image** |
-| `banner-960x300.png` | Optional. Use it as the page banner under "Edit theme" |
+| `cover-630x500.png` | **Cover image**. Look for the person standing in the sea. Regenerate both images with `python itch/make_cover.py .` |
+| `banner-960x300.png` | Page banner under "Edit theme". Someone is standing at the end of the pier |
 | `screenshots/01–08.png` | **Screenshots**, in this order. All are 1920×1080 |
 
 ## Project fields
 - **Title:** After Class
 - **Project URL:** `after-class`
-- **Short description / tagline:** A dating sim about the last week before summer. Summer never comes.
+- **Short description / tagline:** Five days until summer ♡ A sweet school romance.
 - **Classification:** Games
 - **Kind of project:** Downloadable
 - **Release status:** Released
@@ -26,38 +26,35 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 - **Visibility:** Draft first. Switch to Public once payments are set up and you've checked the page.
 
 ## Description (paste into the description box)
+The page is meant to look like an ordinary, sweet dating sim. The unease comes from small details, never from the word "horror". The honest content warning stays at the bottom, the way other games in this genre do it.
 
-> **Hoshimi Academy. The last week of term. Five days until summer break.**
+> ♡ **Summer break is only five days away!** ♡
 >
-> You're the transfer student nobody had time to befriend. Then, in the last week before summer, three girls decide you're worth knowing:
+> You've just transferred to Hoshimi Academy for the very last week of term. You don't know anyone yet, but that's about to change. Three lovely girls can't wait to get to know you:
 >
-> - **Hina**, the sunny class rep, who has a summer list and wants you on it.
-> - **Rei**, the sarcastic photography club (she *is* the club), who keeps finding someone standing behind you in her photos.
-> - **Sayo**, the quiet girl from the infirmary, who draws a little box at the bottom of every picture, with words inside it.
+> - 🌻 **Hina**, the cheerful class rep. She's writing a list of everything she wants to do this summer, and there's room on it for you!
+> - 📷 **Rei**, the photography club's one and only member. She says you're very photogenic. She takes a lot of pictures of you.
+> - 📓 **Sayo**, the quiet girl who spends her afternoons in the infirmary. She loves to draw. She's been drawing you for a while.
 >
-> Spend each afternoon with whoever you like. Walk home along the river. Develop film in the darkroom. Sit by the infirmary window.
+> Spend each afternoon with whoever you like! Walk home along the river, develop film in the darkroom, or sit by the infirmary window and watch the clouds go by.
 >
-> The school's PA system will remind you, every afternoon, that summer is almost here.
+> **Features**
+> - Three sweet girls to get to know
+> - Five whole afternoons together, and multiple endings
+> - Cozy music that's made just for you, while you play
+> - A friendly school announcement every afternoon, so you never lose track of the days
 >
-> *It will keep reminding you.*
+> Summer is only five days away.
+>
+> See you after class! ♡
+>
+> 🌸 **Free demo:** play the first week in your browser at https://codingguardsman.github.io/DatingSimAlex/
+>
+> Estimated playtime: about 1–2 hours.
 >
 > ---
 >
-> **After Class** is a short psychological horror visual novel disguised as a dating sim. It knows it's a game, and it knows you're playing it.
->
-> - Three girls, two very different playthroughs, and three endings.
-> - A story that changes once you've finished it once.
-> - An original soundtrack that's generated live while you play, and a PA system with a voice of its own.
-> - Things in the game folder that weren't there when you started.
->
-> Play it once. Then play it again.
->
-> **Free demo:** play all of the first act in your browser at https://codingguardsman.github.io/DatingSimAlex/
->
-> **Estimated playtime:** about 1–2 hours to see every ending.
-
-## Content warnings (paste under the description, and tick "Contains flashing lights" if offered)
-> ⚠ **Content warning.** After Class is a psychological horror game. It contains flashing lights, screen shake and glitch effects, sudden loud sounds, and fourth-wall-breaking moments that refer to you and your computer. The game creates text and image files only inside its own "Hoshimi Academy" folder next to the .exe. It never reads, changes or deletes anything else. Not suitable for children.
+> *This game is not suitable for children or those who are easily disturbed. It contains flashing lights, screen shake, sudden loud sounds and scenes some players may find upsetting. The game keeps a few files in a "Hoshimi Academy" folder next to the .exe. It never reads, changes or deletes anything else.*
 
 ## System requirements (paste at the bottom)
 > - Windows 10 or 11 (64-bit)
