@@ -55,6 +55,7 @@ export const MEMORIES = [
   { id: "p6", book: "photo", title: "The wall of shame", bg: "darkroom", who: "rei", expr: "laugh" },
   { id: "p8", book: "photo", title: "Your screen, from in here", bg: "darkroom", who: "rei", expr: "aim_shocked", ghost: true },
   { id: "p9", book: "photo", title: "K, in focus", bg: "classroom", ghost: true },
+  { id: "p10", book: "photo", title: "Rei, on the roof (nobody behind her)", bg: "rooftop", who: "rei", expr: "photo_soft" },
   // Sayo's sketchbook
   { id: "s1", book: "sketch", title: "The box at the bottom", text: "This classroom, drawn from above. Along the bottom, a long dark box full of tiny words. 'There's always one.'", hint: "she draws when she's alone" },
   { id: "s2", book: "sketch", title: "Your face, this time", text: "A careful pencil portrait. Underneath: 'so I remember. this time.'", hint: "she wants to remember someone" },
@@ -62,6 +63,7 @@ export const MEMORIES = [
   { id: "s4", book: "sketch", title: "Every page a door", text: "The same door, forty times. It's a little more open on every page.", hint: "the sketchbook, when she's asleep" },
   { id: "s5", book: "sketch", title: "The seat by the window", text: "An empty desk by the window, and a girl sitting at it that nobody else can see.", hint: "a Thursday" },
   { id: "s6", book: "sketch", title: "The door, open", text: "The last page. The door is open. There's light on the other side.", hint: "after the week starts again" },
+  { id: "s8", book: "sketch", title: "Your window", text: "A window, drawn from your side of the screen. Whatever was really out there, in her drawing it's summer.", hint: "she wants to know what your room looks like" },
   { id: "s7", book: "sketch", title: "Behind the menu", text: "Three pieces of tape on a dark floor. REI. HINA. SAYO.", hint: "she drew you a way in" },
   // Keepsakes from everyone else
   { id: "o1", book: "other", title: "Kanda-sensei's register", text: "One line has been erased so many times the paper went thin. You can still read a K.", hint: "homeroom, first thing Monday" },
@@ -70,6 +72,7 @@ export const MEMORIES = [
   { id: "o4", book: "other", title: "Nurse Mori's sign-in book", text: "Every page: 'Shiraishi Sayo. Tired.' The dates go back years. They are all this week.", hint: "the infirmary" },
   { id: "o5", book: "other", title: "Sayo's letter", text: "'Thank you for sitting with me in the infirmary. It was the least tired I've ever been.'", hint: "she wanted part of her to be outside" },
   { id: "o6", book: "other", title: "K's last entry", text: "'they're not a game to me. tell them that.'", hint: "a save slot that isn't yours" },
+  { id: "o8", book: "other", title: "Hina's counting notebook", text: "Pages of tally marks: clicks, tab-outs, hours. The last column says 'days I was happy anyway'. It's the longest.", hint: "Hina, by the river, the second time around" },
   { id: "o7", book: "other", title: "The unknown number", text: "'is this K?' ... 'sorry. you sound like them.'", hint: "a message late on Wednesday" }
 ];
 
@@ -1050,6 +1053,54 @@ export const SCRIPT = {
     when(v => v.listGone, ["hina sad| ...You threw away my list. The copy in the folder. It's okay. I wrote it again."]),
     { t: "js", run: async g => { g.v.wroteList2 = await g.meta.writeFile("hinas_summer_list.txt", HINA_LIST_2); } },
     when(v => v.wroteList2, ["hina happy| I fixed the copy in your folder too. So you have it. Out there, where it's safe."]),
+    jump("r_hina_eve")
+  ],
+
+  r_hina_eve: [
+    clear,
+    bg("riverside"),
+    music("evening"),
+    "| That evening Hina walks me to the river anyway. Out of habit, she says. Habits are the one thing the rewind can't take.",
+    show("hina", "neutral", "center"),
+    "hina| I have one sparkler left. From every week. I've been saving them. I don't know how many weeks that is.",
+    "hina list| I counted, actually. I just don't want to say the number out loud.",
+    "| She lights it. The tiny ball of fire hangs there, spitting orange flowers into the dark.",
+    "hina| If you hold perfectly still, it lasts forever. That's what I told you last time.",
+    "hina sad| I think that's what the menu is. Someone holding perfectly still so it lasts forever. It doesn't feel like forever from the inside. It feels like holding your breath.",
+    menu([
+      { text: "Then let it drop.", do: [love("hina"),
+        "hina| ...Okay.",
+        "| She lets her hand shake. The little ball of fire falls into the river with a hiss. Hina laughs, surprised, like it didn't hurt at all.",
+        "hina happy| Huh. It just... ends. That's allowed?",
+        "hina neutral| Here. You should have this. It's where I count things.",
+        "| She hands me a little notebook. Every page is tally marks: clicks, tab-outs, hours. On the last page there's one more column, in tiny writing. Days I was happy anyway.",
+        "| That column is longer than all the others.",
+        mem("o8")] },
+      { text: "I'll hold still with you.", do: [
+        "hina sad| That's sweet. That's really sweet. Please don't.",
+        "| We hold still anyway. The sparkler lasts a long time. Then it goes out on its own, the way they always do."] }
+    ]),
+    jump("r_next")
+  ],
+
+  r_rei_eve: [
+    clear,
+    bg("rooftop"),
+    music("evening"),
+    show("rei", "photo", "center"),
+    "| Rei catches me on the stairs and drags me up to the roof. The lock is still broken. Some things the week doesn't bother to fix.",
+    "rei| You take one. Of me. I'm always behind the camera. I want to know if I come out.",
+    "rei photo_soft| Don't look at me like that. Just point it and press. It's not hard. ...It's a little hard.",
+    menu([
+      { text: "Take the photo", do: [
+        { t: "js", run: g => g.meta.photo({ ghost: false, caption: "Rei, on the roof. (nobody behind her.)" }) },
+        "rei| ...Nobody behind me.",
+        "rei soft| Huh. I always thought there would be.",
+        mem("p10"),
+        love("rei")] },
+      { text: "Put the camera down", do: ["rei annoyed| Coward. ...Okay. Maybe I don't want to know either."] }
+    ]),
+    "rei| Hey. When you go, I'm keeping that roll. Proof you were here. Proof I was.",
     jump("r_next")
   ],
 
@@ -1083,7 +1134,7 @@ export const SCRIPT = {
     ]),
     watch("cursor", false),
     "rei| ...I'm going to stop watching your cursor now. It's rude.",
-    jump("r_next")
+    jump("r_rei_eve")
   ],
 
   r_sayo: [
@@ -1097,6 +1148,15 @@ export const SCRIPT = {
     "sayo| The week only ends when nobody is watching it.",
     "sayo| The Office counts every second you're here. If you look away, really away, not just closing your eyes, the clock stops. And if the clock stops long enough...",
     "sayo happy| ...maybe it's just summer.",
+    "sayo neutral| Before I give you something. Can I ask you a question?",
+    "sayo| What's outside your window? Your real one.",
+    menu([
+      { text: "A city.", do: [love("sayo"), "sayo draw_happy| Lights. Lots of lights. Okay. I'm drawing lights."] },
+      { text: "Trees.", do: [love("sayo"), "sayo draw_happy| ...Trees. I always wanted trees."] },
+      { text: "Just another wall.", do: [love("sayo"), "sayo draw| Then I'll draw a window on the wall. That's allowed. I'm the one drawing."] }
+    ]),
+    "| She draws fast, the pencil like rain again. When she turns the page around, it's a window. Through it, whatever I said, it's summer.",
+    mem("s8"),
     "sayo reach| I wrote it all down. Please take it. I want part of me to be outside, even if it's just paper.",
     { t: "js", run: async g => {
       const took = await g.meta.letter("sayo_letter.txt", SAYO_LETTER(g.name()));

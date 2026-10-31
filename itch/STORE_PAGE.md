@@ -50,7 +50,7 @@ The page is meant to look like an ordinary, sweet dating sim. The unease comes f
 > **Features**
 > - Three sweet girls to get to know, plus a whole class of friends: Daichi and his beach plan, sleepy Kanda-sensei, gentle Nurse Mori, and Mrs. Okada at the konbini by the bridge
 > - Five whole afternoons together, a group chat that buzzes every night, and multiple endings
-> - A Summer Scrapbook to fill: 35 memories to collect, from Hina's summer list to Rei's photos and Sayo's sketches. One week can't hold them all ♡
+> - A Summer Scrapbook to fill: 38 memories to collect, from Hina's summer list to Rei's photos and Sayo's sketches. One week can't hold them all ♡
 > - Cozy music that's made just for you, while you play
 > - A friendly school announcement every afternoon, so you never lose track of the days
 >

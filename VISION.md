@@ -60,6 +60,9 @@ Everything looks like a sweet pastel romance by default: notebook-paper menus wi
 
 Wednesday's "K?" slip flashes the uncanny UI for a split second and then pretends it didn't happen. The UI goes back to cute on the beach.
 
+## Act 2 evenings
+After Hina's and Rei's Act 2 afternoons there's an evening scene: Hina's last sparkler (let it drop and she gives you her counting notebook), and Rei asking you to take her photo on the roof (nobody is behind her). Sayo asks what's outside your real window and draws it.
+
 ## Minor characters and the week
 Act 1 days now have a homeroom or morning scene, a group lunch, an afternoon with one girl, and a group-chat phone scene at night. The minor characters never remember anything, so in Act 2 they repeat their Act 1 lines word for word:
 - **Kanda-sensei**, the tired homeroom teacher. A K is rubbed out of her register.
@@ -68,7 +71,7 @@ Act 1 days now have a homeroom or morning scene, a group lunch, an afternoon wit
 - **Mrs. Okada** at the konbini, who always asks "same as yesterday?"
 
 ## The Summer Scrapbook (player effort)
-There are 35 memories in four books: Hina's summer list, Rei's photos, Sayo's sketchbook, and keepsakes. Each one comes from a choice, an afternoon visit or a discovery. For example, Hina whispers that Daichi always throws rock, and choosing Paper checks off "Beat Daichi at something".
+There are 38 memories in four books: Hina's summer list, Rei's photos, Sayo's sketchbook, and keepsakes. Each one comes from a choice, an afternoon visit or a discovery. For example, Hina whispers that Daichi always throws rock, and choosing Paper checks off "Beat Daichi at something".
 
 One week can't hold every memory, and the scrapbook survives "Forget them" or "Start over", so collecting everything takes several playthroughs. The payoffs:
 - The girls quote your count.
@@ -124,6 +127,5 @@ All art was generated for this project with AssetHub (canvas "After Class - meta
 **Testing tip:** `__afterClass.persist.forgetAll()` in the console resets every playthrough. `__afterClass.game.start("r_start")` jumps straight to Act 2.
 
 ## Next ideas
-- Add a 4th afternoon scene for each girl in Act 2. Right now each girl has one.
 - Add a CG or two: the three girls on the beach seen from behind, and K's last photo.
 - Add a sound pass with real voice acting for key lines, if you ever get a VA.
