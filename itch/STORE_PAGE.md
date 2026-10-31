@@ -79,13 +79,13 @@ itch's command-line uploader lets you push new versions without using the websit
    ```bash
    butler login
    ```
-3. Push the build. Replace `YOUR-USERNAME` with your itch username:
+3. Push the build. Your itch username is `stagworks`:
    ```bash
-   butler push itch/AfterClass-windows.zip YOUR-USERNAME/after-class:windows
+   butler push itch/AfterClass-windows.zip stagworks/after-class:windows
    ```
 
 ## Before you set it to Public
 - [ ] **Payments:** itch.io → Settings → *Payment settings*. Choose how you get paid (PayPal or direct deposit) and complete the **tax interview**. Paid games can't be bought until this is done.
-- [ ] **Link the free demo to the store:** once the page exists, put its address in `src/config.js` (`STORE_URL`, replacing `YOUR-USERNAME`) and push. The demo's last screen then gets a "Get the full game on itch.io" button. Until then it says "Search for After Class on itch.io".
+- [x] **Link the free demo to the store:** done. `STORE_URL` in `src/config.js` points to https://stagworks.itch.io/after-class, so the demo's last screen shows a "Get the full game on itch.io" button.
 - [ ] Play through the downloaded zip once on a clean machine, or at least from a fresh folder.
 - [ ] Check the page on mobile using itch's preview.
