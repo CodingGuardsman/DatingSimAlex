@@ -7,9 +7,10 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 |---|---|
 | `AfterClass-windows.zip` | **Uploads**: tick "Executable → Windows". It's built by `npm run dist` and then zipped, and it isn't committed to git. |
 | `cover-630x500.png` | **Cover image**. Look for the person standing in the sea. Regenerate both images with `python itch/make_cover.py .` |
+| `channel/icon-800.png`, `channel/banner-2560x1440.png` | Stagworks YouTube channel picture and banner (`itch/make_channel_art.py`) |
 | `banner-960x300.png` | Page banner under "Edit theme". Someone is standing at the end of the pier |
 | `screenshots/01–08.png` | **Screenshots**, in this order. All are 1920×1080, in the cute UI: title, Hina, Rei, sparklers, the group chat, Sayo, the scrapbook, and one slightly off line from Rei. Recapture them with `itch/capture_shots.mjs` |
-| `trailer.mp4` | **Trailer**, 52 s, 1080p. Linked from the description ("Watch the trailer", hosted on GitHub Pages). itch's "Gameplay video or trailer" field only takes YouTube or Vimeo, so leave it empty unless you upload from a **Stagworks** channel, not a personal one. Rebuild it with `itch/make_trailer.py` |
+| `trailer.mp4` | **Trailer**, 52 s, 1080p. On the **Stagworks** YouTube channel (@stagworksgamestudios) at https://youtu.be/iDAdHKpdR5Q, set as "Gameplay video or trailer". Rebuild it with `itch/make_trailer.py` |
 
 ## Project fields
 - **Title:** After Class
