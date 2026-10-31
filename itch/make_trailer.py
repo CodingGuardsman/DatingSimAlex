@@ -115,16 +115,16 @@ def end_card():
 
 
 def sting_frames():
-    """A few frames of something that isn't cute at all."""
+    """A few frames of something that isn't cute at all: the uncanny UI, and Hina, corrupted."""
     base = bg("classroom", 0.35).convert("RGBA")
     s = sprite("hina/corrupt", int(H * 1.05))
     base.alpha_composite(s, (int(W / 2 - s.width / 2), int(H * 0.08)))
-    base = base.convert("RGB")
-    arr = np.asarray(base).copy()
+    corrupt = np.asarray(base.convert("RGB")).copy()
+    uncanny = np.asarray(shot("t-uncanny")).copy()
     rng = np.random.default_rng(7)
     out = []
     for k in range(4):
-        a = arr.copy()
+        a = (uncanny if k % 2 == 0 else corrupt).copy()
         for _ in range(14):
             y0 = rng.integers(0, H - 40); h = rng.integers(8, 60); dx = rng.integers(-160, 160)
             a[y0:y0 + h] = np.roll(a[y0:y0 + h], dx, axis=1)
@@ -144,18 +144,22 @@ def shot(name):
 cute = [
     ("card", text_card(["Stagworks presents"], hearts=False), 2.4),
     ("card", text_card(["Summer break is only", "five days away!"]), 2.8),
-    ("kb", shot("02-hina"), 2.8),
-    ("kb", shot("03-rei"), 2.8),
-    ("kb", shot("04-river"), 2.8),
-    ("kb", shot("05-sayo"), 2.8),
+    ("kb", shot("02-hina"), 2.6),
+    ("kb", shot("03-rei"), 2.6),
+    ("kb", shot("t-lunch"), 2.4),
+    ("kb", shot("04-river"), 2.6),
+    ("kb", shot("05-phone"), 3.0),
+    ("kb", shot("06-sayo"), 2.6),
     ("card", text_card(["Five afternoons.", "Three girls.", "One summer."]), 3.0),
-    ("kb", shot("06-choice"), 2.2),
-    ("kb", shot("07-rooftop"), 2.4),
-    ("kb", shot("t-rei-roof"), 2.2),
-    ("kb", shot("t-sayo-roof"), 2.2),
+    ("kb", shot("07-scrapbook"), 2.6),
+    ("kb", shot("t-choice"), 2.0),
+    ("kb", shot("t-rooftop"), 2.2),
+    ("kb", shot("t-rei-roof"), 2.0),
+    ("kb", shot("t-sayo-roof"), 2.0),
     ("kb", shot("t-pa"), 7.0),
     ("kb", title_card(), 4.0),
 ]
+PA_INDEX = 14  # the Office's announcement: music ducks under the voice here
 STING, BLACK, END = 0.6, 0.9, 5.0
 
 
@@ -259,7 +263,7 @@ def soundtrack(total_cute):
     out = np.zeros(int((total + 1) * SR))
     m = music(total_cute)[: int(total_cute * SR)]
     # Duck the music under the announcement.
-    pa_start = sum(d for _, _, d in cute[:11])
+    pa_start = sum(d for _, _, d in cute[:PA_INDEX])
     env = np.ones(len(m))
     a, b = int((pa_start - 0.2) * SR), int((pa_start + 6.8) * SR)
     ramp = int(0.4 * SR)
