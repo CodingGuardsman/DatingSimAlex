@@ -9,7 +9,7 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 | `cover-630x500.png` | **Cover image**. Look for the person standing in the sea. Regenerate both images with `python itch/make_cover.py .` |
 | `banner-960x300.png` | Page banner under "Edit theme". Someone is standing at the end of the pier |
 | `screenshots/01–08.png` | **Screenshots**, in this order. All are 1920×1080, in the cute UI: title, Hina, Rei, sparklers, the group chat, Sayo, the scrapbook, and one slightly off line from Rei. Recapture them with `itch/capture_shots.mjs` |
-| `trailer.mp4` | **Trailer**, 52 s, 1080p. Uploaded (Unlisted) at https://youtu.be/Bs_nh6antLc and set as "Gameplay video or trailer". Rebuild it with `itch/make_trailer.py` |
+| `trailer.mp4` | **Trailer**, 52 s, 1080p. Linked from the description ("Watch the trailer", hosted on GitHub Pages). itch's "Gameplay video or trailer" field only takes YouTube or Vimeo, so leave it empty unless you upload from a **Stagworks** channel, not a personal one. Rebuild it with `itch/make_trailer.py` |
 
 ## Project fields
 - **Title:** After Class
@@ -47,8 +47,9 @@ The page is meant to look like an ordinary, sweet dating sim. The unease comes f
 > Spend each afternoon with whoever you like! Walk home along the river, develop film in the darkroom, or sit by the infirmary window and watch the clouds go by.
 >
 > **Features**
-> - Three sweet girls to get to know
-> - Five whole afternoons together, and multiple endings
+> - Three sweet girls to get to know, plus a whole class of friends: Daichi and his beach plan, sleepy Kanda-sensei, gentle Nurse Mori, and Mrs. Okada at the konbini by the bridge
+> - Five whole afternoons together, a group chat that buzzes every night, and multiple endings
+> - A Summer Scrapbook to fill: 35 memories to collect, from Hina's summer list to Rei's photos and Sayo's sketches. One week can't hold them all ♡
 > - Cozy music that's made just for you, while you play
 > - A friendly school announcement every afternoon, so you never lose track of the days
 >
