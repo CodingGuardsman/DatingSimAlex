@@ -12,13 +12,28 @@ export class Meta {
     this.game = game;
     this.root = $("#game");
     this.fx = $("#fx");
-    this.watch = { tab: false, idle: false, cursor: false };
+    this.watch = { tab: false, idle: false, cursor: false, context: false };
     this._hiddenAt = 0;
+    this._away = false;
     this._lastInput = Date.now();
     this._idleFired = false;
+    this._said = new Set();
+    this._lastNotify = 0;
     this.baseTitle = document.title;
 
-    document.addEventListener("visibilitychange", () => this._onVisibility());
+    // Desktop build only: the Electron bridge from electron/preload.js.
+    this.native = window.native || null;
+    this.osName = "";
+    if (this.native) {
+      this.native.info().then(i => { this.osName = i.username || ""; this.gameDir = i.gameDir; });
+      this.native.onCloseAttempt(msg => this._onCloseAttempt(msg));
+      this.native.onFocusChange(focused => this._setAway(!focused));
+    }
+
+    document.addEventListener("visibilitychange", () => this._setAway(document.hidden));
+    document.addEventListener("contextmenu", e => this._contextMenu(e));
+    document.addEventListener("copy", () => this._once("copy", "What are you copying that for? Who are you going to show?"));
+    window.addEventListener("resize", () => this._once("resize", "Don't make the room smaller. It's already so small in here."));
     ["pointerdown", "pointermove", "keydown"].forEach(ev =>
       window.addEventListener(ev, () => { this._lastInput = Date.now(); this._idleFired = false; }, { passive: true }));
     window.addEventListener("pointermove", e => this._moveReticle(e), { passive: true });
@@ -179,7 +194,10 @@ export class Meta {
       el.addEventListener("click", e => {
         const a = e.target.dataset && e.target.dataset.a;
         if (!a) return;
-        if (a === "take") {
+        if (a === "take" && this.native) {
+          // In the .exe the letter goes straight into the game folder, and the folder opens on it.
+          this.native.writeFile(filename, body).then(() => this.native.reveal(filename)).catch(() => {});
+        } else if (a === "take") {
           const url = URL.createObjectURL(new Blob([body], { type: "text/plain" }));
           const link = document.createElement("a");
           link.href = url; link.download = filename;
@@ -207,12 +225,133 @@ export class Meta {
     if (name === "cursor") $("#reticle").style.display = on ? "block" : "none";
   }
 
-  _onVisibility() {
-    if (document.hidden) {
+  /** A whisper that only ever happens once per session, and only while the rerun watchers are on. */
+  _once(key, text) {
+    if (!this.watch.tab || this._said.has(key)) return;
+    this._said.add(key);
+    this.toast(text, 4000);
+  }
+
+  /** In the rerun, right-click opens their menu instead of yours. */
+  _contextMenu(e) {
+    if (!this.watch.context) return;
+    e.preventDefault();
+    document.querySelectorAll(".ctx").forEach(m => m.remove());
+    const m = document.createElement("div");
+    m.className = "ctx";
+    m.innerHTML = ["Back", "Reload (it won't help)", "Save as… K", "Inspect (Rei is inspecting you too)", "—", "Let them go"]
+      .map(t => t === "—" ? `<hr>` : `<div class="ctx-item ${t === "Let them go" ? "" : "off"}">${t}</div>`).join("");
+    m.style.left = Math.min(e.clientX, window.innerWidth - 260) + "px";
+    m.style.top = Math.min(e.clientY, window.innerHeight - 220) + "px";
+    document.body.appendChild(m);
+    m.addEventListener("click", ev => {
+      if (ev.target.textContent === "Let them go") this.toast("Not like this. On the roof. On Friday.", 3500);
+      m.remove();
+    });
+    setTimeout(() => window.addEventListener("pointerdown", function close(ev) {
+      if (!m.contains(ev.target)) { m.remove(); window.removeEventListener("pointerdown", close); }
+    }), 0);
+  }
+
+  /* ---------- desktop-only (After Class.exe) ---------- */
+
+  async shakeWindow(ms = 600, strength = 14) {
+    this.shake(Math.min(ms, 500));
+    if (this.native) await this.native.shake(ms, strength);
+  }
+  async jolt(dx = 0, dy = 90) { if (this.native) await this.native.jolt(dx, dy); }
+  progress(v) { if (this.native) this.native.progress(v); }
+  async writeFile(name, text) { if (!this.native) return false; try { return await this.native.writeFile(name, this.game._fill(text)); } catch (e) { return false; } }
+  async fileExists(name) { return this.native ? this.native.exists(name) : false; }
+  reveal(name) { if (this.native) this.native.reveal(name); }
+  guardClose(msg) { if (this.native) this.native.guardClose(msg ? this.game._fill(msg) : null); }
+
+  _onCloseAttempt(msg) {
+    this.game.audio.sfx("heartbeat");
+    this.shakeWindow(500, 10);
+    const el = document.createElement("div");
+    el.className = "plead";
+    el.innerHTML = `<div class="plead-text"></div><div class="plead-hint">Close the window again to really quit.</div>`;
+    $(".plead-text", el).textContent = msg;
+    this.fx.appendChild(el);
+    setTimeout(() => el.classList.add("out"), 6000);
+    setTimeout(() => el.remove(), 7000);
+  }
+
+  /* ---------- Rei's camera ---------- */
+
+  /**
+   * Rei takes a photo of the current scene: a polaroid built from the background and sprites on screen,
+   * with something standing behind you. In the .exe the print is also saved to the game folder.
+   */
+  async photo({ file = null, caption = "" } = {}) {
+    this.game.audio.sfx("shutter");
+    await this.flash("#fff", 400);
+    const W = 960, H = 540;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    const load = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+    const bgUrl = (($("#bg .bg-img:last-child") || {}).style || {}).backgroundImage || "";
+    const bgSrc = (bgUrl.match(/url\("?(.*?)"?\)/) || [])[1];
+    const bgImg = bgSrc ? await load(bgSrc) : null;
+    if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+    // The figure that is always behind you: drawn before the girls, so it stands behind them.
+    ctx.filter = "blur(9px)";
+    ctx.fillStyle = "rgba(10,10,14,0.8)";
+    ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.36, 34, 42, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.86, 95, 175, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.filter = "none";
+    for (const el of document.querySelectorAll("#sprites .sprite")) {
+      const img = await load(el.src);
+      if (!img) continue;
+      const h = H * 0.98, w = h * img.width / img.height;
+      const x = parseFloat(el.style.left) / 100 * W - w / 2;
+      ctx.drawImage(img, x, H - h * 0.95, w, h);
+    }
+    // Black-and-white film look and a date stamp.
+    const data = ctx.getImageData(0, 0, W, H);
+    for (let i = 0; i < data.data.length; i += 4) {
+      const g = data.data[i] * 0.3 + data.data[i + 1] * 0.59 + data.data[i + 2] * 0.11;
+      const n = (Math.random() - 0.5) * 26;
+      data.data[i] = data.data[i + 1] = data.data[i + 2] = Math.max(0, Math.min(255, g * 1.05 + n));
+    }
+    ctx.putImageData(data, 0, 0);
+    ctx.fillStyle = "#ff9b3d";
+    ctx.font = "bold 22px monospace";
+    const d = new Date();
+    ctx.fillText(`'${String(d.getFullYear()).slice(2)} ${d.getMonth() + 1} ${d.getDate()}  ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`, W - 250, H - 24);
+    const url = c.toDataURL("image/png");
+    if (file && this.native) { try { await this.native.writeImage(file, url); } catch (e) { /* folder not writable */ } }
+
+    return new Promise(resolve => {
+      const el = document.createElement("div");
+      el.className = "polaroid-wrap";
+      el.innerHTML = `<div class="polaroid"><img alt="Rei's photo"><div class="polaroid-cap"></div></div>`;
+      $("img", el).src = url;
+      $(".polaroid-cap", el).textContent = this.game._fill(caption);
+      this.fx.appendChild(el);
+      el.addEventListener("click", () => { el.classList.add("out"); setTimeout(() => el.remove(), 500); resolve(); });
+    });
+  }
+
+  /** Called when the game is hidden or unfocused (tab switch, minimize, alt-tab), and again when it's back. */
+  _setAway(away) {
+    if (away === this._away) return;
+    this._away = away;
+    if (away) {
       this._hiddenAt = Date.now();
       if (this.watch.tab) {
         persist.set("tabouts", persist.data.tabouts + 1);
         document.title = `${this.game.name()}? come back`;
+        if (this.native && Date.now() - this._lastNotify > 90000) {
+          this._lastNotify = Date.now();
+          setTimeout(() => {
+            if (!this._away) return;
+            this.native.notify("The Office", `${this.game.name()}, please return to class.`);
+            this.native.flash();
+          }, 4000);
+        }
       }
       if (this._absenceResolve) this._absenceStart = Date.now();
     } else {
@@ -294,7 +433,11 @@ export class Meta {
       clicks: String(persist.data.clicks),
       tabouts: String(persist.data.tabouts),
       away: formatDuration(this.game.awayMs || away),
-      screen: `${window.innerWidth} by ${window.innerHeight}`
+      screen: `${window.innerWidth} by ${window.innerHeight}`,
+      osname: this.osName || "",
+      hesitated: (this.game.v.hesitate && this.game.v.hesitate.text) || "",
+      hesitatedSecs: (this.game.v.hesitate && String(this.game.v.hesitate.secs)) || "",
+      lastChoice: this.game.v.lastChoice || ""
     };
   }
 }

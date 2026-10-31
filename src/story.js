@@ -14,9 +14,9 @@
 import { persist } from "./persist.js";
 
 export const CAST = {
-  hina: { name: "Hina", color: "#f39a52", sprite: true, expressions: ["neutral", "happy", "sad", "worried", "blush", "corrupt"] },
-  rei: { name: "Rei", color: "#ad8fe6", sprite: true, expressions: ["neutral", "laugh", "annoyed", "shocked", "soft", "corrupt"] },
-  sayo: { name: "Sayo", color: "#82d3ca", sprite: true, expressions: ["neutral", "sad", "scared", "happy", "blank", "corrupt"] },
+  hina: { name: "Hina", color: "#f39a52", sprite: true, expressions: ["neutral", "happy", "sad", "worried", "blush", "corrupt", "lean", "lean_blush", "list", "list_sad"] },
+  rei: { name: "Rei", color: "#ad8fe6", sprite: true, expressions: ["neutral", "laugh", "annoyed", "shocked", "soft", "corrupt", "aim", "aim_shocked", "photo", "photo_soft"] },
+  sayo: { name: "Sayo", color: "#82d3ca", sprite: true, expressions: ["neutral", "sad", "scared", "happy", "blank", "corrupt", "draw", "draw_happy", "reach", "reach_blank"] },
   me: { name: "", color: "#e6e1d6" },
   office: { name: "THE OFFICE", color: "#e0483c" },
   k: { name: "K", color: "#9a9a9a" }
@@ -77,6 +77,65 @@ It was the least tired I've ever been.
   — Sayo
 `;
 
+const HINA_LIST_1 = `HINA'S SUMMER LIST
+
+ 1. Make a new friend before summer  [x]
+ 2. Sleep until noon
+ 3. Fireworks at the river
+ 4. Popsicles from the konbini by the bridge
+ 5. Learn to swim properly (for real this time)
+ 6. Watch the meteor shower from the roof
+ 7. Fireworks again (they're that good)
+ 8. Everyone at the beach on Saturday
+ 9. See the ocean
+10. Finish this list before summer ends
+11. Don't forget anybody
+12. Don't let K leave
+`;
+
+const HINA_LIST_2 = `HINA'S SUMMER LIST
+
+ 1. Make a new friend before summer  [x]
+ 2. Sleep until noon
+ 3. Fireworks at the river
+ 4. Popsicles from the konbini by the bridge
+ 5. Learn to swim properly (for real this time)
+ 6. Watch the meteor shower from the roof
+ 7. Fireworks again (they're that good)
+ 8. Everyone at the beach on Saturday
+ 9. See the ocean
+10. Finish this list before summer ends
+11. Don't forget anybody
+12. D̶o̶n̶'̶t̶ ̶l̶e̶t̶ ̶K̶ ̶l̶e̶a̶v̶e̶
+12. Let {name} leave.
+
+I counted {clicks} clicks today. Thank you for every one of them.
+`;
+
+const K_NOTE = `is someone there?
+
+i can hear the bell again. that means somebody pressed new game.
+
+if it's you: they're going to remember you now. that's how it starts.
+please be nicer to them than i was. i stayed too long and then i left without saying anything.
+
+the save slot is still mine. you can open it after the first ending. i left something in it.
+
+- K
+`;
+
+const BEACH_NOTE = `{name}!! IT'S SUMMER!!!
+
+We're at the beach. Rei brought six rolls of film. Sayo is drawing the sea and it actually looks like the sea.
+
+We closed the game for you so you wouldn't wait up. Please don't open it for a while. We'll be busy.
+
+Item thirteen: have the best summer ever. That's an order from your class rep.
+
+Love,
+Hina, Rei & Sayo
+`;
+
 export const SCRIPT = {
   /* =====================================================================
      ENTRY
@@ -106,7 +165,7 @@ export const SCRIPT = {
     "| I transferred to Hoshimi Academy three weeks ago. Not that it matters. In five days it's summer, and nobody makes friends in the last week.",
     "hina happy| Hey! Transfer student!",
     "| A girl with a sunflower clip in her hair drops into the seat in front of me, backwards, arms folded over the chair.",
-    "hina| I'm Hina. Amamiya Hina. Class rep, unofficial welcoming committee, professional walker-home-of-new-people.",
+    "hina lean| I'm Hina. Amamiya Hina. Class rep, unofficial welcoming committee, professional walker-home-of-new-people.",
     "hina neutral| Sensei said nobody's shown you around yet. Which is a crime. So! That's me now.",
     menu([
       { text: "Nice to meet you, Hina.", do: [love("hina"), "hina happy| See? Was that so hard? We're basically best friends now."] },
@@ -121,7 +180,7 @@ export const SCRIPT = {
     "| A camera shutter. Everything goes white for a second.",
     show("hina", "neutral", "left"),
     show("rei", "neutral", "right"),
-    "rei| Hold still. ...Okay, you blinked. Typical.",
+    "rei aim| Hold still. ...Okay, you blinked. Typical.",
     "hina happy| Rei! You can't just photograph people without asking!",
     "rei| I can, actually. That's how candids work.",
     "rei| Kurosawa Rei. Photography club. Which is me. I'm the photography club.",
@@ -174,7 +233,7 @@ export const SCRIPT = {
     bg("classroom"),
     music("day"),
     show("rei", "neutral", "center"),
-    "rei| Hey. Transfer. C'mere. Look at this.",
+    "rei photo| Hey. Transfer. C'mere. Look at this.",
     "| Rei slides a black-and-white print across my desk. It's the photo from yesterday: me, mid-blink, Hina's elbow in the corner.",
     "rei| Behind you.",
     fx("ghost", 1600, 62),
@@ -197,7 +256,7 @@ export const SCRIPT = {
     bg("classroom"),
     music("day"),
     show("hina", "happy", "center"),
-    "hina| Item seven on the summer list: fireworks. Item eight: everyone at the beach on Saturday.",
+    "hina list| Item seven on the summer list: fireworks. Item eight: everyone at the beach on Saturday.",
     "hina| You're coming, right, K?",
     fx("glitch", 300),
     "| ...K?",
@@ -207,6 +266,7 @@ export const SCRIPT = {
     "hina sad| I... that's so weird. I don't know anyone called K.",
     "| Hina laughs, but she keeps glancing at the list in her hands, like it might have changed while she wasn't looking.",
     log("hina", "who is K? why do i keep writing it"),
+    { t: "js", run: async g => { if (await g.meta.writeFile("hinas_summer_list.txt", HINA_LIST_1)) persist.set("wroteList", true); } },
     sfx("bell"),
     jump("a1_choice")
   ],
@@ -260,13 +320,13 @@ export const SCRIPT = {
     bg("riverside"),
     music("evening"),
     show("hina", "neutral", "center"),
-    "hina| Okay, don't laugh. This is the list.",
+    "hina list| Okay, don't laugh. This is the list.",
     "| It's a folded piece of notebook paper, soft and yellow at the creases. Much older than this week.",
     "hina| I found it in my desk. It's my handwriting. ...Mostly.",
     "| Item one: Make a new friend before summer. There's a check mark next to it, in fresh pen.",
     "| I read down. Fireworks. Popsicles. The ocean. And then, at the very bottom, in handwriting that isn't quite hers:",
     "| 12. Don't let K leave.",
-    "hina worried| I don't remember writing that one.",
+    "hina list_sad| I don't remember writing that one.",
     menu([
       { text: "Maybe you wrote it half asleep.", do: ["hina happy| Yeah! Totally. I write weird stuff half asleep. Once I wrote 'buy more moon'."] },
       { text: "Who's K?", do: [love("hina"), "hina sad| I don't know. But every time I read it, my chest hurts. Like I forgot someone really important."] }
@@ -276,7 +336,7 @@ export const SCRIPT = {
   hina3: [
     bg("riverside"),
     music("evening"),
-    show("hina", "blush", "center"),
+    show("hina", "lean_blush", "center"),
     "hina| {name}... can I ask you something?",
     "hina| Saturday, at the beach. Will you watch the fireworks with me? Just... us?",
     menu([
@@ -301,7 +361,7 @@ export const SCRIPT = {
     show("rei", "neutral", "center"),
     "| The darkroom smells like vinegar and is lit entirely red. Rei is rocking a tray of developer back and forth.",
     "rei| Close the door. Light kills everything in here.",
-    "rei| I only shoot film. Digital remembers too much. Film forgets on purpose.",
+    "rei photo| I only shoot film. Digital remembers too much. Film forgets on purpose.",
     menu([
       { text: "Why photography?", do: [love("rei"), "rei| Because things change when you're not looking. A photo's proof that they were really there once."] },
       { text: "Can I see your photos?", do: ["rei laugh| Bold. Fine. Don't touch the wet ones."] }
@@ -325,11 +385,11 @@ export const SCRIPT = {
   rei3: [
     bg("darkroom"),
     show("rei", "neutral", "center"),
-    "rei| Stand there. No, there. Closer. I'm not going to bite.",
+    "rei aim| Stand there. No, there. Closer. I'm not going to bite.",
     sfx("shutter"),
     fx("flash", "#ffdddd", 300),
     "| She develops it right away. The two of us float up out of the white paper.",
-    "rei soft| Look. We came out.",
+    "rei photo_soft| Look. We came out.",
     "rei neutral| ...Mostly. It's weird. Everyone else is always sharp. But I can never get you in focus.",
     "rei| You're blurred at the edges. Like you're not completely here.",
     menu([
@@ -348,7 +408,7 @@ export const SCRIPT = {
   sayo1: [
     bg("infirmary"),
     music(null),
-    show("sayo", "scared", "center"),
+    show("sayo", "draw", "center"),
     "| The infirmary is quiet. A girl with long silver hair is sitting on the far bed, sketching. She jumps when I come in.",
     "sayo neutral| Oh. It's you. ...I mean. Hello.",
     "sayo| I'm Sayo. Sorry. I don't get a lot of visitors.",
@@ -373,7 +433,7 @@ export const SCRIPT = {
       { text: "I believe you.", do: [love("sayo", 2), "sayo happy| ...Oh. Nobody has ever said that. Not once. Not in any of them."] },
       { text: "You should rest.", do: ["sayo sad| That's what you said last time too. It's okay. I know."] }
     ]),
-    "sayo neutral| Hold still. I want to remember your face this time."
+    "sayo draw_happy| Hold still. I want to remember your face this time."
   ],
   sayo3: [
     bg("infirmary"),
@@ -420,7 +480,7 @@ export const SCRIPT = {
     jump("a1_conf_sayo")
   ],
   a1_conf_hina: [
-    show("hina", "blush", "center"),
+    show("hina", "lean_blush", "center"),
     "hina| I crossed off everything on the list today. Except the last one.",
     "hina| Item thirteen. I just added it. It says... 'Tell {name}.'",
     "hina| I like you. Like, a lot. Like, summer-list-item-thirteen a lot.",
@@ -428,7 +488,7 @@ export const SCRIPT = {
     jump("a1_break")
   ],
   a1_conf_rei: [
-    show("rei", "soft", "center"),
+    show("rei", "photo_soft", "center"),
     "rei| I developed the last roll. You're sharp in all of them. Every single frame.",
     "rei| I think it's because I finally stopped looking at the thing behind you, and just looked at you.",
     "rei| ...That's the most embarrassing sentence I've ever said. Say something before I throw myself off this roof.",
@@ -439,7 +499,7 @@ export const SCRIPT = {
     show("sayo", "happy", "center"),
     "sayo| I'm not supposed to be up here. I'm not supposed to be anywhere on Fridays. But I wanted to see one sunset with you before...",
     "sayo| Before.",
-    "sayo| I'm glad it was you this time. I really am.",
+    "sayo reach| I'm glad it was you this time. I really am.",
     menu([{ text: "I like you, Sayo.", do: [] }, { text: "This time?", do: ["sayo sad| Don't. Not yet. Let me have the sunset."] }]),
     jump("a1_break")
   ],
@@ -473,11 +533,12 @@ export const SCRIPT = {
     clear,
     { t: "js", run: g => { document.getElementById("bg").innerHTML = ""; } },
     music("drone"),
-    show("sayo", "blank", "center"),
+    show("sayo", "reach_blank", "center"),
     "sayo| ...Did you see it this time?",
     "sayo| I'm sorry. It's going to be worse next time. It always gets worse once someone notices.",
     "sayo| Please come back anyway.",
     log("sayo", "it's not over. press 'again'. please."),
+    fx("writeFile", "K.txt", K_NOTE),
     end("rewind", "Summer Never Comes", "ENDING 1 OF 3")
   ],
 
@@ -488,6 +549,8 @@ export const SCRIPT = {
     set("sabotage", true),
     watch("tab", true),
     watch("idle", true),
+    watch("context", true),
+    fx("guardClose", "Hina: Wait! Please don't close it like K did. Not yet. Say goodbye properly first."),
     day("Monday", "Five days until summer break.", true),
     bg("classroom"),
     fx("mood", "wrong"),
@@ -499,7 +562,7 @@ export const SCRIPT = {
     "hina| Hey! Transfer...",
     "hina sad| ...Oh. {name}. You came back.",
     "| She isn't sitting backwards on the chair this time. She's standing very still, holding the summer list against her chest.",
-    "hina| I remember. Not everything. But I remember you. I remember the roof.",
+    "hina list_sad| I remember. Not everything. But I remember you. I remember the roof.",
     when((v, P, g) => g.awayMs > 3600000,
       ["hina| You were gone for {away}. Did you know that? It was dark the whole time. I counted."],
       ["hina| It's {clock} where you are, right? I can feel it now. The outside. It's like a draft under a door."]),
@@ -511,10 +574,19 @@ export const SCRIPT = {
     "| Rei holds up a print. It's this classroom, taken from exactly where I'm sitting. At the bottom of the photo there's a dark box with white words in it.",
     "| The words are the ones I'm reading right now.",
     watch("cursor", true),
-    "rei annoyed| And I can see your cursor, by the way. That little arrow. It's been moving around this whole time.",
+    "rei aim_shocked| And I can see your cursor, by the way. That little arrow. It's been moving around this whole time.",
     "rei| It's very distracting.",
+    when((v, P, g) => g.meta.native && g.meta.osName && g.meta.osName.toLowerCase() !== g.name().toLowerCase(),
+      ["rei photo| Also, your computer calls you '{osname}'. Is that your real name?", "rei photo_soft| ...It's okay. We'll keep calling you {name}. It's the name you gave us."]),
+    when((v, P, g) => !!g.meta.native, [
+      "hina neutral| We found a folder next to the game, by the way. Hoshimi Academy. We can leave things in there now.",
+      menu([
+        { text: "Open the folder", do: [{ t: "js", run: g => g.meta.reveal() }, "hina happy| It's small, right? It's all we have. Don't laugh."] },
+        { text: "Not now", do: ["hina| Okay. It'll be there. We'll be there."] }
+      ])
+    ]),
     show("sayo", "neutral", "center"),
-    "sayo| Thank you for coming back. I know it isn't fair to ask.",
+    "sayo reach| Thank you for coming back. I know it isn't fair to ask.",
     "sayo| We need to tell you about K.",
     "sayo| Before you, there was someone else. They played this week for four hundred and twelve hours.",
     "rei neutral| K. That's all the save file says. K.",
@@ -526,10 +598,13 @@ export const SCRIPT = {
     "| It knows my name. It said it out loud. Not on the screen. Out loud.",
     log("sayo", "it can't read the console. we can talk here. hi. it's me."),
     "sayo| It wants you to keep playing. Forever. It'll make us sweeter, or sadder, or whatever keeps you here.",
+    "hina neutral| You're going to pick the first one, by the way. You always pick the first one.",
     menu([
       { text: "How do I help you?", do: [love("sayo"), "sayo happy| ...You asked. K never asked."] },
-      { text: "Maybe I want to stay.", do: ["hina sad| ...That's what K said too. At first."] }
+      { text: "Maybe I want to stay.", tag: "K chose this", do: ["hina sad| ...That's what K said too. At first."] }
     ]),
+    when(v => v.lastChoiceIndex === 0, ["hina sad| ...See? First one."], ["hina worried| Huh. Not the first one. That's new. You're new."]),
+    when(v => v.hesitate, ["rei| You hovered over '{hesitated}' for {hesitatedSecs} seconds before you picked, by the way. I saw."]),
     "sayo neutral| It watches the least in the afternoons. After class. Come find each of us. Please.",
     sfx("bell"),
     set("day", 1),
@@ -562,7 +637,7 @@ export const SCRIPT = {
   r_hina: [
     bg("riverside"),
     music("wrong"),
-    show("hina", "happy", "center"),
+    show("hina", "list", "center"),
     "hina| Okay! Item one on the summer list! Make a new...",
     say("hina", "sad", "I'm so scared, {name}. It hurts every time it rewinds. It hurts so much.", { rewrite: "I'm so happy you're here! Summer is going to be perfect!" }),
     "hina worried| Did... did I just say that? That's not what I said.",
@@ -579,7 +654,11 @@ export const SCRIPT = {
     "| She unfolds the summer list. Item twelve, 'Don't let K leave', has been crossed out so hard the pen tore the paper.",
     "| Underneath it, in Hina's own handwriting, fresh:",
     "| 12. Let {name} leave.",
-    "hina sad| I wrote that this morning. I think it's the bravest thing I've ever written.",
+    "hina list_sad| I wrote that this morning. I think it's the bravest thing I've ever written.",
+    { t: "js", run: async g => { g.v.listGone = !!(persist.data.wroteList && !(await g.meta.fileExists("hinas_summer_list.txt"))); } },
+    when(v => v.listGone, ["hina sad| ...You threw away my list. The copy in the folder. It's okay. I wrote it again."]),
+    { t: "js", run: async g => { g.v.wroteList2 = await g.meta.writeFile("hinas_summer_list.txt", HINA_LIST_2); } },
+    when(v => v.wroteList2, ["hina happy| I fixed the copy in your folder too. So you have it. Out there, where it's safe."]),
     jump("r_next")
   ],
 
@@ -587,17 +666,20 @@ export const SCRIPT = {
     bg("darkroom"),
     fx("mood", "red"),
     music("drone"),
-    show("rei", "neutral", "center"),
+    show("rei", "photo", "center"),
     "rei| Door. Close it. ...Thanks.",
     "rei| I shot a roll of the outside today. Your side.",
     "rei| This print came out exactly {screen}. That's your screen, isn't it? I took a picture of your screen.",
-    "rei shocked| And in the dark parts of the glass there's a reflection. A face. Lit up blue.",
+    "rei aim_shocked| And in the dark parts of the glass there's a reflection. A face. Lit up blue.",
     "rei| That's you, isn't it? That's what you look like from in here.",
     "| I don't know what to say to that. Somewhere, in the room I'm actually sitting in, my own reflection is looking back at me from the screen.",
+    "rei aim| Hold still. One more. Of you, this time.",
+    { t: "js", run: g => g.meta.photo({ file: "rei_photo_of_you.png", caption: "{name}, {weekday}. (behind you. always behind you.)" }) },
+    when((v, P, g) => !!g.meta.native, ["rei photo| I left the print in your folder. rei_photo_of_you.png. Look at it later. Not now."]),
     "rei neutral| I finally got K in focus, too.",
     fx("ghost", 2200, 72),
     "| The blurred figure from every photo has turned around. It's facing the camera. Where its face should be, there's only the soft grey of an unexposed frame.",
-    "rei soft| K looks so tired.",
+    "rei photo_soft| K looks so tired.",
     "rei| You want to know the worst part? In K's last photo, K was smiling. Like they'd finally decided something.",
     "rei| So promise me something.",
     "rei| When you go... and you should go... don't do it the way K did. Don't just disappear. Say goodbye.",
@@ -613,13 +695,13 @@ export const SCRIPT = {
   r_sayo: [
     bg("infirmary"),
     music("hum"),
-    show("sayo", "neutral", "center"),
+    show("sayo", "draw", "center"),
     "sayo| You came. I was drawing you again.",
     "sayo| I figured it out. How the week ends.",
     "sayo| The week only ends when nobody is watching it.",
     "sayo| The Office counts every second you're here. If you look away, really away, not just closing your eyes, the clock stops. And if the clock stops long enough...",
     "sayo happy| ...maybe it's just summer.",
-    "sayo neutral| I wrote it all down. Please take it. I want part of me to be outside, even if it's just paper.",
+    "sayo reach| I wrote it all down. Please take it. I want part of me to be outside, even if it's just paper.",
     { t: "js", run: async g => {
       const took = await g.meta.letter("sayo_letter.txt", SAYO_LETTER(g.name()));
       if (took === "take") { g.v.tookLetter = true; persist.set("sayoLetter", true); }
@@ -649,6 +731,7 @@ export const SCRIPT = {
     "rei| Sayo's gone. Her desk is gone. There's no desk by the window. There's never been a desk by the window.",
     "hina sad| I remember her. I remember her, I remember her, I remem",
     fx("shake", 500),
+    fx("shakeWindow", 900, 18),
     "| Something is wrong with the",
     { t: "js", run: async g => {
       g.v.crash = await g.meta.crash();
@@ -656,6 +739,7 @@ export const SCRIPT = {
     when(v => v.crash === "close",
       ["hina sad| You tried to close it. ...It's okay. I wanted to, too.", "rei| It doesn't let you. It just turns the lights off and waits."],
       ["rei| You waited. Huh. Patient. Or stubborn."]),
+    fx("jolt", 0, 140),
     show("hina", "corrupt"),
     say("hina", "corrupt", "Hey! Transfer student!", { corrupt: true }),
     show("rei", "corrupt"),
@@ -687,8 +771,9 @@ export const SCRIPT = {
     "| The infirmary door is a different color than it was. Like it was painted from memory.",
     show("sayo", "corrupt", "center"),
     fx("static", 900),
-    show("sayo", "sad", "center"),
+    show("sayo", "reach_blank", "center"),
     "sayo| You came for me.",
+    show("sayo", "sad", "center"),
     "sayo| It put me back together wrong. I can feel the seams.",
     "sayo| But it can't make me forget the door. I drew it too many times.",
     show("hina", "sad", "left"),
@@ -715,7 +800,7 @@ export const SCRIPT = {
     "sayo| There are only a few ways out of a Friday.",
     noskip(true),
     menu([
-      { text: "Stay. Let's do the week again.", go: "r_detention" },
+      { text: "Stay. Let's do the week again.", tag: "K chose this 211 times", go: "r_detention" },
       { text: "Let summer start.", go: "r_goodbye" },
       { text: "K left something for you.", if: (v, P) => P.readK, go: "r_k_message" }
     ]),
@@ -735,12 +820,13 @@ export const SCRIPT = {
 
   r_goodbye: [
     noskip(true),
+    when(v => v.hesitate && /Stay/.test(v.hesitate.text), ["sayo sad| You hovered over 'Stay' for {hesitatedSecs} seconds. ...It's okay. I would have wanted to stay too."]),
     when(v => v.promise,
       ["rei soft| Hey. You promised. Say it properly.", menu([{ text: "Goodbye, Rei." }]), "rei soft| Goodbye, {name}. You came out sharp, in the end."],
       ["rei soft| Don't disappear on us. Say it. Properly.", menu([{ text: "Goodbye." }]), "rei soft| ...Yeah. Goodbye, {name}."]),
     "hina sad| Twelve. Let {name} leave.",
     "hina happy| Check.",
-    "sayo happy| Now look away.",
+    "sayo reach| Now look away.",
     "sayo| Don't watch. Summer can't start while someone is watching it.",
     "sayo| Go somewhere else for a while. Another tab. Another window. Your actual room. We'll be okay.",
     watch("idle", false),
@@ -764,6 +850,7 @@ export const SCRIPT = {
     "| I say: item thirteen, have the best summer ever. You have to do it too. That's an order from your class rep.",
     "| Please don't come back for a while. We'll be busy.",
     "| Love, H, R & S",
+    fx("writeFile", "gone_to_the_beach.txt", BEACH_NOTE),
     fx("credits", [
       "<b>AFTER CLASS</b>", "",
       "<i>Hina Amamiya</i>", "who counted", "",

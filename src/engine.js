@@ -72,9 +72,18 @@ export class Game {
 
   _bindUI() {
     $("#say").addEventListener("click", () => this._advanceClick());
-    $("#stage").addEventListener("click", () => this._advanceClick());
+    $("#stage").addEventListener("click", () => {
+      if ($("#game").classList.contains("ui-hidden")) return $("#game").classList.remove("ui-hidden");
+      this._advanceClick();
+    });
     window.addEventListener("keydown", e => {
       if ($("#screen").childElementCount) { if (e.key === "Escape") this.closeScreen(); return; }
+      if (/^[1-9]$/.test(e.key)) {
+        const b = document.querySelectorAll("#choices .choice")[Number(e.key) - 1];
+        if (b && $("#choices").style.display !== "none") { b.click(); return; }
+      }
+      if (e.key === "h" || e.key === "H") { $("#game").classList.toggle("ui-hidden"); return; }
+      if ($("#game").classList.contains("ui-hidden")) { $("#game").classList.remove("ui-hidden"); return; }
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); this._advanceClick(); }
     });
     $("#quick").addEventListener("click", e => {
@@ -129,7 +138,9 @@ export class Game {
     this.frames = [];
     this.meta.title(null);
     this.meta.mood(null);
-    ["tab", "idle", "cursor"].forEach(w => this.meta.setWatch(w, false));
+    ["tab", "idle", "cursor", "context"].forEach(w => this.meta.setWatch(w, false));
+    this.meta.guardClose(null);
+    this.meta.progress(-1);
     this.showUI(false);
     this._clearSprites();
     const P = persist.data;
@@ -194,6 +205,7 @@ export class Game {
       this.audio.sfx("error");
       return;
     }
+    if (this.meta.native) { this._recordTime(); return this.meta.native.quit(); }
     this.closeScreen();
     this.audio.stop();
     await this.meta.blackout(1800);
@@ -240,7 +252,8 @@ export class Game {
       const d = s.data;
       let label = d ? `${d.dayLabel || "Day " + d.v.day} · ${new Date(d.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "empty";
       if (this.v.sabotage && !d) label = ["DON'T", "PLEASE", "STAY", "SHE'S STILL IN HERE", "GO HOME", "K"][s.n - 1];
-      return `<button class="slot ${d ? "" : "empty"}" data-n="${s.n}"><span class="slot-n">${s.n}</span><span>${label}</span></button>`;
+      const thumb = d && d.v && d.v.bg ? ` style="--thumb:url(assets/bg/${d.v.bg}.webp)"` : "";
+      return `<button class="slot ${d ? "has-thumb" : "empty"}" data-n="${s.n}"${thumb}><span class="slot-n">${s.n}</span><span>${label}</span></button>`;
     }).join("");
     const p = this._screen(`<h2>${mode === "save" ? "Save" : "Load"}</h2>
       <div class="slots">
@@ -280,6 +293,8 @@ export class Game {
       <label>Music <input type="range" min="0" max="1" step="0.05" value="${s.music}" data-s="music"></label>
       <label>Sound &amp; voices <input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-s="sfx"></label>
       <label class="check"><input type="checkbox" ${s.voice ? "checked" : ""} data-s="voice"> Character voices and announcements</label>
+      ${this.meta.native ? `<div class="row left"><button data-a="full">Toggle fullscreen</button><button data-a="folder">Open the game folder</button></div>` : ""}
+      <p class="keys">Space / Enter: next &middot; 1&ndash;9: choose &middot; H: hide text box &middot; Esc: close menus</p>
       <div class="row"><button data-a="close">Close</button></div>`);
     p.addEventListener("input", e => {
       const k = e.target.dataset.s;
@@ -298,7 +313,12 @@ export class Game {
       persist.save();
       this.audio.applyVolumes();
     });
-    p.addEventListener("click", e => { if (e.target.dataset.a === "close") fromTitle ? this.title() : this.closeScreen(); });
+    p.addEventListener("click", e => {
+      const a = e.target.dataset.a;
+      if (a === "close") fromTitle ? this.title() : this.closeScreen();
+      if (a === "full") this.meta.native.fullscreen(!this._full).then(f => { this._full = f; });
+      if (a === "folder") this.meta.reveal();
+    });
   }
 
   openHistory() {
@@ -333,6 +353,7 @@ export class Game {
     this.meta.mood(this.v.mood || null);
     this.meta.setWatch("tab", !!this.v.sabotage);
     this.meta.setWatch("idle", !!this.v.sabotage);
+    this.meta.setWatch("context", !!this.v.sabotage);
     this._interrupt();
     this._run();
   }
@@ -445,6 +466,8 @@ export class Game {
       else if (c.expr) this._show(who, c.expr);
     }
     Object.entries(this.sprites).forEach(([k, el]) => el.classList.toggle("dim", !!who && k !== who && !!info && !!info.sprite));
+    const speaker = who && this.sprites[who];
+    if (speaker) { speaker.classList.remove("talk"); void speaker.offsetWidth; speaker.classList.add("talk"); }
 
     let display = who === "me" ? this.name() : info ? info.name : "";
     if (c.as) display = this._fill(c.as);
@@ -524,18 +547,39 @@ export class Game {
       items.forEach((it, idx) => {
         const b = document.createElement("button");
         b.className = "choice" + (it.cls ? " " + it.cls : "");
-        b.textContent = this._fill(it.text);
+        b.innerHTML = `<span class="choice-key">${idx + 1}</span><span class="choice-text"></span>`;
+        b.querySelector(".choice-text").textContent = this._fill(it.text);
+        if (it.tag && (!it.tagIf || it.tagIf(this.v, persist.data))) {
+          const tag = document.createElement("span");
+          tag.className = "choice-tag";
+          tag.textContent = this._fill(it.tag);
+          b.appendChild(tag);
+        }
+        // How long the cursor rests on each option. The girls notice when you hesitate.
+        b._hover = 0;
+        b.addEventListener("pointerenter", () => { b._enter = performance.now(); });
+        b.addEventListener("pointerleave", () => { if (b._enter) b._hover += performance.now() - b._enter; b._enter = 0; });
         b.addEventListener("click", async e => {
           e.stopPropagation();
           this.audio.sfx("click");
           persist.data.clicks++;
           // The Office decides for you.
           if (c.hijack) {
-            wrap.querySelectorAll(".choice").forEach(x => { x.textContent = this._fill(c.hijack); x.classList.add("hijacked"); });
+            wrap.querySelectorAll(".choice-text").forEach(x => { x.textContent = this._fill(c.hijack); x.parentElement.classList.add("hijacked"); });
             await this.meta.glitch(400);
             await sleep(700);
           }
-          this.history.push({ who: this.name(), text: "» " + b.textContent });
+          const picked = b.querySelector(".choice-text").textContent;
+          let longest = null;
+          wrap.querySelectorAll(".choice").forEach(x => {
+            if (x === b) return;
+            const ms = x._hover + (x._enter ? performance.now() - x._enter : 0);
+            if (ms > 1200 && (!longest || ms > longest.ms)) longest = { ms, text: x.querySelector(".choice-text").textContent };
+          });
+          this.v.hesitate = longest ? { text: longest.text, secs: Math.round(longest.ms / 100) / 10 } : null;
+          this.v.lastChoice = picked;
+          this.v.lastChoiceIndex = idx;
+          this.history.push({ who: this.name(), text: "» " + picked });
           const chosen = c.hijack && c.forceIndex != null ? items[c.forceIndex] : it;
           if (chosen.go) this._jump(chosen.go);
           else if (chosen.doId) this.frames.push({ id: chosen.doId, i: 0 });
@@ -613,8 +657,12 @@ export class Game {
     this._dayLabel = c.text;
     const el = document.createElement("div");
     el.className = "daycard";
-    el.innerHTML = `<div class="daycard-title"></div><div class="daycard-sub"></div>`;
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const n = days.indexOf(c.text);
+    const dots = n < 0 ? "" : days.map((d, i) => `<i class="${i < n ? "past" : i === n ? "now" : ""}"></i>`).join("");
+    el.innerHTML = `<div class="daycard-line"></div><div class="daycard-title"></div><div class="daycard-sub"></div><div class="daycard-dots">${dots}</div>`;
     $(".daycard-title", el).textContent = this._fill(c.text);
+    if (n >= 0) this.meta.progress((n + 1) / 5);
     $(".daycard-sub", el).textContent = this._fill(c.sub || "");
     if (c.wrong) el.classList.add("wrong");
     $("#fx").appendChild(el);
@@ -632,10 +680,16 @@ export class Game {
     this.showUI(false);
     const el = document.createElement("div");
     el.className = "ending-card";
-    el.innerHTML = `<div class="ending-kind">${c.kind || "ENDING"}</div><div class="ending-name"></div><button>Return to title</button>`;
+    this.meta.progress(-1);
+    this.meta.guardClose(null);
+    const closes = c.id === "summer" && this.meta.native;
+    el.innerHTML = `<div class="ending-kind">${c.kind || "ENDING"}</div><div class="ending-name"></div>
+      ${closes ? `<p class="ending-note">They're closing up for summer. The game will close itself.</p>` : ""}
+      <button>${closes ? "Close" : "Return to title"}</button>`;
     $(".ending-name", el).textContent = c.name;
     $("#fx").appendChild(el);
     await new Promise(r => $("button", el).addEventListener("click", r, { once: true }));
+    if (closes) { this._recordTime(); return this.meta.native.quit(); }
     el.remove();
     this.frames = [];
     this.title();
