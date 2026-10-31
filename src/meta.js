@@ -80,8 +80,8 @@ export class Meta {
 
   /* ---------- the Office ---------- */
 
-  /** A PA announcement: chime, red banner, synthesized voice. */
-  async pa(text, { broken = false } = {}) {
+  /** A PA announcement: chime, red banner, and the Office's recorded voice (synthesized as a fallback). */
+  async pa(text, { broken = false, template = null } = {}) {
     const audio = this.game.audio;
     audio.sfx(broken ? "chime_down" : "chime");
     const el = document.createElement("div");
@@ -90,7 +90,8 @@ export class Meta {
     $(".pa-text", el).textContent = text;
     this.fx.appendChild(el);
     await sleep(1300);
-    await audio.speak(text, broken ? { pitch: 0.2, rate: 0.7 } : {});
+    const played = template && await audio.announce(template, this.vars(), { broken });
+    if (!played) await audio.speak(text, broken ? { pitch: 0.2, rate: 0.7 } : {});
     await sleep(400);
     el.classList.add("out");
     setTimeout(() => el.remove(), 600);

@@ -1,6 +1,6 @@
 /**
- * audio.js — All sound is generated live with Web Audio (no audio files):
- * looping music, sound effects, per-character text blips, and the Office's synthesized voice.
+ * audio.js — Music, sound effects and text blips are generated live with Web Audio.
+ * The only audio files are the Office's recorded PA lines (assets/voice/office).
  */
 
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -49,6 +49,36 @@ const VOICES = {
   sayo: { freq: 330, wave: "sine", gain: 0.07 },
   k: { freq: 180, wave: "sawtooth", gain: 0.02 }
 };
+
+/** Clip lookup key. Must match key() in tools/make_office_voice.py. */
+const officeKey = t => t.replace(/^[\s.,;:!?]+|[\s,;:]+$/g, "").replace(/\s+/g, " ").toLowerCase();
+
+const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+  "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = { 2: "twenty", 3: "thirty", 4: "forty", 5: "fifty" };
+const numberWords = n => n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? "-" + ONES[n % 10] : "");
+
+/** "4:32 PM" -> ["four", "thirty-two", "p.m."]; null if it doesn't look like a time. */
+function clockWords(s) {
+  const m = s.match(/(\d{1,2}):(\d{2})\s*([ap])?/i);
+  if (!m) return null;
+  const h = +m[1], min = +m[2], words = [numberWords(h)];
+  if (min === 0) words.push("o'clock");
+  else if (min < 10) words.push("oh", numberWords(min));
+  else words.push(numberWords(min));
+  if (m[3]) words.push(m[3].toLowerCase() === "a" ? "a.m." : "p.m.");
+  return words;
+}
+
+/** "2 hours and 14 minutes" -> ["two", "hours", "and", "fourteen", "minutes"]; null past 59 hours. */
+function durationWords(s) {
+  const words = [];
+  for (const w of s.split(/\s+/)) {
+    if (/^\d+$/.test(w)) { if (+w > 59) return null; words.push(numberWords(+w)); }
+    else words.push(w.toLowerCase());
+  }
+  return words;
+}
 
 export class AudioSys {
   constructor(settings) {
@@ -306,7 +336,97 @@ export class AudioSys {
     o.start(now); o.stop(now + 0.09);
   }
 
-  /** The Office speaks with the browser's own synthesized voice. Resolves when it finishes. */
+  /* ---------- the Office ---------- */
+
+  /**
+   * Plays a PA announcement from the recorded clips in assets/voice/office
+   * (made by tools/make_office_voice.py). Fixed words are recordings; {clock} and
+   * {playtime} are spliced from recorded numbers like a station announcement; the
+   * player's name falls back to the browser's synthesized voice.
+   * Resolves false if the clips can't be used, so the caller can fall back to speak().
+   */
+  async announce(template, vars, { broken = false } = {}) {
+    if (!this.settings.voice) return true;
+    if (!this.ctx) return false;
+    const clips = await this._officeClips();
+    if (!clips) return false;
+    const plan = [];
+    for (const tok of template.split(/(\{\w+\})/)) {
+      const v = tok.match(/^\{(\w+)\}$/);
+      if (!v) { if (officeKey(tok)) plan.push(officeKey(tok)); continue; }
+      const value = String(vars[v[1]] ?? "");
+      const words = v[1] === "clock" ? clockWords(value) : v[1] === "playtime" ? durationWords(value) : null;
+      if (words) plan.push(...words);
+      else plan.push({ say: value });
+    }
+    if (plan.some(p => typeof p === "string" && !clips[p])) return false;
+    let buffers;
+    try {
+      buffers = await Promise.all(plan.map(p => typeof p === "string" ? this._clip(clips[p]) : null));
+    } catch (e) { return false; }
+    const out = this._paChain(broken);
+    for (let i = 0; i < plan.length; i++) {
+      if (buffers[i]) await this._playClip(buffers[i], out, broken ? 0.8 : 1);
+      else await this.speak(plan[i].say, broken ? { pitch: 0.2, rate: 0.7 } : {});
+      await new Promise(r => setTimeout(r, 50));
+    }
+    setTimeout(() => out.disconnect(), 2500);
+    return true;
+  }
+
+  _officeClips() {
+    if (!this._office) {
+      this._office = fetch("assets/voice/office/manifest.json")
+        .then(r => r.ok ? r.json() : null).then(m => m && m.clips).catch(() => null);
+    }
+    return this._office;
+  }
+
+  _clip(file) {
+    this._buffers = this._buffers || {};
+    if (!this._buffers[file]) {
+      this._buffers[file] = fetch("assets/voice/office/" + file)
+        .then(r => r.arrayBuffer()).then(b => this.ctx.decodeAudioData(b));
+    }
+    return this._buffers[file];
+  }
+
+  _playClip(buffer, out, rate) {
+    return new Promise(resolve => {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buffer;
+      src.playbackRate.value = rate;
+      src.connect(out);
+      src.onended = resolve;
+      src.start();
+    });
+  }
+
+  /** A ceiling speaker in a big room: narrow band, a little grit, a long echo. */
+  _paChain(broken) {
+    const ctx = this.ctx;
+    const input = ctx.createGain();
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = broken ? 500 : 320;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = broken ? 2400 : 3800;
+    const drive = ctx.createWaveShaper();
+    const k = broken ? 18 : 3, curve = new Float32Array(1024);
+    for (let i = 0; i < curve.length; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(k * x) / Math.tanh(k); }
+    drive.curve = curve;
+    const len = Math.floor(ctx.sampleRate * 1.6), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.5);
+    }
+    const room = ctx.createConvolver(); room.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = broken ? 0.55 : 0.32;
+    const dry = ctx.createGain(); dry.gain.value = 1.1;
+    input.connect(hp); hp.connect(lp); lp.connect(drive);
+    drive.connect(dry); dry.connect(this.sfxBus);
+    drive.connect(room); room.connect(wet); wet.connect(this.sfxBus);
+    return input;
+  }
+
+  /** The browser's own synthesized voice. Resolves when it finishes. */
   speak(text, { pitch = 0.55, rate = 0.88 } = {}) {
     return new Promise(resolve => {
       const synth = window.speechSynthesis;

@@ -5,10 +5,10 @@ glitch, then a sweet end card where the music box is very slightly out of tune.
 
 usage: python itch/make_trailer.py <pa_voice.wav> <out.mp4>
   Stills come from itch/screenshots and itch/trailer-stills (made by capture_shots.mjs).
-  pa_voice.wav: the announcement, spoken. On Windows:
-    Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
-    $s.SelectVoice("Microsoft Zira Desktop"); $s.Rate = -1; $s.SetOutputToWaveFile("pa.wav")
-    $s.Speak("Summer break begins in five days. Please enjoy your last week."); $s.Dispose()
+  pa_voice.wav: the announcement, "Summer break begins in five days. Please enjoy your last
+    week.", recorded with the same Kokoro voice as the game (af_heart, speed 0.9; see
+    tools/make_office_voice.py) and run through a PA filter:
+    ffmpeg -i raw.wav -af "highpass=f=320,lowpass=f=3800,acrusher=bits=12:mix=0.15,aecho=0.8:0.6:70|160|290:0.32|0.2|0.12,apad=pad_dur=0.8" pa.wav
 Needs numpy, Pillow and imageio-ffmpeg.
 """
 import os, sys, wave, subprocess

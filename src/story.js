@@ -35,7 +35,7 @@ const set = (k, v) => ({ t: "set", k, v });
 const love = (k, n = 1) => ({ t: "add", k, n });
 const pset = (k, v) => ({ t: "pset", k, v });
 const fx = (fn, ...args) => ({ t: "fx", fn, args });
-const pa = (text, broken = false) => ({ t: "js", run: g => g.meta.pa(g._fill(text), { broken }) });
+const pa = (text, broken = false) => ({ t: "js", run: g => g.meta.pa(g._fill(text), { broken, template: text }) });
 const day = (text, sub, wrong = false) => ({ t: "day", text, sub, wrong });
 const menu = (items, opts = {}) => ({ t: "menu", items, ...opts });
 const when = (fn, then, otherwise) => ({ t: "if", when: fn, then, else: otherwise });
