@@ -82,13 +82,14 @@ The game only ever writes inside its own folder, and it never deletes anything.
 | `src/story.js` | **The whole script.** Lines look like `"hina happy\| Hello {name}!"`; commands are helper calls such as `pa()`, `fx()`, `menu()` and `when()`. |
 | `src/engine.js` | Script runner, dialogue box, menus, save/load, settings, backlog, title screen |
 | `src/meta.js` | Every fourth-wall effect and the real-world variables (`{clock}`, `{away}`, `{clicks}`…) |
-| `src/audio.js` | Procedural music (`day`, `evening`, `wrong`, `musicbox`, `drone`, `hum`), sound effects, voice blips and the Office's speech synthesis. There are no audio files. |
+| `src/audio.js` | Procedural music (`day`, `evening`, `wrong`, `musicbox`, `drone`, `hum`), sound effects, voice blips, and the Office's PA voice: recorded clips played through a ceiling-speaker filter, with the time and play time spliced from recorded numbers. Only the player's name uses the browser's speech synthesis. |
+| `assets/voice/office/` | The Office's lines, recorded with Kokoro (Apache-2.0 neural TTS) by `tools/make_office_voice.py`. Re-run it after changing any `pa(...)` line in the script. |
 | `electron/main.js`, `electron/preload.js` | Desktop shell and the small native bridge (`window.native`) |
 | `src/persist.js` | Saves and cross-playthrough memory, all under the `ac2_` localStorage prefix |
 | `assets/sprites/<girl>/<expr>.webp` | 6 expressions per girl, including a `corrupt` one |
 | `assets/bg/*.webp` | classroom, hallway, rooftop, riverside, infirmary, darkroom, beach |
 
-All art was generated for this project with AssetHub (canvas "After Class - meta horror VN art"). The music is generated live in the browser.
+All art was generated for this project with AssetHub (canvas "After Class - meta horror VN art"). The music is generated live in the browser. The Office's voice is Kokoro (af_heart), an open-weight Apache-2.0 TTS model, so it's fine to use in the paid game.
 
 **Testing tip:** `__afterClass.persist.forgetAll()` in the console resets every playthrough. `__afterClass.game.start("r_start")` jumps straight to Act 2.
 

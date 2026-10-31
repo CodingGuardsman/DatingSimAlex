@@ -9,7 +9,7 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 | `cover-630x500.png` | **Cover image**. Look for the person standing in the sea. Regenerate both images with `python itch/make_cover.py .` |
 | `banner-960x300.png` | Page banner under "Edit theme". Someone is standing at the end of the pier |
 | `screenshots/01–08.png` | **Screenshots**, in this order. All are 1920×1080 and all cute, apart from Rei's line in 08 ("Like you're not completely here."). Recapture them with `itch/capture_shots.mjs` |
-| `trailer.mp4` | **Trailer**, 46 s, 1080p. Uploaded (Unlisted) at https://youtu.be/vregDEIfGGo and set as "Gameplay video or trailer". Rebuild it with `itch/make_trailer.py` |
+| `trailer.mp4` | **Trailer**, 46 s, 1080p. Uploaded (Unlisted) at https://youtu.be/v8Juf_RfwQA and set as "Gameplay video or trailer". Rebuild it with `itch/make_trailer.py` |
 
 ## Project fields
 - **Title:** After Class
