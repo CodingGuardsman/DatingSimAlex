@@ -2,7 +2,7 @@
  * meta.js — The fourth-wall effects. Each one is called deliberately from the story script;
  * nothing here fires at random. Watchers (tab, idle, cursor) only run while the script turns them on.
  */
-import { persist, formatDuration } from "./persist.js";
+import { persist, formatDuration, formatShort } from "./persist.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -64,10 +64,32 @@ export class Meta {
     await sleep(ms);
     el.remove();
   }
-  /** Toggle a persistent mood filter on the whole game: "wrong", "red", or null. */
+  /** Toggle a persistent mood filter on the whole game: "wrong", "red", "still", or null. */
   mood(name) {
-    this.root.classList.remove("mood-wrong", "mood-red");
+    this.root.classList.remove("mood-wrong", "mood-red", "mood-still");
     if (name) this.root.classList.add("mood-" + name);
+    this._mood = name;
+    this.syncUncanny();
+  }
+
+  /**
+   * The UI is cute until something is wrong. Then every piece of it (the text box, the hearts,
+   * the menus, the cursor) turns into its uncanny twin. On during "wrong"/"red" moods and all of Act 2.
+   */
+  syncUncanny() {
+    const on = ["wrong", "red", "still"].includes(this._mood) || !!this.game.v.sabotage;
+    const was = this.root.classList.contains("uncanny");
+    this.root.classList.toggle("uncanny", on);
+    if (on && !was) this.pulse("ui-flip", 700);
+  }
+
+  /** The UI shows its other face for a moment, then pretends it didn't. */
+  async flicker(ms = 260) {
+    if (this.root.classList.contains("uncanny")) return;
+    this.root.classList.add("uncanny");
+    this.game.audio.sfx("glitch");
+    await sleep(ms);
+    this.root.classList.remove("uncanny");
   }
 
   _layer(style) {
@@ -86,7 +108,7 @@ export class Meta {
     audio.sfx(broken ? "chime_down" : "chime");
     const el = document.createElement("div");
     el.className = "pa-banner" + (broken ? " broken" : "");
-    el.innerHTML = `<div class="pa-head">◆ ANNOUNCEMENT FROM THE OFFICE</div><div class="pa-text"></div>`;
+    el.innerHTML = `<div class="pa-head">${broken ? "◆ ANNOUNCEMENT FROM THE OFFICE ◆" : "♪ ding-dong · school announcement ♪"}</div><div class="pa-text"></div>`;
     $(".pa-text", el).textContent = text;
     this.fx.appendChild(el);
     await sleep(1300);
@@ -108,6 +130,70 @@ export class Meta {
     this.fx.appendChild(el);
     setTimeout(() => el.classList.add("out"), ms);
     setTimeout(() => el.remove(), ms + 1200);
+  }
+
+  /**
+   * The phone: a group chat that plays out message by message. msgs are [who, text] pairs;
+   * who is a CAST id, "me", or anything else (shown as an unknown number). Resolves when put away.
+   */
+  phone({ title = "Summer Squad ☀", msgs = [], note = "" } = {}) {
+    const cast = this.game.cast;
+    return new Promise(async resolve => {
+      const el = document.createElement("div");
+      el.className = "phone-wrap";
+      el.innerHTML = `<div class="phone"><div class="phone-top"><span class="phone-time"></span><span>●●● ▮</span></div>
+        <div class="phone-head"><b></b><small></small></div><div class="phone-msgs"></div>
+        <div class="phone-foot">tap to put your phone away</div></div>`;
+      $(".phone-time", el).textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      $(".phone-head b", el).textContent = this.game._fill(title);
+      $(".phone-head small", el).textContent = note;
+      this.fx.appendChild(el);
+      const box = $(".phone-msgs", el);
+      let fast = this.game.mode === "skip";
+      el.addEventListener("click", () => { if (done) close(); else fast = true; });
+      let done = false;
+      const close = () => { el.classList.add("out"); setTimeout(() => el.remove(), 350); resolve(); };
+      for (const [who, text] of msgs) {
+        const info = cast[who];
+        const row = document.createElement("div");
+        const mine = who === "me";
+        row.className = "bubble-row" + (mine ? " me" : "") + (who === "k" ? " k" : "") + (text === null ? " deleted" : "");
+        row.style.setProperty("--who", mine ? "var(--pink)" : info ? info.color : "#9a9a9a");
+        if (!mine) {
+          const name = document.createElement("span");
+          name.className = "bubble-name";
+          name.textContent = info ? (info.name || who) : "unknown number";
+          row.appendChild(name);
+        }
+        const b = document.createElement("div");
+        b.className = "bubble";
+        if (!fast && !mine) {
+          b.innerHTML = `<i class="typing"><b></b><b></b><b></b></i>`;
+          row.appendChild(b); box.appendChild(row); box.scrollTop = box.scrollHeight;
+          await sleep(Math.min(1500, 450 + (text || "").length * 18));
+        }
+        b.textContent = text === null ? "This message was deleted." : this.game._fill(text);
+        if (!b.parentElement) { row.appendChild(b); box.appendChild(row); }
+        box.scrollTop = box.scrollHeight;
+        this.game.audio.sfx("pop");
+        if (!fast) await sleep(mine ? 500 : 350);
+      }
+      done = true;
+      el.classList.add("done");
+    });
+  }
+
+  /** A little card in the corner: something was added to the scrapbook. */
+  memoryToast(title, book) {
+    const el = document.createElement("div");
+    el.className = "memo-toast";
+    const icon = { list: "✓", photo: "▣", sketch: "✎", other: "✿" }[book] || "♥";
+    el.innerHTML = `<span class="memo-icon">${icon}</span><span><small>${this.root.classList.contains("uncanny") ? "it kept this one too" : "added to your scrapbook ♡"}</small><b></b></span>`;
+    $("b", el).textContent = title;
+    this.fx.appendChild(el);
+    this.game.audio.sfx("sparkle");
+    setTimeout(() => el.classList.add("out"), 3200);
+    setTimeout(() => el.remove(), 3800);
   }
 
   /** A silhouette that stands in the background for a moment. K. */
@@ -285,7 +371,7 @@ export class Meta {
    * Rei takes a photo of the current scene: a polaroid built from the background and sprites on screen,
    * with something standing behind you. In the .exe the print is also saved to the game folder.
    */
-  async photo({ file = null, caption = "" } = {}) {
+  async photo({ file = null, caption = "", ghost = true, color = false } = {}) {
     this.game.audio.sfx("shutter");
     await this.flash("#fff", 400);
     const W = 960, H = 540;
@@ -298,11 +384,13 @@ export class Meta {
     const bgImg = bgSrc ? await load(bgSrc) : null;
     if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
     // The figure that is always behind you: drawn before the girls, so it stands behind them.
-    ctx.filter = "blur(9px)";
-    ctx.fillStyle = "rgba(10,10,14,0.8)";
-    ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.36, 34, 42, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.86, 95, 175, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.filter = "none";
+    if (ghost) {
+      ctx.filter = "blur(9px)";
+      ctx.fillStyle = "rgba(10,10,14,0.8)";
+      ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.36, 34, 42, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.86, 95, 175, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.filter = "none";
+    }
     for (const el of document.querySelectorAll("#sprites .sprite")) {
       const img = await load(el.src);
       if (!img) continue;
@@ -312,7 +400,7 @@ export class Meta {
     }
     // Black-and-white film look and a date stamp.
     const data = ctx.getImageData(0, 0, W, H);
-    for (let i = 0; i < data.data.length; i += 4) {
+    if (!color) for (let i = 0; i < data.data.length; i += 4) {
       const g = data.data[i] * 0.3 + data.data[i + 1] * 0.59 + data.data[i + 2] * 0.11;
       const n = (Math.random() - 0.5) * 26;
       data.data[i] = data.data[i + 1] = data.data[i + 2] = Math.max(0, Math.min(255, g * 1.05 + n));
@@ -438,7 +526,13 @@ export class Meta {
       osname: this.osName || "",
       hesitated: (this.game.v.hesitate && this.game.v.hesitate.text) || "",
       hesitatedSecs: (this.game.v.hesitate && String(this.game.v.hesitate.secs)) || "",
-      lastChoice: this.game.v.lastChoice || ""
+      lastChoice: this.game.v.lastChoice || "",
+      titletime: formatShort(persist.data.titleMs),
+      titleloops: String(Math.max(1, Math.floor(persist.data.titleMs / 43000))),
+      quithovers: String(persist.data.quitHovers),
+      caught: String(persist.data.caught),
+      memcount: String(this.game.memCount()),
+      memtotal: String(this.game.memTotal())
     };
   }
 }

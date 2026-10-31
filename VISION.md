@@ -52,6 +52,36 @@ Every effect is placed in the script deliberately. Nothing fires at random.
 | Naming yourself "K" | Name entry |
 | The true ending requires you to stop watching | Ending |
 
+## The two faces of the UI
+Everything looks like a sweet pastel romance by default: notebook-paper menus with washi tape, a polka-dot text box with a heart that bounces when a line is done, heart-shaped day dots, a cheerful yellow "ding-dong" PA notice and a little heart cursor. When the story goes wrong (the Thursday repeat, the rewind, all of Act 2, and the space behind the menu), `#game.uncanny` swaps every piece for its twin:
+- The hearts become eyes and ✕ marks, and the cursor turns dark with an eye on it.
+- The rounded corners go square, the name tags tear, and the menus turn dark.
+- The quick-menu labels change: Log → remember, Auto → stay, Skip → don't, Save → save us, Load → rewind.
+
+Wednesday's "K?" slip flashes the uncanny UI for a split second and then pretends it didn't happen. The UI goes back to cute on the beach.
+
+## Minor characters and the week
+Act 1 days now have a homeroom or morning scene, a group lunch, an afternoon with one girl, and a group-chat phone scene at night. The minor characters never remember anything, so in Act 2 they repeat their Act 1 lines word for word:
+- **Kanda-sensei**, the tired homeroom teacher. A K is rubbed out of her register.
+- **Daichi**, Hina's neighbor, who has a napkin map of the beach.
+- **Nurse Mori**, whose sign-in book has only Sayo's name in it, every page dated this week.
+- **Mrs. Okada** at the konbini, who always asks "same as yesterday?"
+
+## The Summer Scrapbook (player effort)
+There are 35 memories in four books: Hina's summer list, Rei's photos, Sayo's sketchbook, and keepsakes. Each one comes from a choice, an afternoon visit or a discovery. For example, Hina whispers that Daichi always throws rock, and choosing Paper checks off "Beat Daichi at something".
+
+One week can't hold every memory, and the scrapbook survives "Forget them" or "Start over", so collecting everything takes several playthroughs. The payoffs:
+- The girls quote your count.
+- Every ending card shows it.
+- With 30 or more memories, the true ending leaves a color photo of all three girls, in focus.
+
+## Behind the title screen (the big meta trick)
+The title screen is a real place:
+- **Act 1:** if you leave the menu alone for 40 seconds, Sayo's face slips for a fraction of a second. Sayo's sketchbook has a drawing of "three girls in a row, smiling at nobody, five rectangles under them".
+- **After the first ending:** Sayo draws a pencil "door" button next to the menu, and the girls hold their pose only while you're moving. After about 11 seconds of stillness they stop smiling, and Sayo reaches toward the screen. Handwriting appears: "we can hear the menu music the whole time." Any movement snaps them back instantly.
+- **The door:** clicking it swings the menu open like a double door. Behind it, the three girls stand in the dark on tape marks. They quote how long you've left the menu open, how many times you hovered over Quit, and how often you nearly caught them out of pose. Act 2 brings it up afterwards.
+- **In the free demo:** the door works too, so the demo ends on a hook.
+
 ## Free demo vs full game
 The web version on GitHub Pages is a **free demo**. It contains all of Act 1, up to the first ending, "Summer Never Comes", and then shows an "End of the free demo" screen that links to the store. Act 2, K's save and the other two endings are only in the paid `.exe`. The store link lives in `src/config.js`. Add `?full` to the web URL to test the full game in a browser.
 

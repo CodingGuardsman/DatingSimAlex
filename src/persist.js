@@ -31,6 +31,11 @@ const DEFAULTS = {
   readK: false,       // opened the K save slot
   sayoLetter: false,
   summer: false,      // true ending reached: the girls are on vacation
+  titleMs: 0,         // time the title screen has been left open: they stand there, posed, the whole time
+  quitHovers: 0,      // times the cursor rested on Quit
+  caught: 0,          // times the player moved and caught them out of pose on the title screen
+  behind: false,      // went through Sayo's door behind the menu
+  mem: {},            // the scrapbook: memories kept, by id. Survives forgetAll().
   settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true }
 };
 
@@ -49,7 +54,8 @@ export const persist = {
   /** Wipe the girls' memory of you. Used by the "Detention" ending's reset and the settings screen. */
   forgetAll() {
     Object.keys(localStorage).filter(k => k.startsWith(PREFIX)).forEach(k => localStorage.removeItem(k));
-    this.data = { ...DEFAULTS, settings: this.data.settings };
+    // The scrapbook is the one thing that survives. They forget; it doesn't.
+    this.data = { ...DEFAULTS, settings: this.data.settings, mem: this.data.mem || {} };
     this.save();
   }
 };
@@ -76,6 +82,12 @@ export function listSlots() {
   const out = [];
   for (let i = 1; i <= SLOT_COUNT; i++) out.push({ n: i, data: loadSlot(i) });
   return out;
+}
+
+/** Like formatDuration, but says seconds when it's under a minute. */
+export function formatShort(ms) {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s} second${s === 1 ? "" : "s"}` : formatDuration(ms);
 }
 
 export function formatDuration(ms) {

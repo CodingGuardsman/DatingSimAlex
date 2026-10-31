@@ -47,7 +47,11 @@ const VOICES = {
   hina: { freq: 640, wave: "triangle", gain: 0.05 },
   rei: { freq: 420, wave: "square", gain: 0.025 },
   sayo: { freq: 330, wave: "sine", gain: 0.07 },
-  k: { freq: 180, wave: "sawtooth", gain: 0.02 }
+  k: { freq: 180, wave: "sawtooth", gain: 0.02 },
+  daichi: { freq: 250, wave: "square", gain: 0.022 },
+  sensei: { freq: 300, wave: "triangle", gain: 0.045 },
+  nurse: { freq: 540, wave: "sine", gain: 0.06 },
+  okada: { freq: 400, wave: "triangle", gain: 0.045 }
 };
 
 /** Clip lookup key. Must match key() in tools/make_office_voice.py. */
@@ -107,14 +111,25 @@ export class AudioSys {
       fb.gain.value = 0.28;
       const wet = this.ctx.createGain();
       wet.gain.value = 0.22;
-      this.musicBus.connect(this.master);
-      this.musicBus.connect(delay);
+      // Music runs through a lowpass so it can be heard "through the wall" behind the menu.
+      this.musicFilter = this.ctx.createBiquadFilter();
+      this.musicFilter.type = "lowpass";
+      this.musicFilter.frequency.value = 20000;
+      this.musicBus.connect(this.musicFilter);
+      this.musicFilter.connect(this.master);
+      this.musicFilter.connect(delay);
       delay.connect(fb); fb.connect(delay);
       delay.connect(wet); wet.connect(this.master);
       this.sfxBus.connect(this.master);
       this.applyVolumes();
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
+  }
+
+  /** Muffle the music, as if it were playing in another room. */
+  muffle(on) {
+    if (!this.ctx) return;
+    this.musicFilter.frequency.setTargetAtTime(on ? 420 : 20000, this.ctx.currentTime, 0.4);
   }
 
   applyVolumes() {
@@ -312,6 +327,19 @@ export class AudioSys {
         break;
       case "click":
         tone(1200, 0, 0.03, 0.06, "square");
+        break;
+      case "pop": // a chat message arriving
+        tone(880, 0, 0.08, 0.12); tone(1320, 0.05, 0.1, 0.08);
+        break;
+      case "sparkle": // a memory kept
+        [1568, 2093, 2637].forEach((f, i) => tone(f, i * 0.07, 0.35, 0.06));
+        break;
+      case "pencil": // Sayo drawing something
+        for (let i = 0; i < 9; i++) noise(i * 0.16, 0.12, 0.08, 4200 + Math.random() * 1500);
+        break;
+      case "door": // a heavy door, slowly
+        tone(70, 0, 1.6, 0.35, "sawtooth"); noise(0, 1.4, 0.12, 400);
+        for (let i = 0; i < 8; i++) tone(220 + Math.random() * 60, 0.2 + i * 0.12, 0.1, 0.04, "square");
         break;
       case "error":
         tone(330, 0, 0.18, 0.2, "square"); tone(262, 0.2, 0.3, 0.2, "square");
