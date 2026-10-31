@@ -8,3 +8,4 @@ setx OPENROUTER_API_KEY sk-or-v1-0f.txt
 dist/
 test-results/
 game-files/
+itch/*.zip

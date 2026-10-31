@@ -39,6 +39,7 @@ function createWindow() {
     minHeight: 560,
     title: "After Class",
     backgroundColor: "#07060a",
+    icon: path.join(ROOT, "assets", "icon.png"),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),

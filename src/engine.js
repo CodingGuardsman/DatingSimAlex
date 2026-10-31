@@ -144,6 +144,7 @@ export class Game {
     this.showUI(false);
     this._clearSprites();
     const P = persist.data;
+    if (!P.warned) return this._contentWarning();
     const summer = P.summer;
     const detention = !summer && P.endings.includes("detention") && P.endings[P.endings.length - 1] === "detention";
     const rerun = P.runs > 0;
@@ -197,6 +198,21 @@ export class Game {
     };
     scr.addEventListener("pointerdown", startMusic, { once: true });
     if (this.audio.ctx) startMusic();
+  }
+
+  /** Shown once, before the first title screen. */
+  _contentWarning() {
+    const p = this._screen(`<h2>Before you play</h2>
+      <p>After Class is a psychological horror game disguised as a dating sim. It is not suitable for children or for anyone easily disturbed.</p>
+      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, sudden loud sounds, and moments where the game talks about you and your computer${this.meta.native ? ", and leaves files in its own folder" : ""}.</p>
+      <p class="hint">The game never touches anything outside its own folder.</p>
+      <div class="row"><button data-a="ok">I understand</button></div>`, "center warning");
+    p.addEventListener("click", e => {
+      if (e.target.dataset.a !== "ok") return;
+      this.audio.unlock();
+      persist.set("warned", true);
+      this.title();
+    });
   }
 
   async _quit() {
