@@ -25,6 +25,13 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 - **Community:** Comments
 - **Visibility:** Draft first. Switch to Public once payments are set up and you've checked the page.
 
+## Page theme (Edit theme)
+Pastel, so the page looks like an ordinary romance.
+- Background `#ffe6f0`, inner background `#fffafc`, text `#5b3d4c`, links `#e2487f`
+- Header text `#ff6fa3`, buttons `#ff78aa`
+- Font: Nunito (body and headers)
+- Banner: `banner-960x300.png`, centered
+
 ## Description (paste into the description box)
 The page is meant to look like an ordinary, sweet dating sim. The unease comes from small details, never from the word "horror". The honest content warning stays at the bottom, the way other games in this genre do it.
 
