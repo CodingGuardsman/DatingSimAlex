@@ -52,6 +52,8 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 >
 > Play it once. Then play it again.
 >
+> **Free demo:** play all of the first act in your browser at https://codingguardsman.github.io/DatingSimAlex/
+>
 > **Estimated playtime:** about 1–2 hours to see every ending.
 
 ## Content warnings (paste under the description, and tick "Contains flashing lights" if offered)
@@ -84,6 +86,6 @@ itch's command-line uploader lets you push new versions without using the websit
 
 ## Before you set it to Public
 - [ ] **Payments:** itch.io → Settings → *Payment settings*. Choose how you get paid (PayPal or direct deposit) and complete the **tax interview**. Paid games can't be bought until this is done.
-- [ ] **The free web version:** the full game is currently free at codingguardsman.github.io/DatingSimAlex. Decide whether to take it down, or keep it as a free demo.
+- [ ] **Link the free demo to the store:** once the page exists, put its address in `src/config.js` (`STORE_URL`, replacing `YOUR-USERNAME`) and push. The demo's last screen then gets a "Get the full game on itch.io" button. Until then it says "Search for After Class on itch.io".
 - [ ] Play through the downloaded zip once on a clean machine, or at least from a fresh folder.
 - [ ] Check the page on mobile using itch's preview.

@@ -52,6 +52,9 @@ Every effect is placed in the script deliberately. Nothing fires at random.
 | Naming yourself "K" | Name entry |
 | The true ending requires you to stop watching | Ending |
 
+## Free demo vs full game
+The web version on GitHub Pages is a **free demo**. It contains all of Act 1, up to the first ending, "Summer Never Comes", and then shows an "End of the free demo" screen that links to the store. Act 2, K's save and the other two endings are only in the paid `.exe`. The store link lives in `src/config.js`. Add `?full` to the web URL to test the full game in a browser.
+
 ## Desktop build (After Class.exe)
 Run `npm start` to play it as a desktop app, and `npm run dist` to build a portable `dist/After Class.exe`. The web version on GitHub Pages keeps working, and these extras only switch on in the .exe:
 

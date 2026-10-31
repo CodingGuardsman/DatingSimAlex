@@ -6,6 +6,7 @@ import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js";
 import { AudioSys } from "./audio.js";
 import { Meta } from "./meta.js";
 import { SCRIPT, CAST } from "./story.js";
+import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -162,7 +163,7 @@ export class Game {
     }
     const sub = summer ? "closed for summer vacation"
       : detention ? "Monday. Again."
-      : rerun ? `welcome back, ${this.name()}` : "a visual novel";
+      : rerun ? `welcome back, ${this.name()}` : IS_DEMO ? "a visual novel · free demo" : "a visual novel";
     const buttons = summer
       ? `<button data-t="visit">Visit anyway</button><button data-t="settings">Settings</button><button data-t="forget">Forget them</button>`
       : `<button data-t="new">${rerun ? "Again" : "New Game"}</button><button data-t="load">Load</button><button data-t="settings">Settings</button><button data-t="quit">Quit</button>`;
@@ -384,6 +385,8 @@ export class Game {
   /* =================== script runner =================== */
 
   start(label) {
+    // The free demo ends after the first ending: the rerun, K's save and summer are in the full game.
+    if (IS_DEMO && (/^(r_|k_save|visit)/.test(label) || (label === "start" && persist.data.runs > 0))) return this._demoEnd();
     this.v = this._freshVars();
     this.meta.mood(null);
     this.history = [];
@@ -708,6 +711,32 @@ export class Game {
     if (closes) { this._recordTime(); return this.meta.native.quit(); }
     el.remove();
     this.frames = [];
+    if (IS_DEMO) return this._demoEnd();
     this.title();
+  }
+
+  /** End of the free demo: points the player to the full game. */
+  _demoEnd() {
+    this.frames = [];
+    this.showUI(false);
+    this._clearSprites();
+    this.meta.mood("wrong");
+    this._setBg("classroom");
+    this.audio.play("wrong");
+    const link = STORE_READY
+      ? `<a class="buy" href="${STORE_URL}" target="_blank" rel="noopener">Get the full game on itch.io</a>`
+      : `<p class="hint">Search for “After Class” on itch.io.</p>`;
+    const p = this._screen(`<h2>End of the free demo</h2>
+      <p>In the full game, the week starts again.</p>
+      <p><b>This time, they remember you.</b></p>
+      <p class="hint">Two acts · three endings · the save slot that isn't yours · a desktop version that leaves things in its own folder</p>
+      <div class="row">${link}</div>
+      <div class="row"><button data-a="back">Back to title</button></div>`, "center demo-end");
+    this.meta.console("sayo", "you can't stay here. the rest of us are somewhere else now.");
+    p.addEventListener("click", e => {
+      if (e.target.dataset.a !== "back") return;
+      this.meta.mood(null);
+      this.title();
+    });
   }
 }

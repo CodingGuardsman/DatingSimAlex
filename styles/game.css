@@ -362,3 +362,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes titlein { from { opacity: 0; translate: -50% 30px; } }
 .title-buttons button { transition: background .15s, color .15s, border-color .15s, transform .15s; }
 .title-buttons button:hover { transform: translateY(-2px); }
+
+/* free demo */
+.panel a.buy { display: inline-block; padding: .85rem 1.8rem; border-radius: 999px; background: var(--accent); color: #1a1420; font-weight: 700; text-decoration: none; letter-spacing: .06em; box-shadow: 0 10px 30px rgba(243,154,82,.35); transition: transform .15s; }
+.panel a.buy:hover { transform: translateY(-2px); }
+.panel.demo-end p { line-height: 1.6; }
