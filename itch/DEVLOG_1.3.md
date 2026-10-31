@@ -1,4 +1,4 @@
-# Devlog draft: After Class 1.3 ♡
+# Devlog: After Class 1.3 ♡ (posted 2026-11-01: https://stagworks.itch.io/after-class/devlog/1743346)
 
 **Title:** After Class 1.3 — a longer week, a summer scrapbook, and new friends ♡
 **Type:** Update
