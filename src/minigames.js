@@ -4,7 +4,7 @@
  * Office's computer. Each one returns a promise, so the script just awaits it (see mini() in script-helpers.js).
  * The words live in the story files; these only know how to run.
  */
-import { persist } from "./persist.js";
+import { persist } from "./persist.js?v=2.0.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

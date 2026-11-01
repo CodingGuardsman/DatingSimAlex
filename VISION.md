@@ -165,6 +165,8 @@ All art was generated for this project with AssetHub (canvas "After Class - meta
 
 Menus now accept `timeout`, `timeoutGo` and `timerLabel`. The `start` label routes to Act 3 once `act3` is set.
 
+**Releasing:** every relative `import` in `src/` and the two links in `index.html` carry `?v=<version>`, so the web demo never mixes cached modules from an old build with new ones. Bump all of them together (e.g. `sed -i 's/?v=2.0.0/?v=2.0.1/g' src/*.js index.html`). Each file must use the same query everywhere, or the browser loads two copies of it.
+
 **Testing tip:** `__afterClass.game.start("a3_start")` jumps to the second term. `a3_room0` goes to the computer, `a3_thu` to the hearing and `a3_roof` to the final choice. Set `__afterClass.persist.data.summer = true` first if you want the title states to match.
 
 ## Next ideas

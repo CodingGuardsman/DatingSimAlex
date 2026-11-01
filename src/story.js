@@ -13,12 +13,12 @@
  * Act 3 (story_act3.js): the second term. You came back after they asked you not to.
  * Behind the title: after the first ending, Sayo draws a door next to the menu.
  */
-import { persist } from "./persist.js";
+import { persist } from "./persist.js?v=2.0.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
   watch, log, noskip, end, phone, credits, js, mini, visit, title, call
-} from "./script-helpers.js";
-import { ACT3, ACT3_MEMORIES } from "./story_act3.js";
+} from "./script-helpers.js?v=2.0.0";
+import { ACT3, ACT3_MEMORIES } from "./story_act3.js?v=2.0.0";
 
 export const CAST = {
   hina: { name: "Hina", color: "#f39a52", sprite: true, expressions: ["neutral", "happy", "sad", "worried", "blush", "corrupt", "lean", "lean_blush", "list", "list_sad"] },

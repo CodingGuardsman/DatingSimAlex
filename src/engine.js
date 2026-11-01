@@ -2,12 +2,12 @@
  * engine.js — Runs the story script and owns every screen: title, name entry, dialogue,
  * menus, save/load, settings and the backlog.
  */
-import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js";
-import { AudioSys } from "./audio.js";
-import { Meta } from "./meta.js";
-import { Minigames } from "./minigames.js";
-import { SCRIPT, CAST, MEMORIES, ENDINGS } from "./story.js";
-import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js";
+import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.0.0";
+import { AudioSys } from "./audio.js?v=2.0.0";
+import { Meta } from "./meta.js?v=2.0.0";
+import { Minigames } from "./minigames.js?v=2.0.0";
+import { SCRIPT, CAST, MEMORIES, ENDINGS } from "./story.js?v=2.0.0";
+import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.0.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

@@ -10,11 +10,11 @@
  *
  * Same line format as story.js.
  */
-import { persist } from "./persist.js";
+import { persist } from "./persist.js?v=2.0.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
   watch, log, noskip, end, phone, credits, js, mini, office, achieve, title
-} from "./script-helpers.js";
+} from "./script-helpers.js?v=2.0.0";
 
 export const ACT3_MEMORIES = [
   { id: "l15", book: "list", title: "Second term, item 1: Let it end" },
