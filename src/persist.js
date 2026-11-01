@@ -36,13 +36,34 @@ const DEFAULTS = {
   caught: 0,          // times the player moved and caught them out of pose on the title screen
   behind: false,      // went through Sayo's door behind the menu
   mem: {},            // the scrapbook: memories kept, by id. Survives forgetAll().
+  lastEnding: "",     // the most recent ending, in the order they were seen
+  item13: "",         // what the player wrote at the bottom of Hina's summer list
+  survey: "",         // the comment the player left on the Office's five-star survey
+  door: "",           // the door the player drew for Sayo, as an SVG path in a 120x170 box
+  loads: 0,           // times a save was loaded. Taking something back is still something they remember.
+  forgets: 0,         // times "Forget them" was used. Survives forgetAll(): Sayo doesn't forget.
+  legacy: false,      // played a 1.x build before this one
+  version: "",
+  act3: false,        // the second term has started
+  restoredK: false,   // K's files came back out of the Office's recycle bin
+  graduated: false,   // the final ending: the title becomes a graduation photo
   settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true }
 };
+
+export const VERSION = "2.0.0";
 
 export const persist = {
   data: { ...DEFAULTS, ...read(PERSIST_KEY, {}) },
 
   save() { write(PERSIST_KEY, this.data); },
+
+  /** Note which build this is. Anyone who played before 2.0 gets remembered as having been here before the update. */
+  stampVersion() {
+    const d = this.data;
+    if (!d.version && (d.runs > 0 || d.firstPlayed)) d.legacy = true;
+    d.version = VERSION;
+    this.save();
+  },
 
   set(key, value) { this.data[key] = value; this.save(); },
 
@@ -54,8 +75,10 @@ export const persist = {
   /** Wipe the girls' memory of you. Used by the "Detention" ending's reset and the settings screen. */
   forgetAll() {
     Object.keys(localStorage).filter(k => k.startsWith(PREFIX)).forEach(k => localStorage.removeItem(k));
-    // The scrapbook is the one thing that survives. They forget; it doesn't.
-    this.data = { ...DEFAULTS, settings: this.data.settings, mem: this.data.mem || {} };
+    // The scrapbook is the one thing that survives. They forget; it doesn't. (Neither does Sayo.)
+    const d = this.data;
+    this.data = { ...DEFAULTS, settings: d.settings, mem: d.mem || {}, door: d.door, item13: d.item13,
+      forgets: (d.forgets || 0) + 1, legacy: d.legacy, version: d.version, warned: d.warned };
     this.save();
   }
 };

@@ -119,6 +119,21 @@ export class Meta {
     setTimeout(() => el.remove(), 600);
   }
 
+  /**
+   * The Office's idea of a reward: an achievement popup, the kind that keeps people playing.
+   * The girls hate them.
+   */
+  achievement(text) {
+    const el = document.createElement("div");
+    el.className = "achieve";
+    el.innerHTML = `<span class="achieve-icon">★</span><span><small>ACHIEVEMENT UNLOCKED</small><b></b></span>`;
+    $("b", el).textContent = this.game._fill(text);
+    this.fx.appendChild(el);
+    this.game.audio.sfx("sparkle");
+    setTimeout(() => el.classList.add("out"), 3600);
+    setTimeout(() => el.remove(), 4300);
+  }
+
   /** Whisper: a line of text that appears at the edge of the screen and fades. */
   toast(text, ms = 3500) {
     const el = document.createElement("div");
@@ -532,7 +547,18 @@ export class Meta {
       quithovers: String(persist.data.quitHovers),
       caught: String(persist.data.caught),
       memcount: String(this.game.memCount()),
-      memtotal: String(this.game.memTotal())
+      memtotal: String(this.game.memTotal()),
+      item13: persist.data.item13 || "something you never wrote down",
+      survey: persist.data.survey || "(no comment)",
+      loads: String(persist.data.loads || 0),
+      forgets: String(persist.data.forgets || 0),
+      defy: String(this.game.v.defy || 0),
+      endings: String(persist.data.endings.length),
+      year: String(now.getFullYear()),
+      date: now.toLocaleDateString([], { month: "long", day: "numeric" }),
+      wanted: this.game.v.wanted || persist.data.wanted || "",
+      after: persist.data.after || "go outside",
+      outside: persist.data.outside || ""
     };
   }
 }

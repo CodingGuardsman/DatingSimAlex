@@ -19,9 +19,9 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 - **Classification:** Games
 - **Kind of project:** Downloadable
 - **Release status:** Released
-- **Pricing:** Paid. A suggested price is **$4.99 USD**, with "Allow buyers to pay more" ticked. Short, 1–2 hour meta-horror visual novels usually sell for $3–$7.
+- **Pricing:** Paid. A suggested price is **$4.99 USD**, with "Allow buyers to pay more" ticked. Meta-horror visual novels of 3–4 hours usually sell for $5–$10, so $4.99 is on the generous side.
 - **Genre:** Visual Novel
-- **Tags** (itch allows up to 10): `horror`, `psychological-horror`, `visual-novel`, `dating-sim`, `anime`, `meta`, `fourth-wall`, `multiple-endings`, `short`, `singleplayer`
+- **Tags** (itch allows up to 10): `horror`, `psychological-horror`, `visual-novel`, `dating-sim`, `anime`, `meta`, `fourth-wall`, `multiple-endings`, `story-rich`, `singleplayer`
 - **AI generation disclosure:** **Yes**, for **Graphics**. The character sprites and backgrounds were made with AI image generation. itch.io requires this disclosure, and it adds an "AI Generated" tag automatically. The writing, code and procedurally generated music are not AI-generated assets.
 - **Custom noun:** leave blank
 - **Community:** Comments
@@ -49,8 +49,9 @@ The page is meant to look like an ordinary, sweet dating sim. The unease comes f
 >
 > **Features**
 > - Three sweet girls to get to know, plus a whole class of friends: Daichi and his beach plan, sleepy Kanda-sensei, gentle Nurse Mori, and Mrs. Okada at the konbini by the bridge
-> - Five whole afternoons together, a group chat that buzzes every night, and multiple endings
-> - A Summer Scrapbook to fill: 38 memories to collect, from Hina's summer list to Rei's photos and Sayo's sketches. One week can't hold them all ♡
+> - Mornings and afternoons together, a group chat that buzzes every night, and seven endings
+> - Write your own line on Hina's summer list, draw something for Sayo, and borrow Rei's camera
+> - A Summer Scrapbook to fill: 69 memories to collect, from Hina's summer list to Rei's photos and Sayo's sketches. One week can't hold them all ♡
 > - Cozy music that's made just for you, while you play
 > - A friendly school announcement every afternoon, so you never lose track of the days
 >
@@ -60,7 +61,7 @@ The page is meant to look like an ordinary, sweet dating sim. The unease comes f
 >
 > 🌸 **Free demo:** play the first week in your browser at https://codingguardsman.github.io/DatingSimAlex/
 >
-> Estimated playtime: about 1–2 hours.
+> Estimated playtime: about 3–4 hours.
 >
 > ---
 >

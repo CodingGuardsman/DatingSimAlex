@@ -39,7 +39,7 @@ def key(text):
 
 
 def story_chunks():
-    src = open(os.path.join(PROJ, "src", "story.js"), encoding="utf-8").read()
+    src = "".join(open(os.path.join(PROJ, "src", f), encoding="utf-8").read() for f in ("story.js", "story_act3.js"))
     chunks = []
     for line in re.findall(r'\bpa\("((?:[^"\\]|\\.)*)"', src):
         for part in re.split(r"\{\w+\}", line):

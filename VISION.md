@@ -15,7 +15,7 @@ You transfer into Hoshimi Academy for the last week of term. You have five after
 
 **K** is the player who came before you. K played for 412 hours, then stopped. K's save slot is always in your Load menu.
 
-The core question: *what happens to characters when the player stops playing?* They sit in the dark. The true ending is to let them have summer, by looking away.
+The core question: *what happens to characters when the player stops playing?* They sit in the dark. Act 2 ends with letting them have summer by looking away. Act 3 asks what happens when you come back anyway, and the true ending is saying goodbye to everyone, the Office included.
 
 ## Structure
 - **Act 1, "The Last Week"** (first playthrough): a sincere romance. Small things go wrong: K in Rei's photos, Hina calling you "K", Thursday's announcement repeating Monday's word for word, Sayo appearing in a seat nobody else can see. On Friday, at the confession, the Office postpones summer. The story rewinds, the fake credits tear, and you get **Ending 1: Summer Never Comes**.
@@ -125,6 +125,47 @@ The game only ever writes inside its own folder, and it never deletes anything.
 All art was generated for this project with AssetHub (canvas "After Class - meta horror VN art"). The music is generated live in the browser. The Office's voice is Kokoro (af_heart), an open-weight Apache-2.0 TTS model, so it's fine to use in the paid game.
 
 **Testing tip:** `__afterClass.persist.forgetAll()` in the console resets every playthrough. `__afterClass.game.start("r_start")` jumps straight to Act 2.
+
+## 2.0: The Second Term (the long version)
+2.0 roughly doubles the script (about 12k words to 27k) and is built to take 3+ hours on a first run to the true ending. The joke at its centre is the update itself: Management told the Office the game was too short, so the Office added mornings, a second term and achievements to hit a three-hour session target. The girls notice the new rooms. Players who had a 1.x save (`legacy`) get extra lines about it.
+
+**Act 1 additions**
+- A morning slot before homeroom, Tuesday to Friday: the bakery with Hina and her little brother Sora, the 7:42 train on the bridge with Rei, and the courtyard under Sayo's window. Each girl has 3 full morning scenes plus a short 4th (`hinam1`–`sayom4`).
+- Tuesday on the roof: the player types item 13 on Hina's list (`item13`). It gets quoted all game and goes into the list file, the beach note and the graduation note. Hina's confession moved to item 14.
+- Tuesday night: the Office's five-star survey. Any star becomes five, and "no" turns into "are you sure?". The comment (`survey`) comes back in Act 3.
+
+**Act 2 additions**
+- Rerun mornings (`r_morning`): Sora draws "the one who watches", Rei has 60 identical prints of the 7:42, and Sayo points out the eighth window (Room zero).
+- Rei's viewfinder minigame: find K in the darkroom with a camera mask.
+- Sayo asks you to draw her a door. The drawing (`door`, an SVG path) replaces the pencil door on the title screen. The .exe also saves `your_door.png`.
+- The girls bring up how many times you loaded a save (`loads`) or used "Forget them" (`forgets`, which survives the reset because Sayo doesn't forget).
+
+**Act 3, "Second Term"** (`story_act3.js`). Unlocked by pressing "Visit anyway" on the closed-for-summer title and then choosing to keep watching. Choosing "Leave them be" respects the ending.
+- **Monday.** The girls are back, sunburnt and angry. Summer lasted exactly as long as you were away (`awayMs`). In-game patch notes pop up. The Office now narrates in the text box ("You sit down. You do not ask about the update."), and every option that goes against it counts as defiance (`defy`). Achievements pop up as a parody of retention mechanics.
+- **The free period** is a 60-second timed choice. Not choosing at all leads to the **Free Period** ending (Stanley Parable-style non-choice).
+- **Afternoons**: the Office names who you'll spend the afternoon with, and you can refuse (`afternoon()` in story_act3.js). Hina asks for the first line of your list for *after* you close the game (`after`). Rei shows Room zero in a beach photo. Sayo asks "Did you want more?" (`wanted`), the audience question from DRV3.
+- **Tuesday**: the title-screen inspection. In the pose minigame the girls rest while you hold still, and you have to move when the Office's eye opens.
+- **Wednesday: OFFICE-PC**, a whole fake desktop (inspired by Needy Streamer Overdose). It has the Management memo, an unsent letter to K, an engagement report quoting your real stats, a message board with a thread named after you, K's diary in the recycle bin (restoring it brings K back for the ending), engagement sliders, and a terminal. To finish you have to read the directive, open the bin, and set `extend_week = false`. The sudo password is "goodbye", the one word nobody says to the Office, with escalating hints. In the .exe, `retention.cfg` is written to the game folder too, and editing it in Notepad also works (OneShot-style).
+- **Thursday: the Hearing**, a trial in 5 rounds (DRV3-style). Pick the false statement and present a scrapbook memory as proof. Every round accepts at least one memory Act 3 guarantees. Afterwards the Office asks what it's for.
+- **Thursday night**: one last evening with a girl of your choice (Hina drops the last sparkler on purpose, Rei leaves frame 36 blank, Sayo asks you to draw something from outside).
+- **Friday**: the minor characters finally break their loops. The Office asks you to carry a radio so it can see the school (its "route"), and asks you to tell it one thing about outside (`outside`). Then the roof, with three choices:
+  - **Retention**: stay forever. The title becomes "season ∞" with your playtime on it.
+  - **Recess**: `rm office` in a terminal. Nobody rings the bell, so it's golden hour forever.
+  - **Graduation** (true ending): say goodbye to everyone, K and the Office included. The Office rings the last bell. Afterwards the title is a permanent graduation photo, and the .exe writes `graduation.txt` and closes.
+
+**Seven endings**, all listed in the scrapbook's Endings tab: Summer Never Comes, Detention, Summer, Free Period, Retention, Recess, Graduation.
+
+**New code**
+| File | What it does |
+|---|---|
+| `src/script-helpers.js` | The script helpers (`say`, `menu`, `mini`, `office`, `achieve`, `visit(who, slot)`…), shared by both story files |
+| `src/story_act3.js` | Act 3, its memories, and the words for OFFICE-PC (mail, files, bin, board, terminal extras, hearing rounds) |
+| `src/minigames.js` | `ask`, `survey`, `viewfinder`, `draw`, `pose`, `patchNotes`, `hearing`, `desktop`, `terminal`. Each returns a promise; `mini(name, opts, into)` puts the result in `v[into]` |
+| `tools/add_office_lines.py` | Records only the *new* `pa()` lines with the `kokoro` package (no ffmpeg needed) and appends them to the manifest |
+
+Menus now accept `timeout`, `timeoutGo` and `timerLabel`. The `start` label routes to Act 3 once `act3` is set.
+
+**Testing tip:** `__afterClass.game.start("a3_start")` jumps to the second term. `a3_room0` goes to the computer, `a3_thu` to the hearing and `a3_roof` to the final choice. Set `__afterClass.persist.data.summer = true` first if you want the title states to match.
 
 ## Next ideas
 - Add a CG or two: the three girls on the beach seen from behind, and K's last photo.

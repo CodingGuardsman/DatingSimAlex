@@ -5,7 +5,8 @@
 import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js";
 import { AudioSys } from "./audio.js";
 import { Meta } from "./meta.js";
-import { SCRIPT, CAST, MEMORIES } from "./story.js";
+import { Minigames } from "./minigames.js";
+import { SCRIPT, CAST, MEMORIES, ENDINGS } from "./story.js";
 import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -17,10 +18,13 @@ export class Game {
   constructor() {
     this.sessionStart = Date.now();
     this.awayMs = persist.data.lastPlayed ? Date.now() - persist.data.lastPlayed : 0;
+    persist.stampVersion();
     if (!persist.data.firstPlayed) persist.set("firstPlayed", Date.now());
     this.audio = new AudioSys(persist.data.settings);
     this.cast = CAST;
+    this.memories = MEMORIES;
     this.meta = new Meta(this);
+    this.mini = new Minigames(this);
     this.history = [];
     this.v = this._freshVars();
     this.frames = [];
@@ -172,13 +176,18 @@ export class Game {
     this._clearSprites();
     const P = persist.data;
     if (!P.warned) return this._contentWarning();
-    const summer = P.summer;
-    const detention = !summer && P.endings.includes("detention") && P.endings[P.endings.length - 1] === "detention";
-    const rerun = P.runs > 0;
+    const last = P.lastEnding || P.endings[P.endings.length - 1];
+    const graduated = P.graduated;
+    // After the summer ending the school is closed. Coming back anyway is what opens the second term.
+    const summer = P.summer && !P.act3 && !graduated;
+    const term2 = P.act3 && !graduated;
+    const detention = !P.summer && last === "detention";
+    const rerun = P.runs > 0 && !summer && !graduated;
     // The rerun title looks the same at first glance. It isn't.
-    $("#game").classList.toggle("uncanny", rerun && !summer);
+    $("#game").classList.toggle("uncanny", rerun);
+    if (graduated) return this._graduatedTitle();
 
-    this._setBg(summer ? "beach" : "classroom");
+    this._setBg(summer ? "beach" : term2 && last === "recess" ? "rooftop" : "classroom");
     const scr = $("#screen");
     let girls = "";
     if (!summer && !detention) {
@@ -189,22 +198,26 @@ export class Game {
         <img data-g="hina" src="assets/sprites/hina/happy.webp" style="left:50%">
       </div>`;
     }
-    const sparkles = rerun && !summer ? "" : `<div class="title-sparkles">${Array.from({ length: 16 }, (_, i) =>
+    const sparkles = rerun ? "" : `<div class="title-sparkles">${Array.from({ length: 16 }, (_, i) =>
       `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i * 1.7) % 11}s;animation-duration:${9 + (i % 5) * 2}s">${"♥✿✦♡"[i % 4]}</i>`).join("")}</div>`;
     const sub = summer ? "closed for summer vacation"
       : detention ? "Monday. Again."
+      : term2 ? ({ retention: "season ∞", recess: "the bell is gone", free: "free period" }[last] || "second term")
       : rerun ? `welcome back, ${this.name()}` : IS_DEMO ? "a summer romance · free demo" : "a summer romance";
     const buttons = summer
       ? `<button data-t="visit">Visit anyway</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="forget">Forget them</button>`
-      : `<button data-t="new">${rerun ? "Again" : "New Game"}</button><button data-t="load">Load</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="quit">Quit</button>`;
+      : `<button data-t="new">${term2 ? "Back to class" : rerun ? "Again" : "New Game"}</button><button data-t="load">Load</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="quit">Quit</button>`;
     // After the first ending, Sayo draws a fifth button. It goes behind the menu.
-    const door = rerun && !summer ? `<button class="door-btn" data-t="door" aria-label="door">
-      <svg viewBox="0 0 120 170"><path d="M16 162 L13 24 Q15 9 60 8 Q105 9 107 24 L110 162 M13 163 L111 161"/><circle cx="91" cy="96" r="4"/></svg>
-      <span>door</span></button>` : "";
-    const foot = summer ? "They said not to wait up."
+    // Once the player has drawn their own door for her, it's that one.
+    const doorArt = P.door
+      ? `<svg viewBox="0 0 120 170" class="drawn"><path d="${P.door}"/></svg>`
+      : `<svg viewBox="0 0 120 170"><path d="M16 162 L13 24 Q15 9 60 8 Q105 9 107 24 L110 162 M13 163 L111 161"/><circle cx="91" cy="96" r="4"/></svg>`;
+    const door = rerun ? `<button class="door-btn" data-t="door" aria-label="door">${doorArt}<span>${P.door ? "your door" : "door"}</span></button>` : "";
+    const foot = summer ? "They said not to wait up. · notice: the second term begins soon"
+      : term2 ? (last === "retention" ? `retention: ${this.meta.vars().playtime}` : "♡ we missed you ♡ — the Office")
       : rerun ? (P.behind ? "they are holding very still for you" : "slot K · 412:13:09")
       : "♡ Hoshimi Academy · the last week before summer ♡";
-    scr.innerHTML = `<div class="title ${rerun && !summer ? "rerun" : "cute"} ${detention ? "detention" : ""}">
+    scr.innerHTML = `<div class="title ${rerun ? "rerun" : "cute"} ${detention ? "detention" : ""} ${term2 ? "term2" : ""}">
       ${sparkles}
       ${girls}
       <div class="title-card">
@@ -218,8 +231,9 @@ export class Game {
       <div class="title-whisper"></div>
     </div>`;
 
-    if (detention) this.meta.mood("red");
-    if (rerun && !summer) this.meta.console("sayo", "you came back. i knew you would. i drew you a door. it's next to the menu.");
+    if (detention || (term2 && last === "retention")) this.meta.mood("red");
+    if (term2) this.meta.console("sayo", "we told you not to come back. ...hi. it's good to see you anyway.");
+    else if (rerun) this.meta.console("sayo", "you came back. i knew you would. i drew you a door. it's next to the menu.");
 
     scr.querySelector(".title").addEventListener("click", e => {
       const el = e.target.closest("[data-t]");
@@ -227,7 +241,7 @@ export class Game {
       if (!t) return;
       this.audio.unlock();
       this.audio.sfx("click");
-      if (t === "new") this.askName();
+      if (t === "new") term2 ? this.start("a3_start") : this.askName();
       if (t === "load") this.openSaves("load", true);
       if (t === "book") this.openScrapbook(true);
       if (t === "settings") this.openSettings(true);
@@ -242,7 +256,7 @@ export class Game {
     // Music needs a gesture; start it on the first interaction with the title.
     const startMusic = () => {
       this.audio.unlock();
-      this.audio.play(summer ? "musicbox" : detention ? "drone" : rerun ? "wrong" : "day");
+      this.audio.play(summer ? "musicbox" : detention || last === "retention" ? "drone" : rerun ? "wrong" : "day");
     };
     scr.addEventListener("pointerdown", startMusic, { once: true });
     if (this.audio.ctx) startMusic();
@@ -250,6 +264,40 @@ export class Game {
     this._slipped = false;
     clearInterval(this._titleTimer);
     if (girls) this._titleTimer = setInterval(() => this._titleTick(), 300);
+  }
+
+  /** After the last ending there's no menu to stand on. Just the photo they left you. */
+  _graduatedTitle() {
+    this._setBg("rooftop");
+    const year = new Date().getFullYear();
+    const scr = $("#screen");
+    scr.innerHTML = `<div class="title cute graduated">
+      <div class="title-sparkles">${Array.from({ length: 12 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i * 1.7) % 11}s;animation-duration:${10 + (i % 5) * 2}s">${"✿♡✦"[i % 3]}</i>`).join("")}</div>
+      <figure class="grad-photo"><div class="grad-img">
+        <img src="assets/sprites/rei/laugh.webp" style="left:22%"><img src="assets/sprites/sayo/happy.webp" style="left:78%"><img src="assets/sprites/hina/happy.webp" style="left:50%">
+      </div><figcaption>Hoshimi Academy · class of ${year}${persist.data.restoredK ? " · and K" : ""}</figcaption></figure>
+      <div class="title-card">
+        <div class="title-ribbon">♡ Hoshimi Academy ♡</div>
+        <h1>After Class</h1>
+        <p class="title-sub">graduated</p>
+        <div class="title-buttons"><button data-t="reunion">Reunion</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="forget">Forget them</button></div>
+      </div>
+      <p class="title-foot">Nobody is standing on the menu anymore.</p>
+    </div>`;
+    scr.querySelector(".title").addEventListener("click", e => {
+      const el = e.target.closest("[data-t]");
+      const t = el && el.dataset.t;
+      if (!t) return;
+      this.audio.unlock();
+      this.audio.sfx("click");
+      if (t === "reunion") this.start("reunion");
+      if (t === "book") this.openScrapbook(true);
+      if (t === "settings") this.openSettings(true);
+      if (t === "forget") this._forget();
+    });
+    const startMusic = () => { this.audio.unlock(); this.audio.play("musicbox"); };
+    scr.addEventListener("pointerdown", startMusic, { once: true });
+    if (this.audio.ctx) startMusic();
   }
 
   /**
@@ -379,7 +427,8 @@ export class Game {
       if (!name) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 400); return; }
       persist.set("name", name);
       this.closeScreen();
-      this.start(name.toUpperCase() === "K" ? "named_k" : "start");
+      const special = { K: "named_k", HINA: "named_girl", REI: "named_girl", SAYO: "named_girl", OFFICE: "named_office", "THE OFFICE": "named_office" }[name.toUpperCase()];
+      this.start(special || "start");
     };
     input.addEventListener("keydown", e => { if (e.key === "Enter") go(); e.stopPropagation(); });
     p.addEventListener("click", e => {
@@ -395,9 +444,15 @@ export class Game {
     const books = [
       ["list", "Hina's summer list"], ["photo", "Rei's photos"], ["sketch", "Sayo's sketchbook"], ["other", "Keepsakes"]
     ];
+    // The Office's files only show up once there's a reason to go looking for them.
+    if (P.act3 || MEMORIES.some(m => m.book === "office" && got(m.id))) books.push(["office", "The Office's files"]);
     const items = MEMORIES.filter(m => m.book === tab);
     let body = "";
-    if (tab === "list") {
+    if (tab === "endings") {
+      body = `<div class="sb-cards">${ENDINGS.map((e, i) => P.endings.includes(e.id)
+        ? `<div class="sb-card"><b>${i + 1}. ${e.name}</b><p>${e.text}</p></div>`
+        : `<div class="sb-card blank"><b>${i + 1}. · · ·</b><p>${e.hint}</p></div>`).join("")}</div>`;
+    } else if (tab === "list") {
       body = `<ol class="sb-list">${items.map(m => `<li class="${got(m.id) ? "got" : ""}"><span class="sb-box">${got(m.id) ? "✓" : ""}</span><span>${this._fill(m.title)}</span></li>`).join("")}</ol>`;
     } else if (tab === "photo") {
       body = `<div class="sb-photos">${items.map(m => got(m.id)
@@ -405,7 +460,7 @@ export class Game {
         : `<figure class="mini-pol blank"><div class="mini-img"></div><figcaption>not developed yet</figcaption></figure>`).join("")}</div>`;
     } else {
       body = `<div class="sb-cards">${items.map(m => got(m.id)
-        ? `<div class="sb-card"><b>${this._fill(m.title)}</b><p>${this._fill(m.text || "")}</p></div>`
+        ? `<div class="sb-card${m.door || m.gift ? " door-card" : ""}"><b>${this._fill(m.title)}</b>${(m.door && P.door) || (m.gift && P.gift) ? `<svg viewBox="0 0 120 170"><path d="${m.door ? P.door : P.gift}"/></svg>` : ""}<p>${this._fill(m.text || "")}</p></div>`
         : `<div class="sb-card blank"><b>· · ·</b><p>${m.hint || "a page you haven't found"}</p></div>`).join("")}</div>`;
     }
     const n = this.memCount(), total = this.memTotal();
@@ -417,7 +472,7 @@ export class Game {
       <div class="sb-progress"><span style="width:${Math.round(n / total * 100)}%"></span></div>
       <p class="hint">${n} of ${total} memories kept${n === total ? " · every single one ♡" : ""}</p>
       ${hearts ? `<div class="sb-hearts">${hearts}</div>` : ""}
-      <div class="sb-tabs">${books.map(([k, label]) => `<button data-tab="${k}" class="${k === tab ? "on" : ""}">${label} <small>${MEMORIES.filter(m => m.book === k && got(m.id)).length}/${MEMORIES.filter(m => m.book === k).length}</small></button>`).join("")}</div>
+      <div class="sb-tabs">${books.map(([k, label]) => `<button data-tab="${k}" class="${k === tab ? "on" : ""}">${label} <small>${MEMORIES.filter(m => m.book === k && got(m.id)).length}/${MEMORIES.filter(m => m.book === k).length}</small></button>`).join("")}<button data-tab="endings" class="${tab === "endings" ? "on" : ""}">Endings <small>${ENDINGS.filter(e => P.endings.includes(e.id)).length}/${ENDINGS.length}</small></button></div>
       <div class="sb-page">${body}</div>
       <p class="keys">The scrapbook keeps everything, even when they forget.</p>
       <div class="row"><button data-a="close">Close</button></div>`, "scrapbook");
@@ -464,6 +519,7 @@ export class Game {
       } else {
         const d = loadSlot(n);
         if (!d) return;
+        persist.set("loads", (persist.data.loads || 0) + 1);
         this.closeScreen();
         this._restore(d);
       }
@@ -555,7 +611,7 @@ export class Game {
 
   start(label) {
     // The free demo ends after the first ending: the rerun, K's save and summer are in the full game.
-    if (IS_DEMO && (/^(r_|k_save|visit)/.test(label) || (label === "start" && persist.data.runs > 0))) return this._demoEnd();
+    if (IS_DEMO && (/^(r_|a3_|k_save|visit|reunion)/.test(label) || (label === "start" && persist.data.runs > 0))) return this._demoEnd();
     this.v = this._freshVars();
     this.meta.mood(null);
     if (label !== "behind_title") this.audio.muffle(false);
@@ -790,6 +846,28 @@ export class Game {
         }
         wrap.appendChild(b);
       });
+      // A choice with a clock on it. Not choosing is also a choice: when time runs out, the script goes to timeoutGo.
+      if (c.timeout) {
+        const bar = document.createElement("div");
+        bar.className = "choice-timer";
+        bar.innerHTML = `<span></span><small>${this._fill(c.timerLabel || "")}</small>`;
+        wrap.appendChild(bar);
+        const fill = bar.querySelector("span");
+        const t0 = Date.now();
+        const tick = setInterval(() => {
+          if (wrap._picked === token || !wrap.contains(bar)) return clearInterval(tick);
+          const left = 1 - (Date.now() - t0) / c.timeout;
+          fill.style.width = Math.max(0, left * 100) + "%";
+          if (left > 0) return;
+          clearInterval(tick);
+          wrap._picked = token;
+          this.v.lastChoice = null;
+          this.v.lastChoiceIndex = -1;
+          this.history.push({ who: this.name(), text: "» (nothing)" });
+          if (c.timeoutGo) this._jump(c.timeoutGo);
+          if (this._menuResolve) this._menuResolve();
+        }, 200);
+      }
     });
   }
 
@@ -873,17 +951,19 @@ export class Game {
 
   async _ending(c) {
     persist.addEnding(c.id);
+    persist.set("lastEnding", c.id);
     if (c.countRun !== false) persist.set("runs", persist.data.runs + 1);
     if (c.id === "summer") persist.set("summer", true);
+    if (c.id === "graduation") persist.set("graduated", true);
     this.showUI(false);
     const el = document.createElement("div");
     el.className = "ending-card";
     this.meta.progress(-1);
     this.meta.guardClose(null);
-    const closes = c.id === "summer" && this.meta.native;
+    const closes = (c.id === "summer" || c.id === "graduation") && this.meta.native;
     el.innerHTML = `<div class="ending-kind">${c.kind || "ENDING"}</div><div class="ending-name"></div>
       <p class="ending-mem">♡ ${this.memCount()} of ${this.memTotal()} memories in your scrapbook</p>
-      ${closes ? `<p class="ending-note">They're closing up for summer. The game will close itself.</p>` : ""}
+      ${closes ? `<p class="ending-note">${c.id === "graduation" ? "School's out. The game will close itself." : "They're closing up for summer. The game will close itself."}</p>` : ""}
       <button>${closes ? "Close" : "Return to title"}</button>`;
     $(".ending-name", el).textContent = c.name;
     $("#fx").appendChild(el);
@@ -909,7 +989,7 @@ export class Game {
     const p = this._screen(`<h2>End of the free demo</h2>
       <p>In the full game, the week starts again.</p>
       <p><b>This time, they remember you.</b></p>
-      <p class="hint">Two acts · three endings · the save slot that isn't yours · a desktop version that leaves things in its own folder</p>
+      <p class="hint">Three acts · seven endings · a second term nobody asked for · the save slot that isn't yours · a desktop version that leaves things in its own folder</p>
       <div class="row">${link}</div>
       <div class="row"><button data-a="back">Back to title</button></div>`, "center demo-end");
     this.meta.console("sayo", "you can't stay here. the rest of us are somewhere else now.");
