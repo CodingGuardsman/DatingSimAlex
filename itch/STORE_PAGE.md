@@ -21,7 +21,7 @@ Everything needed to put After Class on itch.io as a paid game. Fill in the fiel
 - **Release status:** Released
 - **Pricing:** Paid. A suggested price is **$4.99 USD**, with "Allow buyers to pay more" ticked. Meta-horror visual novels of 3–4 hours usually sell for $5–$10, so $4.99 is on the generous side.
 - **Genre:** Visual Novel
-- **Tags** (itch allows up to 10): `horror`, `psychological-horror`, `visual-novel`, `dating-sim`, `anime`, `meta`, `fourth-wall`, `multiple-endings`, `story-rich`, `singleplayer`
+- **Tags** (itch allows up to 10; live as of 2.0): `anime`, `cute`, `dating-sim`, `horror`, `multiple-endings`, `psychological-horror`, `romance`, `singleplayer`, `story-rich`, `visual-novel`. (`meta` and `fourth-wall` aren't tags itch offers.)
 - **AI generation disclosure:** **Yes**, for **Graphics**. The character sprites and backgrounds were made with AI image generation. itch.io requires this disclosure, and it adds an "AI Generated" tag automatically. The writing, code and procedurally generated music are not AI-generated assets.
 - **Custom noun:** leave blank
 - **Community:** Comments
