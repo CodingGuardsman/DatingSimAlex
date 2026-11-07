@@ -47,6 +47,8 @@ const DEFAULTS = {
   act3: false,        // the second term has started
   restoredK: false,   // K's files came back out of the Office's recycle bin
   graduated: false,   // the final ending: the title becomes a graduation photo
+  known: {},          // clues for the "What we know" page that have no memory of their own
+  noted: {},          // how far each "What we know" note has got ("q" or "a"). Survives forgetAll().
   settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true }
 };
 
@@ -78,7 +80,8 @@ export const persist = {
     // The scrapbook is the one thing that survives. They forget; it doesn't. (Neither does Sayo.)
     const d = this.data;
     this.data = { ...DEFAULTS, settings: d.settings, mem: d.mem || {}, door: d.door, item13: d.item13,
-      forgets: (d.forgets || 0) + 1, legacy: d.legacy, version: d.version, warned: d.warned };
+      forgets: (d.forgets || 0) + 1, legacy: d.legacy, version: d.version, warned: d.warned,
+      known: d.known || {}, noted: d.noted || {} };
     this.save();
   }
 };

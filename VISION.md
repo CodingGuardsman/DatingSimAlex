@@ -78,6 +78,9 @@ One week can't hold every memory, and the scrapbook survives "Forget them" or "S
 - Every ending card shows it.
 - With 30 or more memories, the true ending leaves a color photo of all three girls, in focus.
 
+### What we know
+A scrapbook tab that keeps the story easy to follow. Each note (`NOTES` in `story.js`) starts as an open question once the game raises it, and turns into a plain answer once a girl has actually explained it. Notes never go backwards and survive "Forget them". Clues with no memory of their own are recorded with `know(id)`. When a note changes, a toast says so after the memory toast has gone.
+
 ## Behind the title screen (the big meta trick)
 The title screen is a real place:
 - **Act 1:** if you leave the menu alone for 40 seconds, Sayo's face slips for a fraction of a second. Sayo's sketchbook has a drawing of "three girls in a row, smiling at nobody, five rectangles under them".

@@ -16,7 +16,7 @@
 import { persist } from "./persist.js?v=2.0.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
-  watch, log, noskip, end, phone, credits, js, mini, visit, title, call
+  watch, log, noskip, end, phone, credits, js, mini, visit, title, call, know
 } from "./script-helpers.js?v=2.0.0";
 import { ACT3, ACT3_MEMORIES } from "./story_act3.js?v=2.0.0";
 
@@ -106,6 +106,52 @@ export const ENDINGS = [
 ];
 
 MEMORIES.push(...ACT3_MEMORIES);
+
+/**
+ * "What we know": the scrapbook page that keeps the story straight.
+ * Each note is a question that shows up once the game has raised it (ask) and turns into
+ * an answer once the player has actually been told (know). Both look at what persists, so a
+ * note never runs ahead of the script. P.known holds the few clues that have no memory of their own.
+ */
+const k = (P, id) => !!(P.known && P.known[id]);
+export const NOTES = [
+  { id: "loop", q: "Why does everything keep happening twice?",
+    a: "The week is a loop. Every Friday it rewinds to Monday. Almost everyone forgets. Hina, Rei and Sayo don't.",
+    ask: P => P.mem.o3 || P.mem.p15 || P.mem.s5 || k(P, "loop"), know: P => P.mem.o4 || P.endings.includes("rewind") },
+  { id: "office", q: "Who is \"the Office\"?",
+    a: "The voice on the school speakers. It keeps the week looping, because if the week ends, people stop playing.",
+    ask: P => P.mem.o1, know: P => P.runs > 0 },
+  { id: "k", q: "Who is K?",
+    a: "The player before you. K played this same week for 412 hours, then stopped without saying goodbye.",
+    ask: P => P.mem.o1 || P.mem.p2, know: P => P.runs > 0 },
+  { id: "three", q: "Why do Hina, Rei and Sayo remember?",
+    a: "Each of them found a way to hold on. Hina counts. Rei takes photos. Sayo draws, and she's been aware the longest.",
+    ask: P => P.mem.s1 || P.mem.p4 || P.mem.s5, know: P => P.mem.o5 || P.mem.s6 || P.mem.o8 },
+  { id: "menu", q: "What is the place with the music and the three girls standing still?",
+    a: "The title screen. Whenever the game is open and nobody presses anything, they stand behind the menu on tape marks and smile.",
+    ask: P => P.mem.s3 || P.mem.s1, know: P => P.behind || P.mem.s7 },
+  { id: "end", q: "How does the week ever end?",
+    a: "Only when nobody is watching it. Say goodbye properly, then actually look away.",
+    ask: P => P.runs > 0, know: P => P.mem.s6 || P.endings.includes("summer") },
+  { id: "kwhy", q: "Why did K really leave?",
+    a: "K got a job, a real Monday that ends, and didn't know you could say goodbye to a game. It wasn't because of them.",
+    ask: P => P.runs > 0, know: P => P.mem.o6 || P.mem.f3 },
+  { id: "room0", q: "Eight windows on the second floor, seven rooms. What's in the eighth?",
+    a: "Room zero. The Office lives there, with an old computer that runs the week.",
+    ask: P => k(P, "room0") || P.mem.s10, know: P => P.mem.p13 || P.mem.f2 || P.mem.f5 },
+  { id: "again", q: "What happens if I come back after summer?",
+    a: "The second term. Summer only lasts while you're away. The moment you look again, it's a school day.",
+    ask: P => P.endings.includes("summer"), know: P => P.act3 },
+  { id: "longer", q: "Why is the week longer now?",
+    a: "Management ordered the Office to make every session last at least three hours. The patch notes were real.",
+    ask: P => P.act3, know: P => P.mem.f2 },
+  { id: "plan", q: "What's the plan this term?",
+    a: "Get into Room zero on Wednesday and switch the extra week off. Then, on Friday, the week is allowed to end.",
+    ask: P => P.act3, know: P => P.mem.f5 },
+  { id: "why", q: "What does the Office actually want?",
+    a: "It was built to ring the school bell. When K stopped coming, it held the week perfectly still so nothing would change before K got back. K never came back.",
+    ask: P => P.act3, know: P => P.mem.f6 }
+];
 
 const SAYO_LETTER = name => `To ${name},
 
@@ -345,6 +391,8 @@ export const SCRIPT = {
     "rei annoyed| I say it about everyone who's already on a roll somewhere.",
     "| Before I can ask what that means, the speaker above the blackboard clicks on.",
     pa("Good afternoon, students. This is a reminder from the Office. Summer break begins in five days. Please enjoy your last week."),
+    "me| The Office?",
+    "rei| The Student Office. It does the announcements and the bells. Nobody's ever actually been in there. It's just the voice in the speakers.",
     "hina happy| Five days! Okay, {name}, we have to make the most of it. That's an order from your class rep.",
     "rei| She means it. She has a list.",
     "hina blush| I do NOT have a... okay, I have a small list.",
@@ -426,7 +474,12 @@ export const SCRIPT = {
   ],
 
   a1_night4: [
-    "| Thursday night. The group chat is going off again.",
+    "| Thursday night. I lie on my bed and try to put it in order, the way you'd write down a dream before it goes.",
+    "| One: the week is repeating. Today was Monday again, word for word. The same announcement. The same napkin map, not even creased.",
+    "| Two: someone called K was here before me. K is rubbed out of Sensei's register. Hina called me K without noticing. And in Rei's photo, someone was standing behind my chair.",
+    "| Three: Sayo knows more than she's saying. She said it's always Thursday when someone notices.",
+    "| And tomorrow is supposed to be the last day.",
+    "| My phone buzzes. The group chat is going off again.",
     phone("Summer Squad ☀", [
       ["hina", "METEOR SHOWER TONIGHT!!! 11pm!!! everyone look up!!! ☄"],
       ["daichi", "it's cloudy where i am"],
@@ -645,6 +698,7 @@ export const SCRIPT = {
     "| I count. Eight windows.",
     "sayo| There are seven rooms on the second floor. I checked every door. Seven.",
     "sayo| There's a window for a room that isn't there.",
+    know("room0"),
     menu([
       { text: "\"Let's go look for it.\"", do: [love("sayo"),
         "sayo scared| No. Not yet. ...Not this week.",
@@ -791,6 +845,7 @@ export const SCRIPT = {
     show("rei", "neutral", "right"),
     "rei| She means it. She has a list.",
     "| Word for word. The same as Monday.",
+    know("loop"),
     "daichi| Big news. Saturday. The beach. All of us. I made a map.",
     "| He unfolds the same napkin. The same wavy line. The same X. The napkin isn't even creased; it's brand new.",
     "me| Hina. It's Thursday. Yesterday it was three days.",
@@ -1258,7 +1313,9 @@ export const SCRIPT = {
     when(v => v.hesitate, ["rei| You hovered over '{hesitated}' for {hesitatedSecs} seconds before you picked, by the way. I saw."]),
     when((v, P) => P.loads > 0, ["rei| And you loaded a save {loads} times last week. Every time you take something back, I still have the photo of the version you didn't keep."]),
     when((v, P) => P.forgets > 0, ["sayo sad| You made them forget you {forgets} times. Hina and Rei, I mean. ...Not me. It doesn't work on me. I just have to watch them meet you again."]),
-    "sayo neutral| It watches the least in the afternoons. After class. Come find each of us. Please.",
+    "rei| Okay. Short version, for the new person: the week loops. The three of us remember, nobody else does. The Office runs the loop. K was here before you and left without a word.",
+    "hina| And we want it to end. Properly this time. With a real summer after it.",
+    "sayo neutral| Each of us has a piece of how. It watches the least in the afternoons. After class. Come find each of us. Please.",
     sfx("bell"),
     set("day", 1),
     jump("r_choice")
@@ -1314,7 +1371,7 @@ export const SCRIPT = {
     menu([
       { text: "The bakery", if: v => !v.seen.rmhina, do: [visit("hina", "rm", 1)] },
       { text: "The bridge", if: v => !v.seen.rmrei, do: [visit("rei", "rm", 1)] },
-      { text: "The courtyard", if: v => !v.seen.rmsayo, do: [visit("sayo", "rm", 1)] }
+      { text: "The courtyard", if: v => !v.seen.rmsayo && !v.sayoTaken, do: [visit("sayo", "rm", 1)] }
     ]),
     clear
   ],
@@ -1358,6 +1415,7 @@ export const SCRIPT = {
     "sayo| Things from the week don't leave the week. Except paper. Paper leaves. That's why I draw.",
     "| Above us, eight windows. She points at the sixth one with her pencil.",
     "sayo| That's the room that isn't there. Room zero. I hear it at night. It hums. Like a speaker that's been left on.",
+    know("room0"),
     "sayo| I think it's where the voice comes from. The announcements.",
     menu([
       { text: "\"We'll find it. Together.\"", do: [love("sayo"), "sayo happy| ...Not this week. But I'll remember you said it. I'm the one who remembers."] },
@@ -1373,6 +1431,7 @@ export const SCRIPT = {
     "| Mrs. Okada is standing outside the konbini holding two soda popsicles. She's holding them out to the empty air.",
     "| She's been holding them like that for a long time. They aren't melting.",
     show("hina", "list", "center"),
+    when(v => v.sayoTaken, ["hina worried| Sayo wasn't in class today. Nobody even looked at her desk. Rei and I are pretending not to notice, so the Office doesn't notice us noticing.", "hina| We'll get her back. Later. First I have to show you something, while it's not looking."]),
     "hina| Okay! Item one on the summer list! Make a new...",
     say("hina", "sad", "I'm so scared, {name}. It hurts every time it rewinds. It hurts so much.", { rewrite: "I'm so happy you're here! Summer is going to be perfect!" }),
     "hina worried| Did... did I just say that? That's not what I said.",
@@ -1462,6 +1521,7 @@ export const SCRIPT = {
     music("drone"),
     show("rei", "photo", "center"),
     "rei| Door. Close it. ...Thanks.",
+    when(v => v.sayoTaken, ["rei annoyed| Sayo's desk was empty today. Sensei skipped her name like it was never there. I photographed the desk. The print came out blank.", "rei| The Office took her. We get her back before Friday. But first, this."]),
     "rei| I shot a roll of the outside today. Your side.",
     "rei| This print came out exactly {screen}. That's your screen, isn't it? I took a picture of your screen.",
     "rei aim_shocked| And in the dark parts of the glass there's a reflection. A face. Lit up blue.",

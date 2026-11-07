@@ -202,8 +202,9 @@ export class Meta {
   memoryToast(title, book) {
     const el = document.createElement("div");
     el.className = "memo-toast";
-    const icon = { list: "✓", photo: "▣", sketch: "✎", other: "✿" }[book] || "♥";
-    el.innerHTML = `<span class="memo-icon">${icon}</span><span><small>${this.root.classList.contains("uncanny") ? "it kept this one too" : "added to your scrapbook ♡"}</small><b></b></span>`;
+    const icon = { list: "✓", photo: "▣", sketch: "✎", other: "✿", note: "?" }[book] || "♥";
+    const label = book === "note" ? "in your scrapbook: What we know" : this.root.classList.contains("uncanny") ? "it kept this one too" : "added to your scrapbook ♡";
+    el.innerHTML = `<span class="memo-icon">${icon}</span><span><small>${label}</small><b></b></span>`;
     $("b", el).textContent = title;
     this.fx.appendChild(el);
     this.game.audio.sfx("sparkle");

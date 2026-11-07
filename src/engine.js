@@ -6,7 +6,7 @@ import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2
 import { AudioSys } from "./audio.js?v=2.0.0";
 import { Meta } from "./meta.js?v=2.0.0";
 import { Minigames } from "./minigames.js?v=2.0.0";
-import { SCRIPT, CAST, MEMORIES, ENDINGS } from "./story.js?v=2.0.0";
+import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES } from "./story.js?v=2.0.0";
 import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.0.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -59,6 +59,39 @@ export class Game {
     persist.data.mem[id] = Date.now();
     persist.save();
     this.meta.memoryToast(this._fill(m.title), m.book);
+    this._checkNotes();
+  }
+
+  /** A clue with no memory of its own, for the "What we know" page. */
+  _know(id) {
+    persist.data.known = { ...persist.data.known, [id]: true };
+    persist.save();
+    this._checkNotes();
+  }
+
+  /** Where each "What we know" note stands right now: "a" answered, "q" asked, or nothing yet. Never goes backwards. */
+  _noteState(n) {
+    const P = persist.data;
+    const was = (P.noted || {})[n.id];
+    const now = n.know(P) ? "a" : n.ask(P) ? "q" : null;
+    return was === "a" || now === "a" ? "a" : was || now;
+  }
+
+  /** Record any note that moved on, and say so once, after the memory toast has gone. */
+  _checkNotes(quiet = false) {
+    const P = persist.data;
+    P.noted = P.noted || {};
+    let asked = 0, answered = 0;
+    for (const n of NOTES) {
+      const st = this._noteState(n);
+      if (st && st !== P.noted[n.id]) { st === "a" ? answered++ : asked++; P.noted[n.id] = st; }
+    }
+    if (!asked && !answered) return;
+    persist.save();
+    if (quiet) return;
+    const what = answered && asked ? `${answered} answered, ${asked} new` : answered ? (answered > 1 ? `${answered} questions answered` : "a question answered") : (asked > 1 ? `${asked} new questions` : "a new question");
+    clearTimeout(this._noteTimer);
+    this._noteTimer = setTimeout(() => this.meta.memoryToast(what, "note"), 3900);
   }
 
   _freshVars() {
@@ -452,6 +485,12 @@ export class Game {
       body = `<div class="sb-cards">${ENDINGS.map((e, i) => P.endings.includes(e.id)
         ? `<div class="sb-card"><b>${i + 1}. ${e.name}</b><p>${e.text}</p></div>`
         : `<div class="sb-card blank"><b>${i + 1}. · · ·</b><p>${e.hint}</p></div>`).join("")}</div>`;
+    } else if (tab === "notes") {
+      const shown = NOTES.map(n => [n, this._noteState(n)]).filter(([, st]) => st);
+      body = shown.length ? `<div class="sb-cards sb-notes">${shown.map(([n, st]) => st === "a"
+        ? `<div class="sb-card note"><b>${n.q}</b><p>${this._fill(n.a)}</p></div>`
+        : `<div class="sb-card blank note"><b>? ${n.q}</b><p>not sure yet</p></div>`).join("")}</div>`
+        : `<p class="hint">Nothing strange has happened yet. Probably.</p>`;
     } else if (tab === "list") {
       body = `<ol class="sb-list">${items.map(m => `<li class="${got(m.id) ? "got" : ""}"><span class="sb-box">${got(m.id) ? "✓" : ""}</span><span>${this._fill(m.title)}</span></li>`).join("")}</ol>`;
     } else if (tab === "photo") {
@@ -472,7 +511,7 @@ export class Game {
       <div class="sb-progress"><span style="width:${Math.round(n / total * 100)}%"></span></div>
       <p class="hint">${n} of ${total} memories kept${n === total ? " · every single one ♡" : ""}</p>
       ${hearts ? `<div class="sb-hearts">${hearts}</div>` : ""}
-      <div class="sb-tabs">${books.map(([k, label]) => `<button data-tab="${k}" class="${k === tab ? "on" : ""}">${label} <small>${MEMORIES.filter(m => m.book === k && got(m.id)).length}/${MEMORIES.filter(m => m.book === k).length}</small></button>`).join("")}<button data-tab="endings" class="${tab === "endings" ? "on" : ""}">Endings <small>${ENDINGS.filter(e => P.endings.includes(e.id)).length}/${ENDINGS.length}</small></button></div>
+      <div class="sb-tabs">${books.map(([k, label]) => `<button data-tab="${k}" class="${k === tab ? "on" : ""}">${label} <small>${MEMORIES.filter(m => m.book === k && got(m.id)).length}/${MEMORIES.filter(m => m.book === k).length}</small></button>`).join("")}<button data-tab="notes" class="${tab === "notes" ? "on" : ""}">What we know <small>${NOTES.filter(n => this._noteState(n) === "a").length}/${NOTES.filter(n => this._noteState(n)).length}</small></button><button data-tab="endings" class="${tab === "endings" ? "on" : ""}">Endings <small>${ENDINGS.filter(e => P.endings.includes(e.id)).length}/${ENDINGS.length}</small></button></div>
       <div class="sb-page">${body}</div>
       <p class="keys">The scrapbook keeps everything, even when they forget.</p>
       <div class="row"><button data-a="close">Close</button></div>`, "scrapbook");
@@ -678,7 +717,7 @@ export class Game {
       case "set": this.v[c.k] = c.v; if (c.k === "sabotage") this.meta.syncUncanny(); return;
       case "mem": return this._memory(c.id);
       case "add": this.v.aff[c.k] = (this.v.aff[c.k] || 0) + (c.n ?? 1); return;
-      case "pset": persist.set(c.k, c.v); return;
+      case "pset": persist.set(c.k, c.v); this._checkNotes(); return;
       case "if": {
         const ok = c.when(this.v, persist.data, this);
         const id = ok ? c.thenId : c.elseId;
@@ -951,6 +990,7 @@ export class Game {
 
   async _ending(c) {
     persist.addEnding(c.id);
+    this._checkNotes(true);
     persist.set("lastEnding", c.id);
     if (c.countRun !== false) persist.set("runs", persist.data.runs + 1);
     if (c.id === "summer") persist.set("summer", true);

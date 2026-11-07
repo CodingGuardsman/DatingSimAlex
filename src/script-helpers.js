@@ -14,6 +14,8 @@ export const set = (k, v) => ({ t: "set", k, v });
 export const love = (k, n = 1) => ({ t: "add", k, n });
 export const pset = (k, v) => ({ t: "pset", k, v });
 export const mem = id => ({ t: "mem", id });
+/** Note a clue for the "What we know" page that has no scrapbook memory of its own. */
+export const know = id => ({ t: "js", run: g => g._know(id) });
 export const fx = (fn, ...args) => ({ t: "fx", fn, args });
 export const pa = (text, broken = false) => ({ t: "js", run: g => g.meta.pa(g._fill(text), { broken, template: text }) });
 export const day = (text, sub, wrong = false) => ({ t: "day", text, sub, wrong });

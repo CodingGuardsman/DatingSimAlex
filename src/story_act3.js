@@ -302,11 +302,11 @@ export const ACT3 = {
       { text: "Ask about the update.", do: [
         set("defy", 1),
         office("...You ask about the update."),
-        office("The update is an improvement. Retention was below target. Players were leaving after less than two hours. Now there is more."),
-        "rei shocked| It's narrating now. It's in the text box. It's NARRATING.",
-        "hina| Don't talk to it. It likes being talked to."
+        office("The update is an improvement. Retention was below target. Players were leaving after less than two hours. Now there is more.")
       ] }
     ]),
+    "rei shocked| It's narrating now. It's in the text box, telling you what you do. It's NARRATING.",
+    "hina| Don't talk to it. It likes being talked to. And you don't have to do what it says. It only says it like you will.",
     achieve("Came Back — return after being asked not to"),
     "rei annoyed| ...Did it just give you an achievement? For coming back?",
     "rei| I'm going to be sick. I'm going to be sick on purpose, on the speaker.",
@@ -314,7 +314,8 @@ export const ACT3 = {
     "hina sad| Three hours. That's why there's more of everything.",
     "sayo| It wants three hours of you. Three hours of your actual life, the one with a window. It thinks that's what love is.",
     "sayo neutral| It's stronger now. But it got bigger, and bigger things have more cracks.",
-    "sayo| There's a room it lives in. On the second floor. Room zero. We find it, and we turn it off. Not the Office. The extra week.",
+    "sayo| There's a room it lives in. On the second floor. Room zero. The eighth window.",
+    "sayo| So here's the plan. On Wednesday we get into Room zero and switch the extra week off. Not the Office. Just the extra week. Then on Friday, the week is allowed to end.",
     "rei| And then what? You watch us go to the beach again and then you come back again?",
     "| Nobody says anything for a moment.",
     "rei soft| ...Sorry. That wasn't fair. I'm glad you're here. I just wish I wasn't glad.",
@@ -409,7 +410,7 @@ export const ACT3 = {
       ["rei", "absolutely not"],
       ["hina", "how do you kick someone out of a group chat"],
       ["office", "Good night, students! Good night, {name}! See you tomorrow! ♡"],
-      ["sayo", "it can't use the board. it doesn't know about the board."],
+      ["sayo", "it can't read everything. there's one place it never looks. i'll show you on wednesday."],
       ["daichi", "who's the office? is that a new kid? welcome!!"],
       ["office", "Thank you, Daichi."]
     ], "6 members"),
@@ -730,6 +731,7 @@ export const ACT3 = {
     mem("s11"),
     "sayo| Everybody should get a window. Even the thing that kept us here.",
     "sayo happy| Tomorrow, then. Last day. For real this time.",
+    "sayo neutral| On the roof, it's going to ask you for something. Whatever you answer, that's how it ends. For all of us. Even it.",
     jump("a3_lastnight")
   ],
 
