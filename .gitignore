@@ -4,7 +4,6 @@ __pycache__/
 .DS_Store
 node_modules/
 .env
-setx OPENROUTER_API_KEY sk-or-v1-0f.txt
 dist/
 test-results/
 game-files/
