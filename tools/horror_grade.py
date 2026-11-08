@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def grade(src, dst, seed):
     rng = np.random.default_rng(seed)
     im = Image.open(src).convert("RGB").filter(ImageFilter.GaussianBlur(0.5))
-    im = ImageEnhance.Color(im).enhance(0.6)
+    im = ImageEnhance.Color(im).enhance(0.85)
     a = np.asarray(im, dtype=np.float32) / 255
     H, W, _ = a.shape
     a = np.clip((a - 0.05) * 1.3, 0, 1) ** 1.25 * 0.95
@@ -33,7 +33,11 @@ def grade(src, dst, seed):
     for _ in range(int(rng.integers(6, 14) * K)):
         bw, bh = int(rng.integers(12, 90)), int(rng.integers(6, 30)); x, y = int(rng.integers(0, W - bw)), int(rng.integers(0, H - bh))
         a[y:y+bh, x:x+bw] = rng.random((bh, bw, 1)) * np.array([1.0, 0.25, 0.3]) if rng.random() < .5 else rng.random((bh, bw, 1))
-    a = a * (1 - 0.08 * ((np.arange(H) % 3) == 0)[:, None, None])
+    lum = (a * [0.3, 0.59, 0.11]).sum(2, keepdims=True)
+    shadow = np.clip(1 - lum * 2.0, 0, 1); red = np.array([0.55, 0.04, 0.07], dtype=np.float32)
+    a = a * (1 - 0.30 * shadow) + red * 0.26 * shadow * (0.45 + lum)
+    a[:, :, 0] = np.clip(a[:, :, 0] * 1.12, 0, 1); a[:, :, 1] *= 0.88; a[:, :, 2] *= 0.86
+    a = a * (1 - 0.06 * ((np.arange(H) % 3) == 0)[:, None, None])
     yy, xx = np.mgrid[0:H, 0:W]; d = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)
     a = a * np.clip(1.1 - 0.5 * d ** 1.6, 0.2, 1)[:, :, None]
     a[:, :, 0] = np.clip(a[:, :, 0] * 1.06, 0, 1)
