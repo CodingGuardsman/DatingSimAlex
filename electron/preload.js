@@ -20,5 +20,8 @@ contextBridge.exposeInMainWorld("native", {
   guardClose: msg => ipcRenderer.invoke("close:guard", msg),
   quit: () => ipcRenderer.invoke("quit"),
   onCloseAttempt: cb => ipcRenderer.on("close-attempt", (e, msg) => cb(msg)),
-  onFocusChange: cb => ipcRenderer.on("focus-change", (e, focused) => cb(focused))
+  onFocusChange: cb => ipcRenderer.on("focus-change", (e, focused) => cb(focused)),
+  watchFiles: names => ipcRenderer.invoke("files:watch", names),
+  fileWritten: name => ipcRenderer.invoke("file:written", name),
+  onFileGone: cb => ipcRenderer.on("file-gone", (e, name) => cb(name))
 });

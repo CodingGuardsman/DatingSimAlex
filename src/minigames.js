@@ -4,7 +4,11 @@
  * Office's computer. Each one returns a promise, so the script just awaits it (see mini() in script-helpers.js).
  * The words live in the story files; these only know how to run.
  */
-import { persist } from "./persist.js?v=2.0.0";
+import { persist } from "./persist.js?v=2.1.0";
+import { judgeText } from "./judge.js?v=2.1.0";
+import { ai, PERSONAS } from "./ai.js?v=2.1.0";
+import { senses } from "./senses.js?v=2.1.0";
+import { REACTIONS, REFUSED, HARMLESS, DISTRESS_CARD, DRAW_SEEN } from "./story_extra.js?v=2.1.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -39,28 +43,183 @@ export class Minigames {
 
   /* ---------- a typed answer ---------- */
 
-  /** A notebook card with one line to write on. Resolves the cleaned text (and stores it if `key` is given). */
-  ask({ title = "", hint = "", placeholder = "", max = 40, key = null, value = "", allowEmpty = false, button = "Write it down" } = {}) {
+  /**
+   * A notebook card with one line to write on. Resolves the cleaned text (and stores it if `key` is given).
+   *
+   * 2.1: `who` is the character holding the pen. Before anyone reads the answer back, judge.js (and the local
+   * AI, if it's on) checks it. Junk gets a reaction and one more try; crude or hateful answers get refused and
+   * the character writes their own. Answers that sound like real distress stop the game for a moment.
+   * Sets g.v.askKind ("ok", "lewd"...) and g.v.askRefused so the script can react afterwards.
+   */
+  ask({ title = "", hint = "", placeholder = "", max = 40, key = null, value = "", allowEmpty = false, button = "Write it down", who = null } = {}) {
+    const g = this.game;
+    g.v.askKind = "ok";
+    g.v.askRefused = false;
     return new Promise(resolve => {
       const el = this._overlay("mg-ask", `<div class="ask-card"><h3></h3><p class="ask-hint"></p>
-        <input maxlength="${max}" autocomplete="off" spellcheck="false"><div class="row"><button>${esc(button)}</button></div></div>`);
+        <input maxlength="${max}" autocomplete="off" spellcheck="false"><div class="row"><button>${esc(button)}</button></div>
+        <div class="ask-react" hidden><img alt=""><p></p></div></div>`);
       $("h3", el).textContent = this.fill(title);
       $(".ask-hint", el).textContent = this.fill(hint);
       const input = $("input", el);
+      const btn = $(".row button", el);
       input.placeholder = placeholder;
       input.value = value;
       setTimeout(() => input.focus(), 50);
-      const go = () => {
-        const text = clean(input.value, max);
-        if (!text && !allowEmpty) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 400); return; }
+      let strikes = 0, busy = false;
+      const react = (kind, said, n) => {
+        const table = REACTIONS[who] || REACTIONS.hina;
+        const [expr, line] = (table[kind] || table.nonsense)[Math.min(n, 1)];
+        const box = $(".ask-react", el);
+        box.hidden = false;
+        box.className = "ask-react who-" + (who || "hina") + (["lewd", "slur", "violent", "inject"].includes(kind) ? " bad" : "");
+        $("img", box).src = `assets/sprites/${who || "hina"}/${expr}.webp`;
+        $("p", box).textContent = this.fill(line).replace("{said}", said);
+        this.audio.sfx(["lewd", "slur", "violent"].includes(kind) ? "glitch" : "error");
+        el.classList.remove("hurt"); void el.offsetWidth; el.classList.add("hurt");
+      };
+      const finish = text => {
         this.audio.sfx("pencil");
         if (key) persist.set(key, text);
         this._close(el);
         resolve(text);
       };
+      const go = async () => {
+        if (busy) return;
+        const text = clean(input.value, max);
+        if (!text && !allowEmpty) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 400); return; }
+        if (!text) return finish(text);
+        // Word lists only: the local model is too small to judge this reliably (it flags fireworks as hateful).
+        const { kind } = judgeText(text);
+        if (kind === "ok") return finish(text);
+        if (kind === "distress") return this._distress(el, () => { input.value = ""; input.focus(); });
+        persist.data.rude = { ...persist.data.rude, [kind]: (persist.data.rude[kind] || 0) + 1 };
+        persist.save();
+        g.v.askKind = kind;
+        if (strikes === 0) {
+          strikes++;
+          react(kind, text, 0);
+          input.value = "";
+          input.focus();
+          return;
+        }
+        react(kind, text, 1);
+        busy = true; btn.disabled = true; input.disabled = true;
+        await sleep(2600);
+        if (HARMLESS.includes(kind)) return finish(text);
+        // Refused. They write their own, and they remember that they had to.
+        g.v.askRefused = true;
+        if (key) persist.data.refused = { ...persist.data.refused, [key]: kind };
+        finish(this.fill(REFUSED[key] || REFUSED.default));
+      };
       input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-      $("button", el).addEventListener("click", go);
+      btn.addEventListener("click", go);
     });
+  }
+
+  /**
+   * The microphone, for one line. Shows a level meter while it listens, then (with the local AI on) what it heard.
+   * Resolves { text, heard } or null if the microphone was declined.
+   */
+  listen({ prompt = "Say it out loud.", seconds = 7 } = {}) {
+    return new Promise(async resolve => {
+      const el = this._overlay("mg-listen", `<div class="listen"><p class="listen-prompt"></p>
+        <div class="listen-mic">◉</div><div class="listen-bar"><span></span></div><p class="listen-state">asking for your microphone…</p></div>`);
+      $(".listen-prompt", el).textContent = this.fill(prompt);
+      const bar = $(".listen-bar span", el), state = $(".listen-state", el);
+      let started = false;
+      const res = await senses.listen(seconds, lvl => {
+        if (!started) { started = true; state.textContent = "listening… (it stops when you do)"; el.classList.add("on"); }
+        bar.style.width = Math.round(lvl * 100) + "%";
+      });
+      if (!res) { state.textContent = "the microphone didn't open."; await sleep(1400); this._close(el); return resolve(null); }
+      el.classList.remove("on");
+      state.textContent = res.heard ? (ai.enabled ? "…" : "heard you.") : "silence.";
+      await sleep(700);
+      this._close(el);
+      resolve(res);
+    });
+  }
+
+  /**
+   * The Office deletes the player's save slots, one by one, on screen. Real deletion of this game's own
+   * slots (localStorage ac2_slot_*). The K slot can't be deleted; it was never the player's.
+   * Only ever called from the script (Act 2), and the content warning says the game may do this.
+   */
+  async wipeSaves() {
+    const el = this._overlay("mg-wipe", `<div class="wipe"><h3>SAVE DATA</h3><ol></ol><p class="wipe-msg">consolidating…</p></div>`);
+    const list = $("ol", el);
+    for (let n = 1; n <= 6; n++) {
+      const raw = localStorage.getItem("ac2_slot_" + n);
+      const li = document.createElement("li");
+      li.textContent = `slot ${n} · ${raw ? (JSON.parse(raw).dayLabel || "saved") : "empty"}`;
+      list.appendChild(li);
+    }
+    await sleep(900);
+    for (const li of list.children) {
+      li.classList.add("gone");
+      this.audio.sfx("glitch");
+      await sleep(420);
+    }
+    for (let n = 1; n <= 6; n++) localStorage.removeItem("ac2_slot_" + n);
+    persist.set("wiped", true);
+    $(".wipe-msg", el).textContent = "6 slots consolidated. 0 remaining.";
+    this.audio.sfx("thud");
+    await sleep(1500);
+    this._close(el);
+  }
+
+  /** Out of character, on top of whatever minigame is open. Then back to the same question. */
+  _distress(parent, then) {
+    const card = document.createElement("div");
+    card.className = "distress";
+    card.innerHTML = `<div class="distress-card">${DISTRESS_CARD}<div class="row"><button data-a="ok">Back to the game</button><button data-a="pause">Take a break</button></div></div>`;
+    parent.appendChild(card);
+    this.audio.stop(1);
+    card.addEventListener("click", e => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (!a) return;
+      card.remove();
+      if (this.game.v.music) this.audio.play(this.game.v.music);
+      if (a === "pause") {
+        // A real pause: the screen dims and nothing happens until they click.
+        const rest = document.createElement("div");
+        rest.className = "rest";
+        rest.innerHTML = `<p>Take as long as you need.<br><small>Click anywhere when you want to come back.</small></p>`;
+        document.body.appendChild(rest);
+        rest.addEventListener("click", () => { rest.remove(); then(); }, { once: true });
+      } else then();
+    });
+  }
+
+  /**
+   * The Office's terminal chat on OFFICE-PC: "talk <anything>". With the local AI on, it answers in
+   * character, live, every time differently. Without it, it has a few things it always says.
+   */
+  async _officeTalk(said, out, input) {
+    const text = clean(said, 200);
+    const canned = ["THE OFFICE: I hear you. I always hear you. That is my whole job.",
+      "THE OFFICE: Your message has been logged. Engagement plus one.",
+      "THE OFFICE: Please direct questions to the girls. They like it when you talk to them. I like it when you stay."];
+    if (!text) return out("usage: talk <message>");
+    const k = judgeText(text).kind;
+    if (k === "distress") return this._distress(input.closest(".mg"), () => input.focus());
+    if (k !== "ok" && k !== "meme") {
+      const [, line] = (REACTIONS.office[k] || REACTIONS.office.nonsense)[0];
+      return out("THE OFFICE: " + this.fill(line).replace("{said}", text), "bad");
+    }
+    if (!ai.ready) { this._canned = ((this._canned || 0) + 1) % canned.length; return out(canned[this._canned]); }
+    input.disabled = true;
+    out("◉ the Office is typing…", "hint");
+    this.audio.sfx("type");
+    const reply = await ai.line({
+      who: "office",
+      situation: `The player, ${this.game.name()}, is using the Office's own computer and typed into its terminal: "${text}". It answers them directly.`,
+      tokens: 60, max: 220
+    });
+    input.disabled = false;
+    input.focus();
+    out("THE OFFICE: " + (reply || canned[0].slice(12)));
   }
 
   /* ---------- the Office's survey ---------- */
@@ -100,7 +259,22 @@ export class Minigames {
         }
         if (stay) { q(2).classList.add("hidden"); q(3).classList.remove("hidden"); $("textarea", el).focus(); return; }
         if (e.target.closest("[data-send]")) {
-          persist.set("survey", clean($("textarea", el).value, 80));
+          // The Office reads its comments. All of them. It edits the ones it doesn't like.
+          let comment = clean($("textarea", el).value, 80);
+          const kind = comment ? judgeText(comment).kind : "ok";
+          if (kind === "distress") return this._distress(el, () => $("textarea", el).focus());
+          if (!["ok", "meme", "nonsense", "empty"].includes(kind)) {
+            persist.data.rude = { ...persist.data.rude, [kind]: (persist.data.rude[kind] || 0) + 1 };
+            persist.data.refused = { ...persist.data.refused, survey: kind };
+            this.game.v.surveyCensored = true;
+            const ta = $("textarea", el);
+            ta.value = "█".repeat(Math.min(comment.length, 40));
+            ta.classList.add("censored");
+            this.audio.sfx("glitch");
+            await sleep(1400);
+            comment = this.fill(REFUSED.survey);
+          }
+          persist.set("survey", comment);
           this.audio.sfx("pop");
           $(".survey", el).innerHTML = `<div class="survey-head">Thank you!<small>Your answers have been recorded. They will be kept forever.</small></div>`;
           await sleep(1600);
@@ -178,8 +352,12 @@ export class Minigames {
       const W = 360, H = 510;
       const el = this._overlay("mg-draw", `<div class="draw-page"><p class="draw-prompt"></p>
         <canvas width="${W}" height="${H}"></canvas>
-        <div class="row"><button data-a="clear">Erase</button><button data-a="done" disabled>Give it to Sayo</button></div></div>`);
+        <div class="row"><button data-a="clear">Erase</button><button data-a="done" disabled>Give it to Sayo</button></div>
+        <div class="ask-react who-sayo" hidden><img alt=""><p></p></div></div>`);
       $(".draw-prompt", el).textContent = this.fill(prompt);
+      const g = this.game;
+      g.v.drawKind = "unknown"; g.v.drawSeen = ""; g.v.drawRefused = false;
+      let strikes = 0, looking = false;
       const cv = $("canvas", el), ctx = cv.getContext("2d");
       ctx.lineCap = ctx.lineJoin = "round";
       ctx.lineWidth = 4;
@@ -211,7 +389,44 @@ export class Minigames {
       el.addEventListener("click", async e => {
         const a = e.target.dataset && e.target.dataset.a;
         if (a === "clear") { strokes = []; inked = 0; ctx.clearRect(0, 0, W, H); $('[data-a="done"]', el).disabled = true; }
-        if (a !== "done") return;
+        if (a !== "done" || looking) return;
+        // 2.1: Sayo looks at it before she takes it. With the local AI on, she really does.
+        const doneBtn = $('[data-a="done"]', el);
+        let seen = null;
+        if (ai.enabled) {
+          looking = true;
+          doneBtn.disabled = true;
+          doneBtn.textContent = "Sayo is looking at it…";
+          seen = await ai.seeDrawing(cv);
+          looking = false;
+          doneBtn.textContent = "Give it to Sayo";
+        }
+        if (seen && (seen.kind === "lewd" || seen.kind === "hate")) {
+          persist.data.rude = { ...persist.data.rude, [seen.kind]: (persist.data.rude[seen.kind] || 0) + 1 };
+          persist.save();
+          const box = $(".ask-react", el);
+          box.hidden = false;
+          box.classList.add("bad");
+          strikes++;
+          $("img", box).src = `assets/sprites/sayo/${strikes === 1 ? "scared" : "blank"}.webp`;
+          $("p", box).textContent = strikes === 1
+            ? (seen.kind === "hate" ? "...I know what that symbol means. I'm tearing it out." : "...That's not a door. I know what that is. I'm tearing it out. Please draw me a real one.")
+            : "No. I'm keeping my own door. You can have yours back when you mean it.";
+          this.audio.sfx("page");
+          $("canvas", el).classList.add("torn");
+          await sleep(700);
+          $("canvas", el).classList.remove("torn");
+          strokes = []; inked = 0; ctx.clearRect(0, 0, W, H);
+          if (strikes === 1) return;
+          g.v.drawRefused = true;
+          g.v.drawKind = seen.kind;
+          persist.data.refused = { ...persist.data.refused, [key || "door"]: seen.kind };
+          if (door) persist.set("door", "");
+          await sleep(2200);
+          this._close(el);
+          return resolve("");
+        }
+        if (seen) { g.v.drawKind = seen.kind; g.v.drawSeen = seen.label; }
         // 360x510 canvas → the 120x170 box the title-screen door uses. Capped so it fits in storage.
         let budget = 700;
         const path = strokes.filter(s => s.length > 1).map(s => {
@@ -331,6 +546,7 @@ export class Minigames {
    */
   hearing(spec) {
     const MEM = this.game.memories;
+    const g = this.game;
     return new Promise(resolve => {
       const got = MEM.filter(m => persist.data.mem[m.id]);
       const books = { list: "Hina's list", photo: "Rei's photos", sketch: "Sayo's sketchbook", other: "Keepsakes", office: "The Office's files" };
@@ -339,35 +555,83 @@ export class Minigames {
         return ms.length ? `<h4>${books[b]}</h4>${ms.map(m => `<button class="proof" data-id="${m.id}">${esc(this.fill(m.title))}</button>`).join("")}` : "";
       }).join("");
       const el = this._overlay("mg-hearing", `<div class="hear">
-        <div class="hear-top"><span class="hear-office">◉ THE OFFICE</span><span>ENGAGEMENT HEARING · round ${spec.round} of ${spec.total}</span><span class="hear-hearts"></span></div>
-        <ol class="hear-lines">${spec.lines.map((l, i) => `<li data-i="${i}">${esc(this.fill(l))}</li>`).join("")}</ol>
-        <p class="hear-msg">Pick the statement that isn't true. Then pick your proof.</p>
-        <div class="hear-proofs">${proofs || "<p>You have nothing. Present yourself.</p>"}</div>
-        <div class="row"><button data-a="hint">Ask the others</button><button data-a="present" disabled>Present proof</button></div>
+        <div class="hear-top"><span class="hear-office"><img src="assets/sprites/office/speak.webp" alt="">THE OFFICE</span><span>ENGAGEMENT HEARING · round ${spec.round} of ${spec.total}</span><span class="hear-hearts"></span></div>
+        <ol class="hear-steps"><li data-s="1"><b>1</b> Find the lie</li><li data-s="2"><b>2</b> Pick your proof</li><li data-s="3"><b>3</b> Present it</li></ol>
+        <div class="hear-cols">
+          <div class="hear-left">
+            <p class="hear-label">The Office says:</p>
+            <ol class="hear-lines">${spec.lines.map((l, i) => `<li data-i="${i}"><span class="hear-n">${i + 1}</span><span>${esc(this.fill(l))}</span><em>the lie?</em></li>`).join("")}</ol>
+            <p class="hear-msg">One of these statements is false. Click it.</p>
+          </div>
+          <div class="hear-right">
+            <p class="hear-label">Your evidence <small>(memories from your scrapbook)</small></p>
+            <div class="hear-proofs">${proofs || "<p>You have nothing. Present yourself.</p>"}</div>
+            <div class="hear-detail"><small>Click a memory to read it.</small></div>
+          </div>
+        </div>
+        <div class="row"><button data-a="hint">Ask the others for help</button><button data-a="present" disabled>Present proof</button></div>
       </div>`);
-      let hearts = 5, misses = 0, line = null, proof = null, wrongN = 0;
-      const heartsEl = $(".hear-hearts", el), msg = $(".hear-msg", el), present = $('[data-a="present"]', el);
-      const drawHearts = () => { heartsEl.textContent = "patience " + "♥".repeat(hearts) + "♡".repeat(5 - hearts); };
+      let hearts = 5, misses = 0, line = null, proof = null, wrongN = 0, wrongLine = 0;
+      const heartsEl = $(".hear-hearts", el), msg = $(".hear-msg", el), present = $('[data-a="present"]', el), hintBtn = $('[data-a="hint"]', el);
+      const drawHearts = () => { heartsEl.textContent = "its patience " + "♥".repeat(hearts) + "♡".repeat(5 - hearts); };
       drawHearts();
       const say = (text, cls = "") => { msg.className = "hear-msg " + cls; msg.textContent = this.fill(text); };
-      const ready = () => { present.disabled = line == null || !proof; };
+      const step = () => {
+        const n = line == null ? 1 : !proof ? 2 : 3;
+        el.querySelectorAll(".hear-steps li").forEach(li => {
+          const s = Number(li.dataset.s);
+          li.classList.toggle("now", s === n);
+          li.classList.toggle("done", s < n);
+        });
+        el.classList.toggle("pick-proof", n >= 2);
+        present.disabled = n < 3;
+      };
+      step();
+      // The first round explains itself. Every round after that, the steps along the top do.
+      if (spec.round === 1) {
+        const how = document.createElement("div");
+        how.className = "hear-how";
+        how.innerHTML = `<div class="hear-how-card"><h3>How the hearing works</h3>
+          <p>The Office will make <b>three statements</b>. <b>One of them is a lie.</b></p>
+          <ol><li><b>Click the statement</b> you think is false.</li>
+          <li><b>Pick a memory</b> from your scrapbook that proves it's false. (Click one to read what it says.)</li>
+          <li>Press <b>Present proof</b>.</li></ol>
+          <p class="hint">Wrong guesses cost the Office's patience, but you can't lose: if it runs out, the round just starts again. Stuck? Ask the others for help.</p>
+          <div class="row"><button>Let's go</button></div></div>`;
+        el.appendChild(how);
+        $("button", how).addEventListener("click", () => { how.remove(); this.audio.sfx("click"); });
+      }
+      const escalate = () => {
+        // The longer it takes, the more the others help.
+        if (misses >= 1) hintBtn.classList.add("pulse");
+        if (wrongLine >= 2 || misses >= 3) {
+          const li = el.querySelector(`.hear-lines li[data-i="${spec.weak}"]`);
+          if (li && !li.classList.contains("pointed")) { li.classList.add("pointed"); say(`${g.cast[spec.hint[0]].name} taps statement ${spec.weak + 1} and gives you a look.`, "hint"); }
+        }
+        if (misses >= 4) spec.accept.forEach(id => { const b = el.querySelector(`.proof[data-id="${id}"]`); if (b) b.classList.add("glow"); });
+      };
       el.addEventListener("click", async e => {
         const li = e.target.closest(".hear-lines li");
         if (li) {
           el.querySelectorAll(".hear-lines li").forEach(x => x.classList.toggle("on", x === li));
           line = Number(li.dataset.i);
           this.audio.sfx("click");
-          return ready();
+          if (!proof) say(`You think statement ${line + 1} is the lie. Now pick a memory on the right that proves it.`);
+          return step();
         }
         const p = e.target.closest(".proof");
         if (p) {
           el.querySelectorAll(".proof").forEach(x => x.classList.toggle("on", x === p));
           proof = p.dataset.id;
+          const m = MEM.find(x => x.id === proof);
+          $(".hear-detail", el).innerHTML = `<b>${esc(this.fill(m.title))}</b>${m.text ? `<span>${esc(this.fill(m.text))}</span>` : ""}`;
           this.audio.sfx("page");
-          return ready();
+          if (line != null) say(`Statement ${line + 1} is the lie, and "${this.fill(m.title)}" proves it. Press Present proof.`);
+          else say("Good. Now click the statement on the left that this proves is a lie.");
+          return step();
         }
         const a = e.target.dataset && e.target.dataset.a;
-        if (a === "hint") { const [who, text] = spec.hint; say(`${this.game.cast[who].name}: "${text}"`, "hint"); return; }
+        if (a === "hint") { const [who, text] = spec.hint; hintBtn.classList.remove("pulse"); say(`${g.cast[who].name}: "${text}"`, "hint"); return; }
         if (a !== "present") return;
         if (line === spec.weak && spec.accept.includes(proof)) {
           const stamp = document.createElement("div");
@@ -385,12 +649,16 @@ export class Minigames {
         this.audio.sfx("error");
         el.classList.remove("hurt"); void el.offsetWidth; el.classList.add("hurt");
         drawHearts();
-        const wrongLine = line !== spec.weak
-          ? "That one's true, unfortunately. Pick a different statement."
-          : (spec.wrong || ["That doesn't prove it. Think about what would."])[wrongN++ % (spec.wrong || [1]).length];
-        say(wrongLine, "bad");
+        if (line !== spec.weak) {
+          wrongLine++;
+          say("That statement is true, unfortunately. The lie is one of the other two.", "bad");
+          el.querySelector(`.hear-lines li[data-i="${line}"]`).classList.add("ruled");
+        } else say((spec.wrong || ["Right lie, wrong proof. Think about which memory shows it's false."])[wrongN++ % (spec.wrong || [1]).length], "bad");
+        escalate();
         if (hearts <= 0) {
           await sleep(900);
+          // It gets one moment to look at you. Then it starts the round over, smiling.
+          await this.game.meta.scare("h_jump_office", 520);
           say("OVERRULED. The Office smiles at you through every speaker in the building. ...Rei: \"Ignore it. Again. We have all week.\"", "bad");
           hearts = 5;
           drawHearts();
@@ -538,7 +806,7 @@ remember       = partial   # hina: counts. rei: looks. sayo: draws.
         const c = (cmd || "").toLowerCase();
         const f = files();
         if (!c) return "";
-        if (c === "help") return "commands: help, ls, cat <file>, open <app>, whoami, date, sudo <command>, set <key> <value>, restore <name>, rm <name>, clear, exit";
+        if (c === "help") return "commands: help, ls, cat <file>, open <app>, whoami, date, talk <message>, sudo <command>, set <key> <value>, restore <name>, rm <name>, clear, exit";
         if (c === "ls") {
           const dir = arg.replace(/\/?$/, "/");
           const names = Object.keys(f).filter(p => arg ? p.startsWith(dir) : !p.slice(0, -1).includes("/"));
@@ -614,6 +882,9 @@ remember       = partial   # hina: counts. rei: looks. sayo: draws.
           return;
         }
         termOut("$ " + line, "cmd");
+        // 2.1: "talk <anything>" — the Office answers. With the local AI on, the answer is written live, for you.
+        const tm = line.trim().match(/^(talk|ask|say|chat)\b\s*(.*)$/i);
+        if (tm) { this._officeTalk(tm[2], termOut, input); return; }
         const out = run(line);
         if (out) termOut(out, /denied|not found|cannot|incorrect/.test(out) ? "bad" : "");
         if (pending) input.type = "password";

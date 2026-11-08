@@ -871,3 +871,161 @@ button { font: inherit; color: inherit; cursor: inherit; }
 .sb-card.note b { font-size: .95rem; }
 .sb-card.blank.note b { color: var(--ink-soft); }
 .sb-card.blank.note p { color: var(--ink-soft); font-size: 1rem; }
+
+/* =================== 2.1 =================== */
+
+/* Big poses. Close-ups fill the screen from the bottom edge; action poses are a little larger than standing ones. */
+.sprite.pose-close { height: 132%; bottom: -36%; }
+.sprite.pose-wide { height: 106%; bottom: -6%; }
+.sprite.pose-close.dim { filter: brightness(.55) saturate(.8) blur(1px); }
+/* The Office: a speaker leaning in from the edge of the room. */
+/* The Office hangs from the ceiling in the corner, the way school speakers do: pole up out of frame,
+   horn tipped down toward the room. It never stands on the floor with the girls. */
+.sprite.is-office { top: -30%; bottom: auto; height: 66%; left: 87% !important; rotate: 168deg; transform-origin: 50% 50%;
+  filter: drop-shadow(0 -14px 22px rgba(0,0,0,.5)); animation: officeHum 7s ease-in-out infinite; z-index: 1; }
+@keyframes officeHum { 50% { rotate: 166deg; } }
+.sprite.is-office.dim { filter: brightness(.8) drop-shadow(0 -14px 22px rgba(0,0,0,.5)); }
+.sprite.is-office.talk { animation: officeTalk .5s ease-out; }
+.sprite.is-eye { animation: rgbsplit .18s steps(2) infinite; }
+@keyframes officeTalk { 30% { transform: scale(1.04); } }
+.sprite.is-minor { height: 88%; }
+.sprite.is-ghost { opacity: .55; filter: blur(1.5px) grayscale(1) drop-shadow(0 0 20px rgba(0,0,0,.6)); animation: ghostDrift 6s ease-in-out infinite; }
+@keyframes ghostDrift { 50% { opacity: .35; transform: translateX(6px); } }
+
+/* A minor character who couldn't fit on stage talks from the side of the text box. */
+#say-portrait { position: absolute; left: -1.6rem; bottom: 100%; height: clamp(150px, 28vh, 270px); margin-bottom: -2.2rem; pointer-events: none;
+  filter: drop-shadow(0 8px 14px rgba(90,40,60,.3)); animation: fadein .3s ease both;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent); mask-image: linear-gradient(to bottom, #000 72%, transparent); }
+#say.thinking #say-text { color: #e0483c; font-family: ui-monospace, Consolas, monospace; letter-spacing: .1em; animation: tblink 1s steps(1) infinite; }
+@keyframes tblink { 50% { opacity: .2; } }
+
+/* Illustrations: over the stage, under the text box. */
+#stage { z-index: 0; }
+#cg { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.cg-img { position: absolute; inset: 0; background: center / cover no-repeat; opacity: 0; transition: opacity .8s ease; overflow: hidden; }
+.cg-img.in { opacity: 1; }
+.cg-img.withheld { filter: blur(28px) brightness(.3) grayscale(.6); }
+#cg:has(.withheld)::after { content: "▒ graphic image hidden (Settings) ▒"; position: absolute; left: 50%; top: 40%; translate: -50% 0; color: #a89a9d; font: 700 .9rem ui-monospace, Consolas, monospace; letter-spacing: .12em; }
+
+/* Jumpscares and subliminal frames. */
+.scare { position: absolute; inset: 0; z-index: 60; background: #000 center / cover no-repeat; animation: scareIn .14s cubic-bezier(.2,1.6,.4,1) both; }
+.scare.out { animation: fadeout .15s ease both; }
+@keyframes scareIn { from { transform: scale(1.6); filter: brightness(3); } to { transform: scale(1.04); filter: brightness(1) contrast(1.2); } }
+.subliminal { position: absolute; inset: 0; z-index: 58; background: center / cover no-repeat; opacity: .9; }
+
+/* Blood running from the top of the screen. */
+#game.fx-blood #stage::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 46%; z-index: 3; pointer-events: none;
+  background:
+    radial-gradient(ellipse 8px 60px at 7% 0, #7a0010 96%, transparent) no-repeat,
+    radial-gradient(ellipse 5px 110px at 18% 0, #8c0414 96%, transparent) no-repeat,
+    radial-gradient(ellipse 10px 40px at 31% 0, #6e000d 96%, transparent) no-repeat,
+    radial-gradient(ellipse 6px 150px at 46% 0, #7a0010 96%, transparent) no-repeat,
+    radial-gradient(ellipse 9px 80px at 59% 0, #8c0414 96%, transparent) no-repeat,
+    radial-gradient(ellipse 4px 190px at 71% 0, #6e000d 96%, transparent) no-repeat,
+    radial-gradient(ellipse 7px 95px at 84% 0, #7a0010 96%, transparent) no-repeat,
+    radial-gradient(ellipse 5px 130px at 94% 0, #8c0414 96%, transparent) no-repeat,
+    linear-gradient(#5a000b, transparent 9%);
+  animation: bleed 9s ease-out both; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+@keyframes bleed { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* The Office on its own PA banner. */
+.pa-banner { padding-left: 5.4rem; }
+.pa-office { position: absolute; left: .4rem; bottom: -.3rem; height: 118%; pointer-events: none; filter: drop-shadow(0 4px 8px rgba(0,0,0,.25)); }
+
+/* The local AI badge while the model downloads. */
+#ai-badge { position: absolute; left: 1rem; top: .8rem; z-index: 70; padding: .3rem .7rem; border-radius: 4px; background: rgba(20,8,10,.82); color: #ff8a80;
+  font: 700 .72rem ui-monospace, Consolas, monospace; letter-spacing: .08em; transition: opacity 1s; pointer-events: none; }
+#ai-badge:empty, #ai-badge.gone { opacity: 0; }
+.panel ul.consent { text-align: left; margin: .4rem auto .8rem; max-width: 34rem; line-height: 1.6; }
+.panel label small { display: block; opacity: .75; font-size: .78em; margin-left: 1.6rem; }
+
+/* A character answering what you typed, right on the notebook card. */
+.ask-react { display: flex; gap: .8rem; align-items: flex-end; margin-top: .9rem; padding: .6rem .8rem; border-radius: 14px; background: var(--paper2); border: 2px dashed var(--line); text-align: left; animation: fadein .3s ease both; }
+.ask-react[hidden] { display: none; }
+.ask-react img { width: 84px; height: 84px; object-fit: cover; object-view-box: inset(4% 28% 58% 28%); border-radius: 10px; background: var(--paper); flex: none; }
+.ask-react p { margin: 0; font-weight: 700; line-height: 1.45; color: var(--ink); }
+.ask-react.bad { background: #2a1216; border: 2px solid #e0483c; }
+.ask-react.bad p { color: #ffb3ad; }
+.mg-ask.hurt .ask-card, .mg-draw.hurt .draw-page { animation: shake .08s linear 4; }
+.draw-page { position: relative; }
+.mg-draw .ask-react { position: absolute; left: 50%; bottom: 4.2rem; translate: -50% 0; width: min(420px, 90%); z-index: 2; }
+.mg-draw canvas.torn { animation: tear .7s ease-in both; }
+@keyframes tear { 40% { transform: rotate(-4deg) translateX(-10px); } 100% { transform: rotate(9deg) translate(40px, 60px); opacity: 0; clip-path: polygon(0 0, 62% 0, 48% 100%, 0 100%); } }
+textarea.censored { color: #000 !important; background: #111 !important; letter-spacing: -.1em; }
+
+/* Out of character: the game stops being a game for a moment. */
+.distress { position: absolute; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(10,10,14,.86); animation: fadein .4s ease both; }
+.distress-card { width: min(560px, 92vw); padding: 1.6rem 1.8rem; border-radius: 12px; background: #f7f5f2; color: #2b2b2b; font-family: system-ui, "Segoe UI", sans-serif; line-height: 1.55; text-align: left; }
+.distress-card h3 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.distress-card ul { padding-left: 1.2rem; }
+.distress-card .hint { color: #666; font-size: .9rem; }
+.distress-card button { border-radius: 6px !important; box-shadow: none !important; border: 2px solid #ccc !important; background: #fff !important; color: #222 !important; }
+.rest { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #0b0a0d; color: #bbb; text-align: center; font-family: system-ui, sans-serif; cursor: pointer; }
+
+/* Rei's polaroid from the real camera. */
+.polaroid.real img { aspect-ratio: 4 / 3; }
+
+/* The graduation photo on the last title screen is the real illustration now. */
+.grad-img.cg { background-size: cover; background-position: center; }
+
+/* =================== the hearing, reworked =================== */
+.mg-hearing { background: rgba(14,4,8,.72) url(../assets/cg/hearing.webp) center / cover; background-blend-mode: multiply; }
+.hear { width: min(1040px, 96vw); position: relative; }
+.hear-office img { height: 1.6em; vertical-align: -.45em; margin-right: .35rem; }
+.hear-steps { display: flex; gap: .4rem; margin: .8rem 0 .2rem; padding: 0; list-style: none; }
+.hear-steps li { flex: 1; padding: .45rem .6rem; border: 1px solid #3a2e33; border-radius: 4px; color: #6f6368; font-weight: 700; font-size: .88rem; transition: all .2s; }
+.hear-steps li b { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; margin-right: .4rem; border-radius: 50%; background: #2a2228; color: #a89a9d; }
+.hear-steps li.now { color: #fff; border-color: #e0483c; background: #2a1418; box-shadow: 0 0 18px rgba(224,72,60,.35); }
+.hear-steps li.now b { background: #e0483c; color: #fff; }
+.hear-steps li.done { color: #8fdccf; border-color: #2f5a54; }
+.hear-steps li.done b { background: #2f5a54; color: #dff; }
+.hear-cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.1rem; min-height: 0; flex: 1; }
+@media (max-width: 760px) { .hear-cols { grid-template-columns: 1fr; } }
+.hear-label { margin: .7rem 0 .2rem; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: #8d8389; }
+.hear-label small { text-transform: none; letter-spacing: 0; }
+.hear-lines li { padding-left: 2.9rem; padding-right: 5.5rem; cursor: pointer; }
+.hear-lines li::before { content: none; }
+.hear-n { position: absolute; left: .7rem; top: .5rem; width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border-radius: 50%; background: #3a1418; color: #ff8a80; font-weight: 800; font-size: .85rem; }
+.hear-lines li em { display: none; position: absolute; right: .6rem; top: 50%; translate: 0 -50%; font-style: normal; font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #e0483c; }
+.hear-lines li:hover em, .hear-lines li.on em { display: block; }
+.hear-lines li.on { box-shadow: inset 4px 0 0 #e0483c; }
+.hear-lines li.ruled { opacity: .45; text-decoration: line-through; text-decoration-color: #8fdccf; }
+.hear-lines li.pointed { animation: point 1.4s ease-in-out infinite; }
+@keyframes point { 50% { box-shadow: 0 0 0 2px #8fdccf, 0 0 22px rgba(143,220,207,.5); } }
+.mg-hearing:not(.pick-proof) .hear-right { opacity: .55; }
+.mg-hearing.pick-proof .hear-left .hear-lines li:not(.on) { opacity: .7; }
+.hear-proofs { max-height: 30vh; }
+.hear-proofs .proof.glow { box-shadow: 0 0 0 2px #8fdccf, 0 0 14px rgba(143,220,207,.6); }
+.hear-detail { min-height: 4.2em; margin-top: .5rem; padding: .5rem .7rem; border-radius: 4px; background: #110e13; border: 1px solid #2c2328; font-size: .86rem; line-height: 1.45; color: #cfc3c6; }
+.hear-detail b { display: block; color: #fff; }
+.hear-detail small { color: #6f6368; }
+.mg .hear .row button.pulse { animation: point 1.2s ease-in-out infinite; border-color: #8fdccf; }
+.hear-how { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: rgba(10,4,8,.9); border-radius: 6px; }
+.hear-how-card { width: min(520px, 90%); padding: 1.3rem 1.6rem; border: 1px solid #e0483c; border-radius: 6px; background: #17131a; line-height: 1.55; }
+.hear-how-card h3 { margin: 0 0 .5rem; color: #ff8a80; font-family: var(--display); letter-spacing: .04em; }
+.hear-how-card ol { padding-left: 1.3rem; }
+.hear-how-card .hint { color: #8fdccf; font-size: .88rem; }
+
+/* The microphone, for one line. */
+.listen { width: min(420px, 90vw); padding: 1.6rem; text-align: center; border-radius: 6px; background: #17131a; color: #e9dfe0; border: 1px solid #5a2a30; }
+.listen-prompt { font-weight: 800; font-size: 1.1rem; }
+.listen-mic { font-size: 3rem; color: #5a4a50; transition: color .3s; }
+.mg-listen.on .listen-mic { color: #e0483c; animation: tblink 1.2s steps(1) infinite; }
+.listen-bar { height: 8px; border-radius: 4px; background: #2a2228; overflow: hidden; margin: .8rem 0; }
+.listen-bar span { display: block; height: 100%; width: 0; background: #e0483c; transition: width .08s; }
+.listen-state { color: #a89a9d; font-size: .9rem; font-family: ui-monospace, Consolas, monospace; }
+
+/* Sora is six. */
+.sprite[data-who="sora"] { height: 56%; }
+
+/* The Office deleting the save slots, one at a time. */
+.wipe { width: min(420px, 90vw); padding: 1.4rem 1.6rem; border-radius: 4px; background: #0d0a0e; color: #e9dfe0; border: 1px solid #e0483c; font-family: ui-monospace, Consolas, monospace; }
+.wipe h3 { margin: 0 0 .6rem; color: #e0483c; letter-spacing: .2em; }
+.wipe ol { list-style: none; padding: 0; margin: 0; }
+.wipe li { padding: .3rem 0; border-bottom: 1px solid #2a1e22; transition: all .3s; }
+.wipe li.gone { color: #e0483c; text-decoration: line-through; opacity: .35; letter-spacing: .3em; }
+.wipe-msg { margin: .8rem 0 0; color: #ff8a80; }
+/* Whoever was kept back: a strip of tape on the menu where she should be standing. */
+.title-absent { position: absolute; bottom: 6%; translate: -50% 0; padding: .3rem .9rem; background: #e9e2c8; color: #3b2a2a; font: 800 1.1rem ui-monospace, Consolas, monospace;
+  letter-spacing: .2em; rotate: -3deg; box-shadow: 0 2px 6px rgba(0,0,0,.4); text-align: center; }
+.title-absent small { display: block; font-size: .6rem; letter-spacing: .1em; color: #b3303a; }

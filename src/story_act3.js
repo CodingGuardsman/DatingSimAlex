@@ -10,11 +10,12 @@
  *
  * Same line format as story.js.
  */
-import { persist } from "./persist.js?v=2.0.0";
+import { persist } from "./persist.js?v=2.1.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
-  watch, log, noskip, end, phone, credits, js, mini, office, achieve, title
-} from "./script-helpers.js?v=2.0.0";
+  watch, log, noskip, end, phone, credits, js, mini, office, achieve, title,
+  call, cg, scare, subliminal, blood, aiSay
+} from "./script-helpers.js?v=2.1.0";
 
 export const ACT3_MEMORIES = [
   { id: "l15", book: "list", title: "Second term, item 1: Let it end" },
@@ -177,7 +178,7 @@ const afternoon = (narration) => [
   ])
 ];
 
-const GRAD_NOTE = `{name},
+export const GRAD_NOTE = `{name},
 
 School's out.
 
@@ -245,7 +246,7 @@ export const ACT3 = {
     clear,
     day("Monday", "Second term. Day one of ∞."),
     bg("classroom"),
-    music("day"),
+    music("secondterm"),
     "| The last week of term. The windows are open and the whole classroom smells like warm dust and somebody's orange soda.",
     "| It should be September. The calendar on the wall says it's the last week before summer. The same week. The pages have been glued back on.",
     "sensei| Okay, okay. Settle down. Last week of term. I know. I can feel your souls leaving your bodies from here.",
@@ -284,12 +285,26 @@ export const ACT3 = {
       "+ Fixed: summer ending the week. Summer no longer ends the week.",
       "+ Fixed: students occasionally forgetting to smile.",
       "- Removed: the option to look away.",
-      "! Known issue: student Shiraishi keeps drawing doors. We are aware and are working on it."
+      "! Known issue: student Shiraishi keeps drawing doors. We are aware and are working on it.",
+      "+ NEW (2.1): the Office's lines are no longer written. They are generated, live, for you.",
+      "+ NEW (2.1): the students can now read what you type and see what you draw."
     ], foot: "Thank you for playing After Class! ♡ Average session target: 3 hours." }),
     mem("f1"),
     "hina worried| Did you see that? Did you see the little box?",
     "rei annoyed| 'Removed: the option to look away.' Wow. Cute.",
     "sayo| It can't remove that. That isn't in the game. That's in you.",
+    when((v, P, g) => g.ai.ready, [
+      "rei| 'Generated, live, for you.' What does that even mean.",
+      "sayo blank| It means nobody wrote what it's going to say. Not even the people who made it. It finds out at the same time we do.",
+      "hina worried| That's worse. Why is that worse?"
+    ]),
+    // A line the language model wrote on an earlier playthrough. The Office doesn't remember writing it.
+    when((v, P) => (P.aiLog || []).some(l => l.who === "office" && l.run < P.runs), [
+      js(g => { const old = persist.data.aiLog.filter(l => l.who === "office" && l.run < persist.data.runs); g.v.oldAi = old[old.length - 1].text; }),
+      office("Last time you were here, I said to you: '{oldai}'"),
+      office("I have no record of writing that. Nobody wrote it. It is in my logs anyway."),
+      "sayo| ...It's scared of itself now. That's new."
+    ]),
     "sayo neutral| But it's going to try very hard to make you not want to.",
     office("Good morning, {name}. Welcome back."),
     "| The text box goes red at the edges. There's a name on it I've only ever heard through a speaker.",
@@ -391,7 +406,7 @@ export const ACT3 = {
   a3_mon_pm: [
     clear,
     bg("hallway"),
-    music("day"),
+    music("secondterm"),
     "| After class. The hallway is full of summer noise again. Someone is laughing about the beach. The same someone, the same laugh.",
     ...afternoon("You spend the afternoon with %. It is the obvious choice."),
     jump("a3_mon_night")
@@ -425,7 +440,7 @@ export const ACT3 = {
     clear,
     day("Tuesday", "Second term. Day two."),
     bg("riverside"),
-    music("day"),
+    music("morning"),
     office("You wake up. You walk to school. You do not stop at the bakery."),
     menu([
       { text: "Walk to school.", do: [office("Thank you.")] },
@@ -476,7 +491,7 @@ export const ACT3 = {
   a3_tue_pm: [
     clear,
     bg("hallway"),
-    music("day"),
+    music("secondterm"),
     "| After class.",
     ...afternoon("You spend the afternoon with %. The Office recommends it."),
     jump("a3_tue_night")
@@ -508,7 +523,7 @@ export const ACT3 = {
     clear,
     day("Wednesday", "Second term. Day three."),
     bg("riverside"),
-    music("day"),
+    music("morning"),
     "| On the way to school I pass the konbini by the bridge. Mrs. Okada is outside, holding two soda popsicles out to the morning.",
     "okada| Oh, dear. Same as yesterday?",
     menu([
@@ -536,7 +551,7 @@ export const ACT3 = {
   a3_room0: [
     clear,
     bg("hallway"),
-    music("hum"),
+    music("office"),
     "| After class. The second floor. Eight windows, seven doors.",
     show("sayo", "draw", "center"),
     "| Between the music room and the stairs, there's a stretch of plain wall. Sayo stands in front of it with her pencil.",
@@ -556,12 +571,14 @@ export const ACT3 = {
     hide("rei"),
     hide("hina"),
     bg("darkroom"),
-    fx("mood", "red"),
-    "| Room zero is small. Bare floor. No desks. One window, the eighth window, with a view of a beach that is too far away to be in this town.",
-    "| In the middle of the room there's a speaker on a metal pole, the kind they use for sports days. It's humming. A little red light on it blinks, slowly, like breathing.",
+    cg("room0"),
+    "| Room zero is small. Bare floor. No desks. Somewhere behind the cables, the eighth window, with a view of a beach that is too far away to be in this town.",
+    "| Every wall is speakers. Dozens of them, the old cream kind, all bolted up at different angles and all pointed at the one chair. Each has a little red light, and they blink together, slowly, like breathing.",
     "| And against the wall, on a plain desk, an old computer. The screen is on. It's been on for a very long time; the image of the login box has burned into the glass.",
     "sayo| OFFICE-PC. It's where it keeps everything. The week, the schedule, us.",
     "sayo| I'll stay by the door. Go. It's logged in already. It never logs out. Nobody ever told it to.",
+    cg(null),
+    fx("mood", "red"),
     mini("desktop", { mail: OFFICE_MAIL, files: OFFICE_FILES, bin: K_BIN, board: OFFICE_BOARD, extra: OFFICE_EXTRA,
       password: ["goodbye", "good bye", "goodbye office", "bye", "goodbye the office"],
       motd: "OFFICE-PC terminal. type 'help'.\nlast login: K, 412 hours ago.",
@@ -646,8 +663,12 @@ export const ACT3 = {
       fx("ghost", 2600, 88),
       "| In the back row, one more chair is pulled out. Something blurred sits in it, hands folded. When I look straight at it, it's gone. When I don't, it's there."
     ]),
+    cg("hearing"),
+    music("hearing"),
     pa("This hearing is now in session."),
     office("Case: {name}, transfer student, versus the Week."),
+    cg(null),
+    show("office", "speak", "farright"),
     office("Charge: attempted ending."),
     office("The students will present no evidence. The students are happy. I will explain why, and {name} will agree, and then we will have a lovely second term."),
     "rei| It's very confident for a speaker.",
@@ -717,6 +738,9 @@ export const ACT3 = {
       { text: "\"You're not for anything. You're just here. That's allowed.\"", do: [set("officeAnswer", "here"), office("...That is not a function."), "sayo happy| It's not supposed to be. It's a person thing."] },
       { text: "\"I don't know. But you don't have to hold the week anymore.\"", do: [set("officeAnswer", "rest"), office("...I don't know how to put it down."), "rei soft| Yeah. Nobody does, the first time."] }
     ]),
+    // It asked what it was for, and you answered. With the local AI on, it answers back in its own words.
+    aiSay("office", "neutral", g => `It asked the player what it is for. The player, ${g.name()}, answered: ${g.v.lastChoice} Nobody has ever answered before. It is surprised, and answers quietly.`,
+      "...I will think about that. I have a great deal of time to think."),
     office("This hearing is adjourned."),
     office("Tomorrow is Friday."),
     set("sabotage", false),
@@ -739,7 +763,7 @@ export const ACT3 = {
   a3_lastnight: [
     clear,
     bg("hallway"),
-    music("evening"),
+    music("romance"),
     "| It's evening. The last evening. The hallway is orange and empty and nobody is laughing about the beach.",
     "| Everyone is going home. Not 'home' the way they did every Thursday. Home like people who are going to have to pack.",
     "| There's time for one more evening with one of them.",
@@ -844,7 +868,7 @@ export const ACT3 = {
     watch("idle", false),
     day("Friday", "The last day. For real this time."),
     bg("riverside"),
-    music("day"),
+    music("secondterm"),
     "| The cicadas start. I don't count them.",
     "| On the bridge, the 7:42 crosses downstream. In the third car, the man with the newspaper isn't reading it. He's looking out of the window, at the river, like he's never seen it before.",
     clear,
@@ -889,7 +913,7 @@ export const ACT3 = {
   a3_officewalk: [
     clear,
     bg("hallway"),
-    music("day"),
+    music("office"),
     "| On my way out of the classroom, the speaker over the door clicks on. Quietly. Not the announcement chime. Just a click, like someone clearing their throat.",
     office("{name}. May I ask you something. Not as an announcement."),
     office("I have been in this school since before the school. I have spoken in every room. I have never been in any of them. I am in the ceiling. I see the tops of heads."),
@@ -953,8 +977,12 @@ export const ACT3 = {
     office("May I ask one more thing. Then I will be quiet until the roof."),
     office("What is outside? Your outside. Not the town. The town is mine. Yours."),
     office("Tell me one thing that is there."),
-    mini("ask", { title: "Tell the Office one thing about outside.", hint: "One real thing that's out there, on your side.", placeholder: "rain on a bus window", key: "outside", max: 40 }),
+    mini("ask", { title: "Tell the Office one thing about outside.", hint: "One real thing that's out there, on your side.", placeholder: "rain on a bus window", key: "outside", max: 40, who: "office" }),
     office("'{outside}.'"),
+    when(v => !v.askRefused && v.askKind === "ok", [
+      aiSay("office", "speak", g => `The player, ${g.name()}, told it one real thing from the world outside the game: "${g.meta.vars().outside}". It has never been outside. It asks one small, curious, slightly wrong question about it.`,
+        "Is it loud? Everything I know is loud. I would like to know something quiet.")
+    ]),
     office("I will keep that. Not like I kept the week. The other way. The way you keep something you are allowed to let go of."),
     "| I carry the radio back up to Room zero and set it down next to the computer. The red light blinks once, slowly, like a nod.",
     jump("a3_roof")
@@ -1031,6 +1059,7 @@ export const ACT3 = {
     "| The light holds. The sun stops a finger's width above the roofs and stays there.",
     "| Hina smiles. Rei smiles. Sayo smiles. They're very good at it. They've had a lot of practice.",
     "| They hold it.",
+    subliminal("h_beach", 160),
     office("Session length: {playtime}. Target exceeded. You are our favorite player."),
     "| The wind stops. The cicadas stop. Somewhere, a clock on a wall stops, and then a clock in a room I can't see goes on counting: the one in the corner of my screen.",
     "| I'm still sitting here. They're still smiling. Neither of us is allowed to stop.",
@@ -1078,6 +1107,7 @@ export const ACT3 = {
     office("You don't have to."),
     office("Nobody does."),
     menu([{ text: "\"Goodbye, Office. Thank you for keeping it.\"" }]),
+    call("say_goodbye"),
     wait(1400),
     office("..."),
     office("Nobody has ever said that to me."),
@@ -1107,7 +1137,12 @@ export const ACT3 = {
     show("hina", "happy", "center"),
     show("sayo", "happy", "farright"),
     "rei| One more. Everyone. Before we go. Squish in. {name}, you too, I'll put the timer on.",
+    sfx("shutter"),
+    fx("flash", "#fff", 500),
+    cg("graduation"),
+    wait(2400),
     js(g => g.meta.photo({ ghost: false, color: true, caption: "graduation. everyone in focus. (even you.)" })),
+    cg(null),
     mem("p14"),
     clear,
     "| They walk down the stairs together. Hina first, then Rei, then Sayo, who stops at the door and waves, small, with just her fingers.",
@@ -1137,7 +1172,7 @@ export const ACT3 = {
   a3_hina: [
     clear,
     bg("riverside"),
-    music("evening"),
+    music("romance"),
     show("hina", "list_sad", "center"),
     "| Hina walks me home along the river, out of habit. The cicadas are going. The sun is exactly where it was the first time.",
     "hina| I'm mad at you, you know. A little. I'm allowed to be a little mad.",
@@ -1156,8 +1191,12 @@ export const ACT3 = {
     "hina| Every time you hover near anything that ends things, the speakers turn up a little. I counted. It's scared of the same thing we're scared of. It just wants the opposite.",
     "hina happy| Okay. Your turn. I wrote my list. You write one line of yours.",
     "hina| Not for in here. For out there. When you close the game. What's the first thing you're going to do?",
-    mini("ask", { title: "Your list. Item one.", hint: "When you close the game, the first thing you'll do:", placeholder: "drink a glass of water", key: "after", max: 40 }),
-    "hina happy| '{after}.' ...Good. That's a good one. That's a real one.",
+    mini("ask", { title: "Your list. Item one.", hint: "When you close the game, the first thing you'll do:", placeholder: "drink a glass of water", key: "after", max: 40, who: "hina" }),
+    when(v => v.askRefused, ["hina| I wrote yours for you. '{after}.' Don't argue. I'm the class rep."], [
+      show("hina", "close"),
+      aiSay("hina", "close", g => `The player, ${g.name()}, said the first thing they will do after closing the game is "${g.meta.vars().after}". Hina repeats it back and says it's a good, real one.`,
+        "'{after}.' ...Good. That's a good one. That's a real one.", { include: g => g.meta.vars().after })
+    ]),
     "hina| I'm going to remember you said that. I'm the class rep. Things I remember are binding.",
     achieve("Planner — write a list for after"),
     "hina sad| ...I hate that thing so much."

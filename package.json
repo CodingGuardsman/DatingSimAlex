@@ -1,7 +1,7 @@
 {
   "name": "after-class",
   "productName": "After Class",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A meta-horror dating sim about the last week before summer.",
   "main": "electron/main.js",
   "scripts": {

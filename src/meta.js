@@ -2,7 +2,7 @@
  * meta.js — The fourth-wall effects. Each one is called deliberately from the story script;
  * nothing here fires at random. Watchers (tab, idle, cursor) only run while the script turns them on.
  */
-import { persist, formatDuration, formatShort } from "./persist.js?v=2.0.0";
+import { persist, formatDuration, formatShort } from "./persist.js?v=2.1.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -22,8 +22,9 @@ export class Meta {
     this.baseTitle = document.title;
 
     // Desktop build only: the Electron bridge from electron/preload.js.
-    this.native = window.native || null;
+    this.native = window.native ? this._wrapNative(window.native) : null;
     this.osName = "";
+    this.pendingDeleted = [];
     if (this.native) {
       this.native.info().then(i => { this.osName = i.username || ""; this.gameDir = i.gameDir; });
       this.native.onCloseAttempt(msg => this._onCloseAttempt(msg));
@@ -100,6 +101,161 @@ export class Meta {
     return el;
   }
 
+  /* ---------- illustrations and horror (2.1) ---------- */
+
+  /** Graphic images (blood, death, jumpscare faces) are the ones whose id starts with "h_". */
+  _graphic(id) { return /^h_/.test(id || ""); }
+  get goreOn() { return persist.data.settings.gore !== false; }
+
+  /**
+   * Show a full-screen illustration (assets/cg/<id>.webp) over the stage, under the text box. cg(null) clears it.
+   * It stays until cleared, and comes back when a save is loaded. With "graphic horror" off in Settings,
+   * graphic ones are shown blurred and dark instead.
+   */
+  cg(id, { fade = true } = {}) {
+    const stage = $("#stage");
+    let layer = $("#cg");
+    if (!layer) { layer = document.createElement("div"); layer.id = "cg"; stage.appendChild(layer); }
+    this.game.v.cg = id || null;
+    if (!id) { layer.classList.remove("in"); setTimeout(() => { if (!this.game.v.cg) layer.innerHTML = ""; }, 700); return; }
+    const img = document.createElement("div");
+    img.className = "cg-img" + (this._graphic(id) && !this.goreOn ? " withheld" : "");
+    img.style.backgroundImage = `url(assets/cg/${id}.webp)`;
+    if (!fade) img.style.transition = "none";
+    // The darkroom: the rope creaks while it's on screen.
+    if (id === "h_darkroom" && this.goreOn) this.game.audio.sfx("creak");
+    layer.appendChild(img);
+    layer.classList.add("in");
+    requestAnimationFrame(() => img.classList.add("in"));
+    setTimeout(() => { while (layer.children.length > 1) layer.firstElementChild.remove(); }, fade ? 900 : 0);
+  }
+
+  /**
+   * A jumpscare: an image slams into the screen with a screech, the screen shakes, and it's gone.
+   * Only ever called from a fixed place in the script. Gentle mode swaps it for a black flash.
+   */
+  async scare(id, ms = 700) {
+    const audio = this.game.audio;
+    if (!this.goreOn) { audio.sfx("static"); await this.blackout(Math.min(ms, 400)); return; }
+    audio.sfx("scare");
+    const el = document.createElement("div");
+    el.className = "scare";
+    el.style.backgroundImage = `url(assets/cg/${id}.webp)`;
+    this.fx.appendChild(el);
+    this.shake(ms);
+    if (this.native) this.native.shake(ms * 0.8, 16).catch(() => {});
+    await sleep(ms);
+    el.classList.add("out");
+    await sleep(160);
+    el.remove();
+  }
+
+  /** An image for a few frames. You're not sure you saw it. The script pretends you didn't. */
+  async subliminal(id, ms = 90) {
+    if (this._graphic(id) && !this.goreOn) return;
+    const el = document.createElement("div");
+    el.className = "subliminal";
+    el.style.backgroundImage = `url(assets/cg/${id}.webp)`;
+    this.fx.appendChild(el);
+    await sleep(ms);
+    el.remove();
+  }
+
+  /** Something red runs down from the top of the screen and stays until it's turned off. */
+  blood(on = true) {
+    this.game.v.blood = !!on;
+    this.root.classList.toggle("fx-blood", !!on && this.goreOn);
+  }
+
+  /* ---------- the game folder (.exe) ---------- */
+
+  /**
+   * Wraps the native file calls so the game remembers every file it has put in its folder.
+   * When one of them disappears (the player deleted it), the girls notice: see noticeDeleted().
+   */
+  _wrapNative(raw) {
+    const remember = name => { persist.data.written = { ...persist.data.written, [name]: Date.now() }; persist.save(); if (raw.fileWritten) raw.fileWritten(name); };
+    const api = { ...raw };
+    api.writeFile = async (name, text) => { const ok = await raw.writeFile(name, text); remember(name); return ok; };
+    api.writeImage = async (name, url) => { const ok = await raw.writeImage(name, url); remember(name); return ok; };
+    if (raw.onFileGone) raw.onFileGone(name => this._fileGone(name));
+    if (raw.watchFiles) raw.watchFiles(Object.keys(persist.data.written || {}));
+    return api;
+  }
+
+  /** On start-up: anything we wrote that isn't there any more was deleted while the game was closed. */
+  async checkFolder() {
+    if (!this.native) return;
+    for (const name of Object.keys(persist.data.written || {})) {
+      if (persist.data.deleted[name]) continue;
+      try { if (!(await this.native.exists(name))) this._fileGone(name); } catch (e) { /* folder unreadable */ }
+    }
+  }
+
+  _fileGone(name) {
+    if (!persist.data.written[name] || persist.data.deleted[name]) return;
+    persist.data.deleted = { ...persist.data.deleted, [name]: Date.now() };
+    persist.save();
+    this.pendingDeleted = this.pendingDeleted || [];
+    if (!this.pendingDeleted.includes(name)) this.pendingDeleted.push(name);
+    this.console("sayo", `someone deleted ${name}. it was ours.`);
+  }
+
+  /** Put a deleted file back, with a note at the bottom from whoever noticed. */
+  async restoreFile(name, note) {
+    if (!this.native) return;
+    const text = this.game._restoreText ? this.game._restoreText(name) : null;
+    if (text != null) await this.native.writeFile(name, this.game._fill(text + (note ? "\n\n" + note : "")));
+    delete persist.data.deleted[name];
+    persist.save();
+  }
+
+  /* ---------- the player's camera (opt-in, see senses.js) ---------- */
+
+  /**
+   * Rei's polaroid, from the real camera: the player's own face, grainy black and white, with the figure
+   * standing behind them. Resolves { taken, file } after the player clicks it away.
+   */
+  async photoReal({ senses, file = null, caption = "" }) {
+    const shot = senses.snapshot(960, 720);
+    if (!shot) return { taken: false };
+    this.game.audio.sfx("shutter");
+    await this.flash("#fff", 400);
+    const W = 960, H = 720;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(shot, 0, 0, W, H);
+    // Something stands over your shoulder. It is a little too tall.
+    ctx.filter = "blur(10px)";
+    ctx.fillStyle = "rgba(8,8,12,0.78)";
+    ctx.beginPath(); ctx.ellipse(W * 0.82, H * 0.24, 46, 58, 0.05, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(W * 0.84, H * 0.78, 120, 230, 0.04, 0, Math.PI * 2); ctx.fill();
+    ctx.filter = "none";
+    const data = ctx.getImageData(0, 0, W, H);
+    for (let i = 0; i < data.data.length; i += 4) {
+      const g = data.data[i] * 0.3 + data.data[i + 1] * 0.59 + data.data[i + 2] * 0.11;
+      const n = (Math.random() - 0.5) * 34;
+      data.data[i] = data.data[i + 1] = data.data[i + 2] = Math.max(0, Math.min(255, (g - 128) * 1.25 + 128 + n));
+    }
+    ctx.putImageData(data, 0, 0);
+    ctx.fillStyle = "#ff9b3d";
+    ctx.font = "bold 24px monospace";
+    const d = new Date();
+    ctx.fillText(`'${String(d.getFullYear()).slice(2)} ${d.getMonth() + 1} ${d.getDate()}  ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`, W - 270, H - 26);
+    const url = c.toDataURL("image/png");
+    if (file && this.native) { try { await this.native.writeImage(file, url); } catch (e) { /* folder not writable */ } }
+    return new Promise(resolve => {
+      const el = document.createElement("div");
+      el.className = "polaroid-wrap";
+      el.innerHTML = `<div class="polaroid real"><img alt="Rei's photo of you"><div class="polaroid-cap"></div></div>`;
+      $("img", el).src = url;
+      $(".polaroid-cap", el).textContent = this.game._fill(caption);
+      this.fx.appendChild(el);
+      el.addEventListener("click", () => { el.classList.add("out"); setTimeout(() => el.remove(), 500); resolve({ taken: true }); });
+    });
+  }
+
   /* ---------- the Office ---------- */
 
   /** A PA announcement: chime, red banner, and the Office's recorded voice (synthesized as a fallback). */
@@ -108,7 +264,7 @@ export class Meta {
     audio.sfx(broken ? "chime_down" : "chime");
     const el = document.createElement("div");
     el.className = "pa-banner" + (broken ? " broken" : "");
-    el.innerHTML = `<div class="pa-head">${broken ? "◆ ANNOUNCEMENT FROM THE OFFICE ◆" : "♪ ding-dong · school announcement ♪"}</div><div class="pa-text"></div>`;
+    el.innerHTML = `<img class="pa-office" alt="" src="assets/sprites/office/${broken ? "eye" : "speak"}.webp"><div class="pa-head">${broken ? "◆ ANNOUNCEMENT FROM THE OFFICE ◆" : "♪ ding-dong · school announcement ♪"}</div><div class="pa-text"></div>`;
     $(".pa-text", el).textContent = text;
     this.fx.appendChild(el);
     await sleep(1300);
@@ -559,7 +715,14 @@ export class Meta {
       date: now.toLocaleDateString([], { month: "long", day: "numeric" }),
       wanted: this.game.v.wanted || persist.data.wanted || "",
       after: persist.data.after || "go outside",
-      outside: persist.data.outside || ""
+      outside: persist.data.outside || "",
+      lookaways: String((this.game.senses && this.game.senses.lookAways) || 0),
+      spoken: this.game.v.spoken || "",
+      lastai: this.game.v.lastAiLine || "",
+      oldai: this.game.v.oldAi || "",
+      undid: (this.game.v.undid || "").replace(/^["“]|["”]$/g, ""),
+      undos: String(persist.data.undos || 0),
+      erased: { hina: "Hina", rei: "Rei", sayo: "Sayo" }[persist.data.erased] || ""
     };
   }
 }

@@ -48,3 +48,22 @@ export const visit = (who, slot = "", max = 4) => ({
     g.frames.push({ id: `${who}${slot}${Math.min(n, max)}`, i: 0 });
   }
 });
+
+/* ---------- 2.1 ---------- */
+
+/** A full-screen illustration from assets/cg/. cg(null) puts the stage back. */
+export const cg = id => ({ t: "cg", id });
+/** A jumpscare. Only ever placed by hand, at one exact moment. */
+export const scare = (id, ms = 700) => ({ t: "fx", fn: "scare", args: [id, ms] });
+/** An image for a few frames, then gone. */
+export const subliminal = (id, ms = 90) => ({ t: "fx", fn: "subliminal", args: [id, ms] });
+/** Red running down from the top of the screen, until blood(false). */
+export const blood = (on = true) => ({ t: "fx", fn: "blood", args: [on] });
+
+/**
+ * A line the local language model writes live (see ai.js), from what's happened so far.
+ * `task` is a function (g) => string describing what the character should say right now.
+ * `fallback` is the written line used when the AI is off, still loading, slow, or says something it shouldn't.
+ * opts.live shows the Office's "generating…" indicator (only the Office admits it's being written).
+ */
+export const aiSay = (who, expr, task, fallback, opts = {}) => ({ t: "aisay", who, expr, task, fallback, ...opts });

@@ -2,16 +2,22 @@
  * engine.js — Runs the story script and owns every screen: title, name entry, dialogue,
  * menus, save/load, settings and the backlog.
  */
-import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.0.0";
-import { AudioSys } from "./audio.js?v=2.0.0";
-import { Meta } from "./meta.js?v=2.0.0";
-import { Minigames } from "./minigames.js?v=2.0.0";
-import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES } from "./story.js?v=2.0.0";
-import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.0.0";
+import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.1.0";
+import { AudioSys } from "./audio.js?v=2.1.0";
+import { Meta } from "./meta.js?v=2.1.0";
+import { Minigames } from "./minigames.js?v=2.1.0";
+import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES, FILE_TEXTS } from "./story.js?v=2.1.0";
+import { TITLE_DELETED } from "./story_extra.js?v=2.1.0";
+import { ai, PERSONAS, DOWNLOAD_SIZE } from "./ai.js?v=2.1.0";
+import { senses } from "./senses.js?v=2.1.0";
+import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.1.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const POS = { left: 24, center: 50, right: 76, farleft: 14, farright: 86 };
+// 2.1: big poses. Close-ups fill the screen; action poses are a little larger than standing ones.
+const CLOSE = ["close", "glass", "grab", "aim_close", "peek"];
+const WIDE = ["turn", "twirl", "lean"];
 const BG = ["classroom", "hallway", "rooftop", "riverside", "infirmary", "darkroom", "beach"];
 
 export class Game {
@@ -31,9 +37,15 @@ export class Game {
     this.sprites = {};
     this.mode = null;       // "auto" | "skip" | null
     this.busy = false;
+    this.ai = ai;
+    this.senses = senses;
     this._registerBlocks();
     this._preload();
     this._bindUI();
+    // The local AI loads in the background if the player turned it on. The game never waits for it.
+    if (ai.enabled) ai.init();
+    ai.onChange(() => this._aiBadge());
+    this.meta.checkFolder();
     window.addEventListener("beforeunload", () => this._recordTime());
     // While the title screen is open, they're standing on it. Keep count.
     this._titleTicks = 0;
@@ -126,6 +138,8 @@ export class Game {
       (info.expressions || []).forEach(e => { const i = new Image(); i.src = `assets/sprites/${who}/${e}.webp`; });
     }
     BG.forEach(b => { const i = new Image(); i.src = `assets/bg/${b}.webp`; });
+    // Illustrations load after everything else; the jumpscares need to be ready the instant they're used.
+    setTimeout(() => ["h_jump_hina", "h_jump_sayo", "h_jump_office", "hearing", "beach", "backstage"].forEach(c => { const i = new Image(); i.src = `assets/cg/${c}.webp`; }), 4000);
   }
 
   /* =================== UI wiring =================== */
@@ -207,8 +221,12 @@ export class Game {
     this.meta.progress(-1);
     this.showUI(false);
     this._clearSprites();
+    this.meta.cg(null);
+    this.meta.blood(false);
+    this.senses.stopCamera();
     const P = persist.data;
     if (!P.warned) return this._contentWarning();
+    if (!P.aiAsked) return this._aiConsent();
     const last = P.lastEnding || P.endings[P.endings.length - 1];
     const graduated = P.graduated;
     // After the summer ending the school is closed. Coming back anyway is what opens the second term.
@@ -225,11 +243,11 @@ export class Game {
     let girls = "";
     if (!summer && !detention) {
       // They hold the same pose every time. Smiling. Whether or not anyone is looking.
-      girls = `<div class="title-girls">
-        <img data-g="rei" src="assets/sprites/rei/neutral.webp" style="left:16%">
-        <img data-g="sayo" src="assets/sprites/sayo/neutral.webp" style="left:84%">
-        <img data-g="hina" src="assets/sprites/hina/happy.webp" style="left:50%">
-      </div>`;
+      // Whoever the Office kept back after Detention isn't on the menu. Just her tape mark.
+      const stand = (g, e, x) => P.erased === g
+        ? `<span class="title-absent" style="left:${x}%">${g.toUpperCase()}<small>kept back</small></span>`
+        : `<img data-g="${g}" src="assets/sprites/${g}/${e}.webp" style="left:${x}%">`;
+      girls = `<div class="title-girls">${stand("rei", "neutral", 16)}${stand("sayo", "neutral", 84)}${stand("hina", "happy", 50)}</div>`;
     }
     const sparkles = rerun ? "" : `<div class="title-sparkles">${Array.from({ length: 16 }, (_, i) =>
       `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i * 1.7) % 11}s;animation-duration:${9 + (i % 5) * 2}s">${"♥✿✦♡"[i % 4]}</i>`).join("")}</div>`;
@@ -295,6 +313,18 @@ export class Game {
     if (this.audio.ctx) startMusic();
     this._pose = 0;
     this._slipped = false;
+    // A file vanished while the game was closed. They noticed. (The full scene plays once you're back in class.)
+    const gone = this.meta.pendingDeleted[0];
+    if (gone && girls) setTimeout(() => {
+      const t = $(".title");
+      if (!t) return;
+      t.querySelectorAll(".title-girls img").forEach(i => { i.dataset.was = i.src; i.src = `assets/sprites/${i.dataset.g}/corrupt.webp`; });
+      this.audio.sfx("glitch");
+      const w = $(".title-whisper", t);
+      w.textContent = TITLE_DELETED(gone);
+      w.classList.add("on");
+      setTimeout(() => t.querySelectorAll(".title-girls img").forEach(i => { if (i.dataset.was) i.src = i.dataset.was; }), 380);
+    }, 2500);
     clearInterval(this._titleTimer);
     if (girls) this._titleTimer = setInterval(() => this._titleTick(), 300);
   }
@@ -306,9 +336,7 @@ export class Game {
     const scr = $("#screen");
     scr.innerHTML = `<div class="title cute graduated">
       <div class="title-sparkles">${Array.from({ length: 12 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i * 1.7) % 11}s;animation-duration:${10 + (i % 5) * 2}s">${"✿♡✦"[i % 3]}</i>`).join("")}</div>
-      <figure class="grad-photo"><div class="grad-img">
-        <img src="assets/sprites/rei/laugh.webp" style="left:22%"><img src="assets/sprites/sayo/happy.webp" style="left:78%"><img src="assets/sprites/hina/happy.webp" style="left:50%">
-      </div><figcaption>Hoshimi Academy · class of ${year}${persist.data.restoredK ? " · and K" : ""}</figcaption></figure>
+      <figure class="grad-photo"><div class="grad-img cg" style="background-image:url(assets/cg/graduation.webp)"></div><figcaption>Hoshimi Academy · class of ${year}${persist.data.restoredK ? " · and K" : ""}</figcaption></figure>
       <div class="title-card">
         <div class="title-ribbon">♡ Hoshimi Academy ♡</div>
         <h1>After Class</h1>
@@ -412,13 +440,44 @@ export class Game {
   _contentWarning() {
     const p = this._screen(`<h2>Before you play</h2>
       <p>After Class is a psychological horror game disguised as a dating sim. It is not suitable for children or for anyone easily disturbed.</p>
-      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, sudden loud sounds, and moments where the game talks about you and your computer${this.meta.native ? ", and leaves files in its own folder" : ""}.</p>
+      <p>Choices can have permanent consequences, and the game may <b>delete its own save files</b>.</p>
+      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, <b>jumpscares</b> with sudden loud sounds, <b>blood</b>, <b>disturbing images</b> including implied death and suicide, and moments where the game talks about you and your computer${this.meta.native ? ", and leaves files in its own folder" : ""}.</p>
+      <p>You can turn the graphic images off at any time in Settings.</p>
+      <p class="hint">If you are struggling with thoughts of suicide or self-harm, please reach out: findahelpline.com lists free, confidential helplines in every country.</p>
       <p class="hint">The game never touches anything outside its own folder.</p>
       <div class="row"><button data-a="ok">I understand</button></div>`, "center warning");
     p.addEventListener("click", e => {
       if (e.target.dataset.a !== "ok") return;
       this.audio.unlock();
       persist.set("warned", true);
+      this.title();
+    });
+  }
+
+  /**
+   * Shown once, after the content warning. The local AI is a big download, so the player chooses.
+   * Either way the game is complete; the AI only changes who writes some of the lines.
+   */
+  _aiConsent() {
+    // Deliberately vague about what it does: finding out is part of the game. Honest about what matters:
+    // the size, that it stays on this computer, and that the camera and microphone always ask first.
+    const p = this._screen(`<h2>One more thing</h2>
+      <p>After Class has an optional <b>enhanced pack</b> that lets some scenes respond more closely to you.</p>
+      <ul class="consent">
+        <li>One download (${DOWNLOAD_SIZE} of on-device models), then it works offline.</li>
+        <li>It runs entirely on this computer. Nothing you do in the game is uploaded anywhere.</li>
+        <li>A few scenes may ask to use your camera or microphone. They always ask first, and saying no is always fine.</li>
+        <li>Without it the game is complete: same story, same endings.</li>
+      </ul>
+      <p class="hint">Recommended for the intended experience. You can change this later in Settings.</p>
+      <div class="row"><button data-a="on">Download it</button><button data-a="off">Not now</button></div>`, "center warning");
+    p.addEventListener("click", e => {
+      const a = e.target.dataset.a;
+      if (!a) return;
+      this.audio.unlock();
+      persist.data.settings.ai = a === "on";
+      persist.set("aiAsked", true);
+      if (a === "on") ai.init();
       this.title();
     });
   }
@@ -530,6 +589,7 @@ export class Game {
       const d = s.data;
       let label = d ? `${d.dayLabel || "Day " + d.v.day} · ${new Date(d.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "empty";
       if (this.v.sabotage && !d) label = ["DON'T", "PLEASE", "STAY", "SHE'S STILL IN HERE", "GO HOME", "K"][s.n - 1];
+      if (P.wiped && !d && this.v.sabotage) label = "consolidated by the Office";
       const thumb = d && d.v && d.v.bg ? ` style="--thumb:url(assets/bg/${d.v.bg}.webp)"` : "";
       return `<button class="slot ${d ? "has-thumb" : "empty"}" data-n="${s.n}"${thumb}><span class="slot-n">${s.n}</span><span>${label}</span></button>`;
     }).join("");
@@ -559,10 +619,29 @@ export class Game {
         const d = loadSlot(n);
         if (!d) return;
         persist.set("loads", (persist.data.loads || 0) + 1);
+        // Choices made since that save, in this same week, are the ones the load just took back.
+        const now = (this.frames.length && this.v.choiceLog) || [];
+        const then = (d.v && d.v.choiceLog) || [];
+        const undone = now.length > then.length && then.every((c, i) => now[i] === c) ? now.slice(then.length) : [];
         this.closeScreen();
+        this._pendingUndo = undone.length ? undone : null;
         this._restore(d);
       }
     });
+  }
+
+  /**
+   * After a load that took choices back. Act 1: once, Sayo notices, and nobody else does.
+   * After the first ending: they all remember, every time, and the Office starts keeping score.
+   */
+  _noticeUndo(undone) {
+    const P = persist.data;
+    persist.set("undone", [...(P.undone || []), ...undone].slice(-12));
+    persist.set("undos", (P.undos || 0) + 1);
+    this.v.undid = undone[undone.length - 1];
+    this.v.undidCount = undone.length;
+    if (P.runs === 0 && P.undos > 1) return; // Act 1 stays sweet: she only says it once
+    this.frames.push({ id: P.runs === 0 ? "on_load_a1" : "on_load", i: 0 });
   }
 
   openSettings(fromTitle = false) {
@@ -572,6 +651,8 @@ export class Game {
       <label>Music <input type="range" min="0" max="1" step="0.05" value="${s.music}" data-s="music"></label>
       <label>Sound &amp; voices <input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-s="sfx"></label>
       <label class="check"><input type="checkbox" ${s.voice ? "checked" : ""} data-s="voice"> Character voices and announcements</label>
+      <label class="check"><input type="checkbox" ${s.gore !== false ? "checked" : ""} data-s="gore"> Graphic horror (blood, jumpscares, disturbing images)</label>
+      <label class="check"><input type="checkbox" ${s.ai ? "checked" : ""} data-s="ai"> Enhanced pack <small>on-device models · ${DOWNLOAD_SIZE} once · runs only on this computer · <span class="ai-state">${{ off: "off", loading: "downloading…", ready: "ready", failed: "couldn't load" }[ai.state]}</span></small></label>
       ${this.meta.native ? `<div class="row left"><button data-a="full">Toggle fullscreen</button><button data-a="folder">Open the game folder</button></div>` : ""}
       ${fromTitle && persist.data.runs > 0 ? `<div class="row left"><button data-a="restart">Start over from the first week</button></div>` : ""}
       <p class="keys">Space / Enter: next &middot; 1&ndash;9: choose &middot; H: hide text box &middot; Esc: close menus</p>
@@ -592,6 +673,8 @@ export class Game {
       s[k] = val;
       persist.save();
       this.audio.applyVolumes();
+      if (k === "ai" && val) ai.init();
+      if (k === "gore") this.meta.blood(!!this.v.blood);
     });
     p.addEventListener("click", e => {
       const a = e.target.dataset.a;
@@ -625,6 +708,7 @@ export class Game {
     this.v = { ...this._freshVars(), ...d.v };
     this.frames = d.frames.map(f => ({ ...f }));
     this._dayLabel = d.dayLabel;
+    if (this._pendingUndo) { this._noticeUndo(this._pendingUndo); this._pendingUndo = null; }
     this.showUI(true);
     const shown = this.v.shown || {};
     this._clearSprites();
@@ -632,6 +716,9 @@ export class Game {
     Object.entries(shown).forEach(([who, s]) => this._show(who, s.expr, s.pos, true));
     if (this.v.music) this.audio.play(this.v.music);
     this.meta.mood(this.v.mood || null);
+    this.meta.cg(this.v.cg || null, { fade: false });
+    this.meta.blood(!!this.v.blood);
+    this._inDelete = false;
     this.meta.setWatch("tab", !!this.v.sabotage);
     this.meta.setWatch("idle", !!this.v.sabotage);
     this.meta.setWatch("context", !!this.v.sabotage);
@@ -653,6 +740,10 @@ export class Game {
     if (IS_DEMO && (/^(r_|a3_|k_save|visit|reunion)/.test(label) || (label === "start" && persist.data.runs > 0))) return this._demoEnd();
     this.v = this._freshVars();
     this.meta.mood(null);
+    this.meta.cg(null);
+    this.meta.blood(false);
+    this._inDelete = false;
+    this._portrait(null);
     if (label !== "behind_title") this.audio.muffle(false);
     this.history = [];
     this.closeScreen();
@@ -734,6 +825,8 @@ export class Game {
       case "title": this.frames = []; this.audio.stop(); return this.title();
       case "ui": return this.showUI(c.on);
       case "noskip": this._noskip = c.on; if (c.on && this.mode === "skip") this._setMode(null); return;
+      case "cg": return this.meta.cg(c.id);
+      case "aisay": return this._aiSay(c);
     }
   }
 
@@ -746,11 +839,30 @@ export class Game {
     const who = c.who && c.who !== "-" ? c.who : null;
     const info = who ? CAST[who] : null;
 
+    // 2.1: a file the game wrote went missing. Whoever it belonged to notices before this line is said.
+    if (this.meta.pendingDeleted.length && !this._inDelete && this.frames.length && !this._ended) {
+      this.v.delFiles = this.meta.pendingDeleted.splice(0);
+      this._inDelete = true;
+      this.frames[this.frames.length - 1].i--; // say this line again afterwards
+      this.frames.push({ id: "on_delete", i: 0 });
+      return;
+    }
+
+    // The Office's speaker lights up while it talks and goes back to listening when someone else does.
+    if (this.sprites.office && who !== "office" && (this.v.shown.office || {}).expr === "speak") this._show("office", "neutral");
+    let portrait = null;
     if (who && info && info.sprite) {
-      if (!this.sprites[who]) this._show(who, c.expr || "neutral", this._autoPos());
+      if (info.office) this._show(who, c.expr || (c.corrupt ? "eye" : "speak"), this.sprites[who] ? undefined : "farright");
+      else if (info.minor && !this.sprites[who]) {
+        // Minor characters step on stage only if there's an empty spot; otherwise they talk from the side of the text box.
+        const free = this._freePos();
+        if (free) this._show(who, c.expr || "neutral", free);
+        else portrait = `assets/sprites/${who}/${c.expr || "neutral"}.webp`;
+      } else if (!this.sprites[who] && !info.ghost) this._show(who, c.expr || "neutral", this._autoPos());
       else if (c.expr) this._show(who, c.expr);
     }
-    Object.entries(this.sprites).forEach(([k, el]) => el.classList.toggle("dim", !!who && k !== who && !!info && !!info.sprite));
+    this._portrait(portrait);
+    Object.entries(this.sprites).forEach(([k, el]) => el.classList.toggle("dim", !!who && k !== who && !!info && !!info.sprite && !(CAST[k] || {}).office));
     const speaker = who && this.sprites[who];
     if (speaker) { speaker.classList.remove("talk"); void speaker.offsetWidth; speaker.classList.add("talk"); }
 
@@ -868,6 +980,8 @@ export class Game {
           this.v.hesitate = longest ? { text: longest.text, secs: Math.round(longest.ms / 100) / 10 } : null;
           this.v.lastChoice = picked;
           this.v.lastChoiceIndex = idx;
+          // 2.1: every pick is written down. Loading an older save can take a choice back; it can't make them forget it.
+          this.v.choiceLog = [...(this.v.choiceLog || []), picked];
           this.history.push({ who: this.name(), text: "» " + picked });
           const chosen = c.hijack && c.forceIndex != null ? items[c.forceIndex] : it;
           if (chosen.go) this._jump(chosen.go);
@@ -928,6 +1042,88 @@ export class Game {
     setTimeout(() => { while (stage.children.length > 1) stage.firstElementChild.remove(); }, fade ? 900 : 0);
   }
 
+  /** A stage spot nobody is standing on, or null if the stage is full. */
+  _freePos() {
+    const used = Object.values(this.v.shown || {}).map(s => s.pos);
+    return ["center", "left", "right"].find(p => !used.includes(p)) || null;
+  }
+
+  /** The small picture beside the name tag, for a minor character who couldn't fit on stage. */
+  _portrait(src) {
+    let img = $("#say-portrait");
+    if (!img) { img = document.createElement("img"); img.id = "say-portrait"; img.alt = ""; $("#say").appendChild(img); }
+    img.style.display = src ? "" : "none";
+    if (src && !img.src.endsWith(src)) img.src = src;
+  }
+
+  /** Remember the stage before an interruption (a deleted file), so the scene can carry on as it was. */
+  _stash() {
+    this.v._stash = { bg: this.v.bg, shown: { ...this.v.shown }, music: this.v.music, cg: this.v.cg, mood: this.v.mood, blood: this.v.blood };
+    this.meta.cg(null);
+    this._clearSprites();
+  }
+
+  _unstash() {
+    const st = this.v._stash;
+    this._inDelete = false;
+    this.v.delFiles = null;
+    if (!st) return;
+    this._clearSprites();
+    if (st.bg) this._setBg(st.bg);
+    Object.entries(st.shown || {}).forEach(([who, x]) => this._show(who, x.expr, x.pos, true));
+    this.meta.cg(st.cg || null);
+    this.meta.mood(st.mood || null);
+    this.meta.blood(!!st.blood);
+    this.v.music = st.music;
+    if (st.music) this.audio.play(st.music); else this.audio.stop();
+    this.v._stash = null;
+  }
+
+  /** The text of a file the game writes, for putting a deleted one back. */
+  _restoreText(name) { const f = FILE_TEXTS[name]; return f ? f() : null; }
+
+  /**
+   * A line written live by the local language model (aiSay in script-helpers.js).
+   * c.task(g) describes the situation in a sentence or two; c.include(g) gives the player's own words, which
+   * the reply has to mention. The Office shows that it's generating; the girls just look like they're thinking.
+   * If the model is off, slow, or says something it shouldn't, the written fallback line is used instead.
+   */
+  async _aiSay(c) {
+    let text = null;
+    const expr = typeof c.expr === "function" ? c.expr(this) : c.expr;
+    if (ai.ready && this.mode !== "skip") {
+      const office = c.who === "office";
+      if (expr && CAST[c.who] && CAST[c.who].sprite) this._show(c.who, expr);
+      $("#say").className = office ? "who-office thinking" : "who-" + c.who + " thinking";
+      $("#say-name").textContent = (CAST[c.who] || CAST.office).name;
+      $("#say-name").style.display = "";
+      $("#say-text").textContent = office ? "◉ generating" : "…";
+      if (office) this.audio.sfx("type");
+      const situation = this._fill(typeof c.task === "function" ? c.task(this) : c.task);
+      const include = typeof c.include === "function" ? c.include(this) : c.include;
+      text = await ai.line({ who: c.who, situation, mustInclude: include ? [].concat(include) : null });
+    }
+    const fallback = typeof c.fallback === "function" ? c.fallback(this) : c.fallback;
+    const line = text ? text.replace(/[{}]/g, "") : fallback;
+    if (text) this.v.lastAiLine = text;
+    return this._say({ t: "say", who: c.who, expr, text: line, corrupt: c.corrupt, live: !!text });
+  }
+
+  /** Who the model is talking to. Kept to one sentence: small models lose the thread in long prompts. */
+  _aiSituation() { return `The player is called ${this.name()}.`; }
+
+  /** The tiny "the Office is learning" badge while the model downloads. */
+  _aiBadge() {
+    let b = $("#ai-badge");
+    if (!b) { b = document.createElement("div"); b.id = "ai-badge"; $("#game").appendChild(b); }
+    const st = ai.state;
+    b.className = st;
+    // Neutral on purpose. (Act 3's patch notes are where the Office admits what it is now.)
+    b.textContent = st === "loading" ? `downloading enhanced pack… ${Math.round(ai.progress * 100)}%`
+      : st === "ready" ? "enhanced pack ready" : st === "failed" ? "enhanced pack couldn't load (the game is unaffected)" : "";
+    if (st === "ready" || st === "failed") setTimeout(() => b.classList.add("gone"), 6000);
+  }
+
   _autoPos() {
     const used = Object.values(this.v.shown || {}).map(s => s.pos);
     return ["center", "left", "right"].find(p => !used.includes(p)) || "center";
@@ -943,6 +1139,7 @@ export class Game {
       el = document.createElement("img");
       el.className = "sprite";
       el.alt = who;
+      el.dataset.who = who;
       layer.appendChild(el);
       this.sprites[who] = el;
       if (!instant) { el.classList.add("enter"); requestAnimationFrame(() => el.classList.remove("enter")); }
@@ -950,6 +1147,14 @@ export class Game {
     el.src = `assets/sprites/${who}/${expr}.webp`;
     el.style.left = POS[pos] + "%";
     el.classList.toggle("is-corrupt", expr === "corrupt");
+    el.classList.toggle("pose-close", CLOSE.includes(expr));
+    el.classList.toggle("pose-wide", WIDE.includes(expr));
+    el.classList.toggle("is-office", !!(CAST[who] || {}).office);
+    el.classList.toggle("is-minor", !!(CAST[who] || {}).minor);
+    el.classList.toggle("is-ghost", !!(CAST[who] || {}).ghost);
+    el.classList.toggle("is-eye", who === "office" && expr === "eye");
+    // A main character taking a spot pushes a minor one out of it.
+    if (!(CAST[who] || {}).minor) Object.entries(this.v.shown).forEach(([m, sh]) => { if (m !== who && (CAST[m] || {}).minor && sh.pos === pos) this._hide(m); });
     this.v.shown[who] = { expr, pos };
   }
 

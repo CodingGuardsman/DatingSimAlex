@@ -49,13 +49,21 @@ const DEFAULTS = {
   graduated: false,   // the final ending: the title becomes a graduation photo
   known: {},          // clues for the "What we know" page that have no memory of their own
   noted: {},          // how far each "What we know" note has got ("q" or "a"). Survives forgetAll().
-  settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true }
+  // 2.1
+  aiAsked: false,     // the player has been asked whether to turn on the local AI
+  aiLog: [],          // lines the language model wrote, so the Office can quote them back next time
+  rude: {},           // what kinds of junk the player typed or drew, by kind ("lewd": 2, "meme": 1...)
+  refused: {},        // answers a girl refused to write down, by key ("item13": "lewd")
+  written: {},        // files the game wrote into its folder (.exe), so it notices when one goes missing
+  deleted: {},        // files the player deleted from the game folder, by name: when it was noticed
+  sensesAsked: {},    // which scenes already asked for the camera or microphone, and the answer
+  settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true, ai: false, gore: true }
 };
 
-export const VERSION = "2.0.0";
+export const VERSION = "2.1.0";
 
 export const persist = {
-  data: { ...DEFAULTS, ...read(PERSIST_KEY, {}) },
+  data: (() => { const d = { ...DEFAULTS, ...read(PERSIST_KEY, {}) }; d.settings = { ...DEFAULTS.settings, ...d.settings }; return d; })(),
 
   save() { write(PERSIST_KEY, this.data); },
 
@@ -81,7 +89,9 @@ export const persist = {
     const d = this.data;
     this.data = { ...DEFAULTS, settings: d.settings, mem: d.mem || {}, door: d.door, item13: d.item13,
       forgets: (d.forgets || 0) + 1, legacy: d.legacy, version: d.version, warned: d.warned,
-      known: d.known || {}, noted: d.noted || {} };
+      known: d.known || {}, noted: d.noted || {},
+      // The Office keeps its own records. So does the folder.
+      aiAsked: d.aiAsked, aiLog: d.aiLog || [], rude: d.rude || {}, written: d.written || {}, deleted: d.deleted || {}, sensesAsked: d.sensesAsked || {} };
     this.save();
   }
 };

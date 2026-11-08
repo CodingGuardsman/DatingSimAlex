@@ -4,8 +4,8 @@ A meta-horror dating sim, built as a web game (vanilla JS, ES modules) and packa
 
 ## Stack and layout
 - No framework or bundler. `index.html` loads `src/main.js` as a module. Electron main process is `electron/main.js` (CommonJS), with `electron/preload.js`.
-- `src/`: `main.js`, `engine.js`, `story.js`, `story_act3.js`, `meta.js`, `minigames.js`, `persist.js`, `audio.js`, `config.js`, `script-helpers.js`.
-- `styles/game.css`, `assets/` (bg, sprites per character, voice/office).
+- `src/`: `main.js`, `engine.js`, `story.js`, `story_act3.js`, `meta.js`, `minigames.js`, `persist.js`, `audio.js`, `config.js`, `script-helpers.js`, plus (2.1) `story_extra.js`, `judge.js`, `ai.js`, `senses.js`.
+- `styles/game.css`, `assets/` (bg, cg, sprites per character, voice/office). `tools/key_sprite.py` turns generated art into game assets.
 - `itch/` holds store page, devlogs, art and trailer scripts. `tools/` holds Python helpers for the Office voice lines.
 
 ## Run and build

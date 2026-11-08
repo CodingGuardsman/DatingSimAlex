@@ -3,7 +3,7 @@
  * Serves the game over a private app:// scheme and exposes a small native bridge (see preload.js).
  * Everything the game writes goes into one folder next to the .exe: "Hoshimi Academy".
  */
-const { app, BrowserWindow, ipcMain, protocol, net, shell, Notification, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, protocol, net, shell, Notification, screen, session } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -136,6 +136,25 @@ app.whenReady().then(() => {
     return true;
   });
   ipcMain.handle("close:guard", (e, msg) => { closeGuard = msg || null; return true; });
+
+  // 2.1: the game keeps an eye on the files it has written. If the player deletes one, the girls notice.
+  // It only ever checks files it wrote itself, inside its own folder, and never deletes anything.
+  const watched = new Set();
+  ipcMain.handle("files:watch", (e, names) => {
+    for (const n of names || []) { try { safeName(n); watched.add(path.basename(String(n))); } catch (err) { /* bad name */ } }
+    return true;
+  });
+  ipcMain.handle("file:written", (e, name) => { try { safeName(name); watched.add(path.basename(String(name))); } catch (err) { /* bad name */ } return true; });
+  setInterval(() => {
+    if (!win || !watched.size) return;
+    for (const n of [...watched]) {
+      if (!fs.existsSync(safeName(n))) { watched.delete(n); win.webContents.send("file-gone", n); }
+    }
+  }, 1500);
+
+  // Camera and microphone requests come only from scenes the player agreed to (see senses.js). Nothing else is allowed.
+  session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => cb(permission === "media"));
+  session.defaultSession.setPermissionCheckHandler((wc, permission) => permission === "media");
   ipcMain.handle("quit", () => { closeGuard = null; app.quit(); });
 
   createWindow();

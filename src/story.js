@@ -13,24 +13,31 @@
  * Act 3 (story_act3.js): the second term. You came back after they asked you not to.
  * Behind the title: after the first ending, Sayo draws a door next to the menu.
  */
-import { persist } from "./persist.js?v=2.0.0";
+import { persist } from "./persist.js?v=2.1.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
-  watch, log, noskip, end, phone, credits, js, mini, visit, title, call, know
-} from "./script-helpers.js?v=2.0.0";
-import { ACT3, ACT3_MEMORIES } from "./story_act3.js?v=2.0.0";
+  watch, log, noskip, end, phone, credits, js, mini, visit, title, call, know,
+  cg, scare, subliminal, blood, aiSay, office
+} from "./script-helpers.js?v=2.1.0";
+import { DRAW_SEEN } from "./story_extra.js?v=2.1.0";
+import { ACT3, ACT3_MEMORIES, GRAD_NOTE } from "./story_act3.js?v=2.1.0";
+import { EXTRA } from "./story_extra.js?v=2.1.0";
 
 export const CAST = {
-  hina: { name: "Hina", color: "#f39a52", sprite: true, expressions: ["neutral", "happy", "sad", "worried", "blush", "corrupt", "lean", "lean_blush", "list", "list_sad"] },
-  rei: { name: "Rei", color: "#ad8fe6", sprite: true, expressions: ["neutral", "laugh", "annoyed", "shocked", "soft", "corrupt", "aim", "aim_shocked", "photo", "photo_soft"] },
-  sayo: { name: "Sayo", color: "#5fc4b8", sprite: true, expressions: ["neutral", "sad", "scared", "happy", "blank", "corrupt", "draw", "draw_happy", "reach", "reach_blank"] },
-  daichi: { name: "Daichi", color: "#6cbf6c" },
-  sensei: { name: "Kanda-sensei", color: "#7d9fd6" },
-  nurse: { name: "Nurse Mori", color: "#f08fb4" },
-  okada: { name: "Mrs. Okada", color: "#d6a067" },
+  // 2.1: close / glass / grab / aim_close / peek are big close-up poses; turn / twirl / lean are wide action poses.
+  hina: { name: "Hina", color: "#f39a52", sprite: true, expressions: ["neutral", "happy", "sad", "worried", "blush", "corrupt", "lean", "lean_blush", "list", "list_sad", "close", "turn", "glass", "bleed"] },
+  rei: { name: "Rei", color: "#ad8fe6", sprite: true, expressions: ["neutral", "laugh", "annoyed", "shocked", "soft", "corrupt", "aim", "aim_shocked", "photo", "photo_soft", "aim_close", "lean", "grab", "bleed"] },
+  sayo: { name: "Sayo", color: "#5fc4b8", sprite: true, expressions: ["neutral", "sad", "scared", "happy", "blank", "corrupt", "draw", "draw_happy", "reach", "reach_blank", "glass", "twirl", "peek", "bleed"] },
+  // The minor cast get sprites too. They step on stage when there's room, and wait at the side of the text box when there isn't.
+  daichi: { name: "Daichi", color: "#6cbf6c", sprite: true, minor: true, expressions: ["neutral"] },
+  sensei: { name: "Kanda-sensei", color: "#7d9fd6", sprite: true, minor: true, expressions: ["neutral"] },
+  nurse: { name: "Nurse Mori", color: "#f08fb4", sprite: true, minor: true, expressions: ["neutral"] },
+  okada: { name: "Mrs. Okada", color: "#d6a067", sprite: true, minor: true, expressions: ["neutral"] },
+  sora: { name: "Sora", color: "#f6c344", sprite: true, minor: true, expressions: ["neutral"] },
   me: { name: "", color: "#c9a6b6" },
-  office: { name: "THE OFFICE", color: "#e0483c" },
-  k: { name: "K", color: "#9a9a9a" }
+  // The Office finally has a body: a PA speaker on a pole. neutral = listening, speak = talking, eye = angry.
+  office: { name: "THE OFFICE", color: "#e0483c", sprite: true, office: true, expressions: ["neutral", "speak", "eye"] },
+  k: { name: "K", color: "#9a9a9a", sprite: true, ghost: true, expressions: ["neutral"] }
 };
 
 /**
@@ -363,7 +370,7 @@ export const SCRIPT = {
     "sensei| Right. Last week. Let's all try to make it a good one.",
     "sensei| ...Hm? Sorry. I had the strangest feeling I'd already said that.",
     "| Homeroom ends. Before I can even stand up, there's a shadow over my desk.",
-    "hina happy| Hey! Transfer student!",
+    "hina close| Hey! Transfer student!",
     "| A girl with a sunflower clip in her hair drops into the seat in front of me, backwards, arms folded over the chair.",
     "hina lean| I'm Hina. Amamiya Hina. Class rep, unofficial welcoming committee, professional walker-home-of-new-people.",
     "hina neutral| Sensei said nobody's shown you around yet. Which is a crime. So! That's me now.",
@@ -385,7 +392,7 @@ export const SCRIPT = {
     "hina happy| Rei! You can't just photograph people without asking!",
     "rei| I can, actually. That's how candids work.",
     "rei| Kurosawa Rei. Photography club. Which is me. I'm the photography club.",
-    "rei laugh| Don't look so scared. I only keep the good ones.",
+    "rei aim_close| Don't look so scared. I only keep the good ones.",
     "rei neutral| ...You're the transfer, right? Huh. Funny. I could swear I've already got you on a roll somewhere.",
     "hina| Rei says that about everyone.",
     "rei annoyed| I say it about everyone who's already on a roll somewhere.",
@@ -423,7 +430,7 @@ export const SCRIPT = {
     "hina worried| ...Do I?",
     "daichi| She does. She says it every year and then we all get sunburnt. Tradition.",
     "| Hina laughs, and pulls a folded piece of notebook paper out of her blazer. She checks something off with a tiny, serious pen stroke.",
-    "hina happy| Item one: make a new friend before summer. ...Check! Don't look at me like that. It counts.",
+    "hina turn| Item one: make a new friend before summer. ...Check! Don't look at me like that. It counts.",
     mem("l1"),
     sfx("bell"),
     "| The bell rings. Last period is over, and the afternoon belongs to me.",
@@ -514,7 +521,7 @@ export const SCRIPT = {
   a1_morning: [
     clear,
     bg("riverside"),
-    music("day"),
+    music("morning"),
     "| Morning. The cicadas have already started. I have about twenty minutes before homeroom.",
     menu([
       { text: "Stop by Amamiya Bakery", do: [visit("hina", "m")] },
@@ -529,6 +536,7 @@ export const SCRIPT = {
     "| The whole street smells like butter. There's a line out the door, and at the front of it, a very small boy is guarding the register.",
     show("hina", "happy", "center"),
     "hina| {name}! You came! Okay, don't panic, this is Sora. My brother. He's six. He's in charge of security.",
+    show("sora", "neutral", "right"),
     "| Sora looks up at me with enormous serious eyes and a smear of custard on his cheek.",
     "| \"Are you a ninja?\" he asks.",
     menu([
@@ -707,7 +715,7 @@ export const SCRIPT = {
         "sayo| Maybe. A closet with a window. That nobody's ever opened.",
         "sayo sad| I think something lives in there. Something that has never had a morning either."] }
     ]),
-    "sayo happy| I'm going to keep the can. Not drink it. Just keep it. So I remember this one was real."
+    "sayo twirl| I'm going to keep the can. Not drink it. Just keep it. So I remember this one was real."
   ],
   sayom3: [
     bg("hallway"),
@@ -779,9 +787,20 @@ export const SCRIPT = {
     "hina| Because you'd write 'beat Hina at something' and that's just item eight backwards.",
     "daichi| ...That is exactly what I was going to write.",
     "| She hands me the list and her pen, a pink one with a little plastic sunflower on the end. The paper is soft from being folded so many times.",
-    mini("ask", { title: "Hina's summer list", hint: "13. Something you want to do this summer. Anything.", placeholder: "eat watermelon on a roof", key: "item13", max: 40 }),
+    mini("ask", { title: "Hina's summer list", hint: "13. Something you want to do this summer. Anything.", placeholder: "eat watermelon on a roof", key: "item13", max: 40, who: "hina" }),
     mem("l13"),
-    "hina happy| '{item13}.' ...I love it. It's going on the list forever. In pen. No take-backs.",
+    when(v => v.askRefused, [
+      "hina| There. Item thirteen: '{item13}.' My handwriting. Your fault.",
+      "daichi| What did they write? Let me see.",
+      "hina| NOTHING. Nothing you need to see, Daichi."
+    ], [when(v => v.askKind !== "ok", [
+      "hina sad| '{item13}.' ...Okay. It's on the list now. In pen. I hope you're happy."
+    ], [
+      // With the local AI on, Hina answers what you actually wrote. Otherwise she says what she always says.
+      show("hina", "close"),
+      aiSay("hina", "close", g => `The player, ${g.name()}, wrote "${g.meta.vars().item13}" as item 13 on Hina's summer list. Hina loves it, says exactly what they wrote back to them, and says it goes on the list forever, in pen.`,
+        "'{item13}.' ...I love it. It's going on the list forever. In pen. No take-backs.", { include: g => g.meta.vars().item13 })
+    ])]),
     "rei| You do realize she's going to make you actually do it.",
     "hina| Every single item gets done this year. Including thirteen. ESPECIALLY thirteen.",
     "rei neutral| Not everyone. We should invite Shiraishi sometime.",
@@ -802,6 +821,7 @@ export const SCRIPT = {
     "hina list| Item eight on the summer list: beat Daichi at something. Item nine: see the ocean. On Saturday, at the beach.",
     "hina| You're coming, right, K?",
     fx("flicker", 420),
+    subliminal("h_classroom", 110),
     fx("glitch", 300),
     "| ...K?",
     "hina worried| Huh? I said your name. {name}. ...Didn't I?",
@@ -898,7 +918,7 @@ export const SCRIPT = {
     "okada| Ah, a new face. ...Hm. No. I've seen you before, dear. Same as yesterday.",
     mem("o3"),
     "| We eat them on the bridge, too fast, and get brain freeze at exactly the same moment.",
-    "hina happy| Item four! Popsicles by the bridge! Check!",
+    "hina turn| Item four! Popsicles by the bridge! Check!",
     mem("l4"),
     show("hina", "neutral", "center"),
     "hina list| Okay, don't laugh. This is the list.",
@@ -1123,7 +1143,7 @@ export const SCRIPT = {
     } },
     clear,
     bg("rooftop"),
-    music("evening"),
+    music("romance"),
     "| After class, someone asks me to meet them on the roof.",
     when(v => v.route === "hina", [jump("a1_conf_hina")]),
     when(v => v.route === "rei", [jump("a1_conf_rei")]),
@@ -1134,6 +1154,7 @@ export const SCRIPT = {
     "hina| I crossed off as much as I could this week. More than any year. Because you were there.",
     "hina| Thirteen was yours. '{item13}.' I'm still doing it. But I added one more last night. Fourteen. It says... 'Tell {name}.'",
     mem("l14"),
+    show("hina", "close"),
     "hina| I like you. Like, a lot. Like, summer-list-item-fourteen a lot.",
     menu([{ text: "I like you too, Hina.", do: [] }, { text: "...Fourteen?", do: ["hina happy| Shut up! It's a lucky number now. I decided."] }]),
     jump("a1_break")
@@ -1142,7 +1163,8 @@ export const SCRIPT = {
     show("rei", "photo_soft", "center"),
     "rei| I developed the last roll. You're sharp in all of them. Every single frame.",
     "rei| I think it's because I finally stopped looking at the thing behind you, and just looked at you.",
-    "rei| ...That's the most embarrassing sentence I've ever said. Say something before I throw myself off this roof.",
+    show("rei", "lean"),
+    "rei| ...That's the most embarrassing sentence I've ever said. Say something before I jump off this roof just to end the conversation.",
     menu([{ text: "I like you too, Rei.", do: [] }, { text: "Can I get a copy?", do: ["rei laugh| You're the worst. Yes. Obviously."] }]),
     jump("a1_break")
   ],
@@ -1150,7 +1172,7 @@ export const SCRIPT = {
     show("sayo", "happy", "center"),
     "sayo| I'm not supposed to be up here. I'm not supposed to be anywhere on Fridays. But I wanted to see one sunset with you before...",
     "sayo| Before.",
-    "sayo reach| I'm glad it was you this time. I really am.",
+    "sayo twirl| I'm glad it was you this time. I really am.",
     menu([{ text: "I like you, Sayo.", do: [] }, { text: "This time?", do: ["sayo sad| Don't. Not yet. Let me have the sunset."] }]),
     jump("a1_break")
   ],
@@ -1164,6 +1186,7 @@ export const SCRIPT = {
     fx("glitch", 900),
     { t: "js", run: g => g._show(g.v.route, g.v.route === "sayo" ? "scared" : g.v.route === "rei" ? "shocked" : "sad") },
     { t: "js", run: g => g._say({ who: g.v.route, text: "No. No no no, not again. Not when it was finally..." }) },
+    { t: "js", run: g => g.meta.scare(g.v.route === "sayo" ? "h_jump_sayo" : "h_jump_hina", 620) },
     fx("rollback"),
     fx("mood", null),
     clear,
@@ -1187,7 +1210,7 @@ export const SCRIPT = {
     clear,
     { t: "js", run: g => { document.getElementById("bg").innerHTML = ""; } },
     music("drone"),
-    show("sayo", "reach_blank", "center"),
+    show("sayo", "glass", "center"),
     "sayo| ...Did you see it this time?",
     "sayo| I'm sorry. It's going to be worse next time. It always gets worse once someone notices.",
     "sayo| Look at the menu when you go back. I finished the door.",
@@ -1207,9 +1230,11 @@ export const SCRIPT = {
     show("rei", "neutral", "farleft"),
     show("hina", "happy", "center"),
     show("sayo", "neutral", "farright"),
+    cg("backstage"),
     "| Behind the menu there's no room. Just dark, and a floor, and the title music coming through the wall like a party next door.",
     "| They're standing exactly where they stand on the title screen. Same spots. Same smiles. There are pieces of tape on the floor with their names on them.",
     "| Nobody moves.",
+    cg(null),
     "me| ...Hina?",
     wait(1400),
     "hina happy| Oh. Hi, {name}. Sorry. I can't stop smiling yet. It takes a while to come off.",
@@ -1270,6 +1295,14 @@ export const SCRIPT = {
       ["hina| It's {clock} where you are, right? I can feel it now. The outside. It's like a draft under a door."]),
     when((v, P, g) => g.meta.vars().late, ["hina worried| It's the middle of the night, {name}. You should be asleep. ...But I'm glad you're not."]),
     when((v, P) => P.endings.includes("detention"), ["hina sad| Last time you chose to stay. We're still so tired from it."]),
+    when((v, P) => P.erased, [
+      cg("h_classroom2"),
+      "| One desk by the window is covered in red. Someone has written on the board, over and over, in something that isn't chalk.",
+      cg(null),
+      when((v, P) => P.erased === "hina", ["rei| Hina's not here. Her desk is just... wet. The Office says she's 'staying behind'.", "sayo| She can hear us. Barely. We get her back if you finish the week properly. Only then."]),
+      when((v, P) => P.erased === "rei", ["hina sad| Rei's gone. Her camera's on her desk, and the lens is full of something red.", "sayo| She's kept back. We get her back if you finish the week properly. Only then."]),
+      when((v, P) => P.erased === "sayo", ["hina sad| Sayo's seat is empty. There's a drawing on it. It's a door, and someone has scribbled it out.", "rei| The Office kept her. We get her back if you finish this properly. Only then."])
+    ]),
     show("hina", "sad", "left"),
     show("rei", "shocked", "right"),
     "rei| It's in all of them now. Not just the ghost. Everything.",
@@ -1470,12 +1503,13 @@ export const SCRIPT = {
   r_hina_eve: [
     clear,
     bg("riverside"),
-    music("evening"),
+    music("romance"),
     "| That evening Hina walks me to the river anyway. Out of habit, she says. Habits are the one thing the rewind can't take.",
     show("hina", "neutral", "center"),
     "hina| I have one sparkler left. From every week. I've been saving them. I don't know how many weeks that is.",
     "hina list| I counted, actually. I just don't want to say the number out loud.",
     "| She lights it. The tiny ball of fire hangs there, spitting orange flowers into the dark.",
+    cg("sparkler"),
     "hina| If you hold perfectly still, it lasts forever. That's what I told you last time.",
     "hina sad| I think that's what the menu is. Someone holding perfectly still so it lasts forever. It doesn't feel like forever from the inside. It feels like holding your breath.",
     menu([
@@ -1491,20 +1525,25 @@ export const SCRIPT = {
         "hina sad| That's sweet. That's really sweet. Please don't.",
         "| We hold still anyway. The sparkler lasts a long time. Then it goes out on its own, the way they always do."] }
     ]),
+    cg(null),
     jump("r_next")
   ],
 
   r_rei_eve: [
     clear,
     bg("rooftop"),
-    music("evening"),
+    music("romance"),
     show("rei", "photo", "center"),
     "| Rei catches me on the stairs and drags me up to the roof. The lock is still broken. Some things the week doesn't bother to fix.",
     "rei| You take one. Of me. I'm always behind the camera. I want to know if I come out.",
     "rei photo_soft| Don't look at me like that. Just point it and press. It's not hard. ...It's a little hard.",
     menu([
       { text: "Take the photo", do: [
-        { t: "js", run: g => g.meta.photo({ ghost: false, caption: "Rei, on the roof. (nobody behind her.)" }) },
+        sfx("shutter"),
+        fx("flash", "#fff", 350),
+        cg("rooftop"),
+        "| Through the viewfinder she looks younger. Or just like someone who isn't working for once.",
+        cg(null),
         "rei| ...Nobody behind me.",
         "rei soft| Huh. I always thought there would be.",
         mem("p10"),
@@ -1529,13 +1568,33 @@ export const SCRIPT = {
     mem("p8"),
     "| I don't know what to say to that. Somewhere, in the room I'm actually sitting in, my own reflection is looking back at me from the screen.",
     when((v, P) => P.mem.p6, ["rei soft| The wall of shame is still up, you know. The one where I'm laughing. It survived the rewind. Don't ask me how."]),
-    "rei aim| Hold still. One more. Of you, this time.",
-    { t: "js", run: g => g.meta.photo({ file: "rei_photo_of_you.png", caption: "{name}, {weekday}. (behind you. always behind you.)" }) },
+    show("rei", "aim_close"),
+    "rei aim_close| Hold still. One more. Of you, this time.",
+    call("rei_camera"),
     when((v, P, g) => !!g.meta.native, ["rei photo| I left the print in your folder. rei_photo_of_you.png. Look at it later. Not now."]),
+    sfx("drip"),
+    fx("static", 300),
+    music("heartbeat"),
+    cg("h_darkroom"),
+    "| The safelight stutters. For one second the darkroom is a different darkroom.",
+    "| Something hangs from the pipe over the sink, swaying, though nothing in here moves the air. Under it, a camera lies on the wet floor with its lens cracked.",
+    cg(null),
+    music("drone"),
+    show("rei", "shocked"),
+    "rei| Don't look at the pipe. ...I don't look at the pipe.",
+    "rei| It's there one second a week. I think it's what the Office shows people who try to leave. A preview.",
     "rei neutral| Now you do one. K is in this room right now. I can feel it, like when someone reads over your shoulder.",
     "rei| Take the camera. Find them. You're from outside. Maybe you can see what I can't.",
     mini("viewfinder", { prompt: "Rei: \"Find K. They're standing very still. Click when they're in the middle of the frame.\"" }, "misses"),
     mem("p11"),
+    when(v => v.cam, [
+      { t: "js", run: g => { g.v.looks = g.senses.lookAways; } },
+      when(v => v.looks > 0,
+        ["rei aim_close| You looked away from the screen {lookaways} times while we were doing that. I watched. Hina's rubbing off on me."],
+        ["rei aim_close| You didn't look away once. Not once. ...That's either sweet or creepy. I'm keeping it."]),
+      { t: "js", run: g => g.senses.stopCamera() },
+      "| The little light above my screen goes out. Rei hands the camera back without being asked."
+    ]),
     when(v => v.misses === 0,
       ["rei shocked| First try. You walked right to them. ...Like you knew where they'd be standing."],
       ["rei| {name}. You got them. It took a few rolls, but you got them."]),
@@ -1576,13 +1635,19 @@ export const SCRIPT = {
     ]),
     "| She draws fast, the pencil like rain again. When she turns the page around, it's a window. Through it, whatever I said, it's summer.",
     mem("s8"),
-    "sayo neutral| Now you. Will you draw me a door?",
+    show("sayo", "peek"),
+    "sayo peek| Now you. Will you draw me a door?",
     "sayo| I've drawn mine forty times. It always comes out the same, because it's mine. I want one that isn't from in here.",
     "sayo| It doesn't have to be good. Doors don't have to be good. They just have to open.",
     mini("draw", { prompt: "Draw Sayo a door. Any door at all.", door: true, file: "your_door.png" }),
     mem("s9"),
-    "sayo draw_happy| ...Oh.",
-    "sayo happy| It's perfect. It's crooked in the right places.",
+    when(v => v.drawRefused, [
+      "sayo blank| I'm keeping my door on the menu. Mine. You can draw me a real one some other week.",
+      "sayo| ...It's okay. Some people need a few weeks before they mean it."
+    ], [
+      "sayo draw_happy| ...Oh.",
+      { t: "js", run: g => { const [expr, text] = DRAW_SEEN[g.v.drawKind] || DRAW_SEEN.unknown; return g._say({ who: "sayo", expr, text }); } }
+    ]),
     "sayo| I'm going to put it next to the menu. Instead of mine. So when you come back, the way in is one you made.",
     when((v, P, g) => !!g.meta.native, ["sayo| I left a copy in your folder too. your_door.png. So you have it, out there."]),
     "sayo reach| I wrote it all down. Please take it. I want part of me to be outside, even if it's just paper.",
@@ -1598,6 +1663,7 @@ export const SCRIPT = {
     pa("Student Shiraishi Sayo. Please report to the Office immediately.", true),
     "sayo scared| It heard me.",
     show("sayo", "corrupt"),
+    subliminal("h_sketch", 140),
     fx("tear", 1200),
     hide("sayo"),
     "| The bed is empty.",
@@ -1628,11 +1694,19 @@ export const SCRIPT = {
       ["hina sad| You tried to close it. ...It's okay. I wanted to, too.", "rei| It doesn't let you. It just turns the lights off and waits."],
       ["rei| You waited. Huh. Patient. Or stubborn."]),
     fx("jolt", 0, 140),
-    show("hina", "corrupt"),
-    say("hina", "corrupt", "Hey! Transfer student!", { corrupt: true }),
-    show("rei", "corrupt"),
-    say("rei", "corrupt", "Hold still.", { corrupt: true }),
+    scare("h_jump_hina", 650),
+    blood(true),
+    music("heartbeat"),
+    cg("h_classroom2"),
+    "| The classroom is the same classroom. Every chair has turned to face the window. Toward me. Someone has written on the board, over and over, and it isn't chalk.",
+    cg(null),
+    show("hina", "bleed"),
+    say("hina", "bleed", "Hey! Transfer student!", { corrupt: true }),
+    show("rei", "bleed"),
+    say("rei", "bleed", "Hold still.", { corrupt: true }),
     fx("glitch", 700),
+    blood(false),
+    music("wrong"),
     show("hina", "sad"),
     show("rei", "shocked"),
     "hina| Sorry. Sorry! It pulled us back to Monday for a second.",
@@ -1644,7 +1718,15 @@ export const SCRIPT = {
       { text: "Stay." }
     ], { hijack: "Stay.", forceIndex: 2 }),
     pa("Thank you, {name}. Your choice has been recorded."),
-    "rei shocked| That wasn't you. I saw your cursor. You didn't click that.",
+    when((v, P) => !P.wiped, [
+      office("To protect your progress, your save data has been consolidated."),
+      js(g => g.mini.wipeSaves()),
+      office("You will not need to load anything again. There is only this week now."),
+      "hina worried| ...It deleted your saves. All of them. {name}, that was your way back.",
+      "rei| Now it's like us. No rewinds. Whatever happens next, happens."
+    ]),
+    show("rei", "grab"),
+    "rei grab| That wasn't you. I saw your cursor. You didn't click that.",
     "hina| Then we go get her ourselves.",
     menu([
       { text: "Go find Sayo", flee: true, do: [jump("r_find")] },
@@ -1654,10 +1736,23 @@ export const SCRIPT = {
 
   r_find: [
     clear,
+    bg("hallway"),
+    music("heartbeat"),
+    cg("h_hallway"),
+    "| The corridor to the infirmary has a trail down the middle of it. Wide, and dark, and dragged. Handprints along the bottom of the wall, low, the height of someone who was being pulled.",
+    "| It ends at the infirmary door.",
+    cg(null),
     bg("infirmary"),
     music("drone"),
     "| The infirmary door is a different color than it was. Like it was painted from memory.",
+    cg("h_sketch"),
+    music("lullaby"),
+    "| Her sketchbook is open on the bed. Every face in it has been scribbled out in red. The red isn't pencil.",
+    cg(null),
     show("sayo", "corrupt", "center"),
+    scare("h_jump_sayo", 600),
+    show("sayo", "bleed", "center"),
+    "sayo| ...Don't look at my hands. It made me draw it all again. Every face. Until they bled through the paper.",
     fx("static", 900),
     show("sayo", "reach_blank", "center"),
     "sayo| You came for me.",
@@ -1739,12 +1834,20 @@ export const SCRIPT = {
     "| The sea is very loud. The sand is warm.",
     mem("l9"),
     "| There's nobody here. Just three sets of footprints running down to the water, and a note held flat by a seashell.",
+    "| Far down the beach, three people in school uniforms are standing in the waves with their shoes in their hands. They don't turn around.",
+    cg("beach"),
+    wait(2600),
+    cg(null),
     "| {name}! IT'S SUMMER!!! It came!",
     "| Rei says thank you for saying goodbye properly. Sayo says thank you for looking away.",
     "| I say: item thirteen was yours. {item13}. Go do it for real, out there. And item fifteen: have the best summer ever. That's an order from your class rep.",
     "| Please don't come back for a while. We'll be busy.",
     "| Love, H, R & S",
     fx("writeFile", "gone_to_the_beach.txt", BEACH_NOTE),
+    when((v, P) => P.erased, [
+      "| ...Three sets of footprints. Not two. Whoever the Office kept back, it let go when the week ended.",
+      pset("erased", null)
+    ]),
     when((v, P, g) => g.memCount() >= 30, [
       "| ...There's something else under the seashell. A photo, face down.",
       show("rei", "laugh", "farleft"),
@@ -1783,6 +1886,10 @@ export const SCRIPT = {
     show("sayo", "corrupt"),
     fx("tear", 1500),
     clear,
+    music("lullaby"),
+    cg("h_puppets"),
+    "| For a moment, before Monday, I see where they go when the week resets. Nobody is in the uniforms. The strings go up into the dark, to a little red light.",
+    cg(null),
     day("Monday", "Five days until summer break.", true),
     bg("classroom", false),
     music("wrong"),
@@ -1790,6 +1897,22 @@ export const SCRIPT = {
     say("hina", "corrupt", "Hey! Transfer student!", { corrupt: true }),
     say("hina", "corrupt", "Hey! Transfer student!", { corrupt: true, speed: 70 }),
     say("hina", "corrupt", "Hey! Transfer student!", { corrupt: true, speed: 90 }),
+    clear,
+    js(g => {
+      const a = g.v.aff || {};
+      const who = ["sayo", "rei", "hina"].sort((x, y) => (a[x] || 0) - (a[y] || 0))[0];
+      persist.set("erased", who);
+      persist.set("erasures", (persist.data.erasures || 0) + 1);
+      g.v.erasedNow = who;
+    }),
+    music("heartbeat"),
+    blood(true),
+    js(g => g._show(g.v.erasedNow, "bleed", "center")),
+    office("Detention has a cost, {name}. Somebody has to stay behind after class."),
+    office("{erased} has been kept back. Permanently."),
+    js(g => g._say({ who: g.v.erasedNow, expr: "bleed", corrupt: true, text: "You spent the least time with me. So it took me. That's how it decides." })),
+    scare("h_jump_office", 600),
+    blood(false),
     fx("mood", null),
     end("detention", "Detention", "ENDING 2 OF 7")
   ],
@@ -1802,6 +1925,10 @@ export const SCRIPT = {
     bg("classroom"),
     fx("mood", "wrong"),
     music("hum"),
+    cg("k_photo"),
+    "| The save opens on a photo. The last one K took. Everyone's waving. In the window behind them, someone is holding the camera.",
+    cg(null),
+    show("k", "neutral", "center"),
     say("k", null, "day 7 again.", { speed: 18 }),
     say("k", null, "hina found item twelve today. i didn't have the heart to tell her i wrote it.", { speed: 18 }),
     say("k", null, "rei took my picture. i've been blurry for weeks. i think that's how you can tell.", { speed: 18 }),
@@ -1824,5 +1951,15 @@ export const SCRIPT = {
     jump("a3_open")
   ],
 
-  ...ACT3
+  ...ACT3,
+  ...EXTRA
+};
+
+/** 2.1: the text of every file the game writes, so a deleted one can be put back (see story_extra.js). */
+export const FILE_TEXTS = {
+  "hinas_summer_list.txt": () => persist.data.runs > 0 ? HINA_LIST_2 : HINA_LIST_1,
+  "K.txt": () => K_NOTE,
+  "sayo_letter.txt": () => SAYO_LETTER(persist.data.name || "you"),
+  "gone_to_the_beach.txt": () => BEACH_NOTE,
+  "graduation.txt": () => GRAD_NOTE.replace("{kline}", "").replace("{oline}", "")
 };

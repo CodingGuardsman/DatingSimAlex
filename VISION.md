@@ -172,6 +172,36 @@ Menus now accept `timeout`, `timeoutGo` and `timerLabel`. The `start` label rout
 
 **Testing tip:** `__afterClass.game.start("a3_start")` jumps to the second term. `a3_room0` goes to the computer, `a3_thu` to the hearing and `a3_roof` to the final choice. Set `__afterClass.persist.data.summer = true` first if you want the title states to match.
 
+## 2.1: Show, Don't Tell (art, AI, and higher stakes)
+
+**Art.** All new art is AssetHub (same canvas), keyed with `tools/key_sprite.py` (green screen → transparent webp, or a CG → 1920-wide webp).
+- **Big poses** that fill the screen: `close`/`glass`/`turn` (Hina), `aim_close`/`lean`/`grab` (Rei), `glass`/`twirl`/`peek` (Sayo), plus a `bleed` sprite each for the worst Act 2 moments.
+- **The Office has a body**: a PA horn on a pole (`neutral`/`speak`/`eye`), hung from the top-right corner of the room like a real ceiling speaker. It lights up while it talks and appears on PA banners.
+- **The minor cast have sprites** (Daichi, Kanda-sensei, Nurse Mori, Mrs. Okada, Sora, and K as a blurred ghost). They step on stage if there's a free spot, otherwise they talk from beside the text box.
+- **Illustrations** (`assets/cg/`, `cg(id)` in the script): the beach from behind, K's last photo, backstage behind the menu, Hina's sparkler, Rei through the viewfinder, the hearing, Room zero, graduation.
+- **Horror** (`h_*`, hidden behind a blur if Settings → "Graphic horror" is off): the bloody classroom (two versions), the blood-trail hallway, the darkroom with the empty noose, the bloody sketchbook, the empty uniforms on strings, the corrupted beach, and jumpscare faces (`scare(id)`) for Hina, Sayo and the Office. Hanging is only ever implied (an empty noose): the image model refuses to show the girls dead, and the game doesn't need it to.
+
+**Music.** New procedural tracks: `morning`, `romance`, `hearing`, `office`, `secondterm`, `lullaby`, `heartbeat` (the sequencer now has drums and bass). New sounds: `scare`, `creak`, `drip`, `whisper`, `type`.
+
+**What you type and draw is read.** `src/judge.js` sorts every typed answer (nonsense, meme, lewd, slur, insult, violent, DDLC references, prompt injection, distress). The character holding the pen reacts on the card (`REACTIONS` in `story_extra.js`); harmless junk is written down on the second try, crude or hateful answers are refused and the girl writes her own (`REFUSED`), and the Office censors its survey. Anything that sounds like real distress stops the game with an out-of-character card and helpline links.
+
+**The enhanced pack (local AI, opt-in).** `src/ai.js` runs models in the browser/Electron through transformers.js (CDN), nothing uploaded:
+- Qwen2.5-0.5B writes **the Office's** live lines (`aiSay` in the script: the hearing's "what am I for", the outside question, `talk` in the OFFICE-PC terminal). The girls' `aiSay` calls fall back to their written lines: the 0.5B model was too generic for them in testing (`VOICED` in ai.js turns them on for a bigger model). WebGPU is self-tested and falls back to the CPU when the GPU path gives garbage.
+- CLIP looks at the drawings for Sayo: a door, a cat, a window... or something rude, which she tears out.
+- Whisper hears "goodbye" out loud at the graduation (`say_goodbye`), if the player agrees.
+- The Office quotes, in Act 3, a line the model generated on an earlier run and says it has no record of writing it.
+- The opening opt-in and the download badge are deliberately vague ("enhanced pack"); the Act 3 patch notes are where the Office admits its lines are generated.
+
+**Camera and microphone (always asked first, in the story).** Rei borrows the webcam for her polaroid (`rei_camera`): the print is your real face with the figure behind you, and she counts how often you looked away (`senses.js`, MediaPipe face detection). The Office asks to hear goodbye out loud. Both turn off when the scene ends.
+
+**Deleting the game's files (.exe).** The game remembers every file it writes (`persist.written`); Electron checks them every 1.5 s. Deleting one interrupts the current line with a scene from whoever it belonged to (`on_delete`/`del_*` in story_extra.js), then the scene resumes; text files are written back with a note. Deleting most of the folder at once gets the Office. Files deleted while the game was closed are noticed at start-up (a whisper on the title, then the scene).
+
+**Higher stakes.**
+- **Loading doesn't make them forget.** Every choice is logged (`v.choiceLog`). Loading a save that undoes choices makes the girl it concerns say the choice you took back (Act 1: only Sayo notices, once).
+- **The Office deletes your saves**, for real, on Act 2 Thursday right after it hijacks your choice, and again if you rewind three times. The content warning says the game may delete its own saves.
+- **Detention costs a girl.** The one you spent the least time with is "kept back": she's missing from the title screen (a strip of tape where she stood) and absent in Act 2 until you reach Summer.
+- **The hearing is readable now**: a how-to card in round 1, a 1-2-3 step tracker, evidence details, and hints that escalate (the others pulse the help button, point at the lie, then light up the right proof). Losing all patience gets a jumpscare, then the round restarts.
+
 ## Next ideas
 - Add a CG or two: the three girls on the beach seen from behind, and K's last photo.
 - Add a sound pass with real voice acting for key lines, if you ever get a VA.
