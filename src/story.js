@@ -2169,7 +2169,7 @@ export const SCRIPT = {
     "| The save opens on a photo. The last one K took. Everyone's waving. In the window behind them, someone is holding the camera.",
     music("heartbeat"),
     "| ...The window is a mirror. Something in the reflection is standing right behind you.",
-    { t: "js", run: g => g.meta.lookBehind("h_behind_front", "h_behind_back") },
+    { t: "js", run: g => g.meta.lookBehind() },
     fx("glitch", 900),
     music("hum"),
     cg(null),

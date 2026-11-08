@@ -151,20 +151,20 @@ export class Meta {
   }
 
   /**
-   * Turn around. The player controls the camera (drag / arrows / wheel) and has to choose to look behind them.
-   * The longer they wait, the faster the heartbeat. Once they turn, there is a short, terrible pause, then the scare.
-   * With "graphic horror off" it skips straight to a blackout.
+   * Turn around. The player controls the camera (drag / arrows / wheel). The room in front is empty. Something is behind them,
+   * and it is closer every time they look away from it: each look behind shows the next stage, the swap happening while they face
+   * front. The fourth time they turn, it is right there. Resolves after the scare.
    */
-  async lookBehind(frontId, backId) {
+  async lookBehind(frontId = "h_stalk_front", stages = ["h_stalk_1", "h_stalk_2", "h_stalk_3"], faceId = "h_stalk_face") {
     const audio = this.game.audio;
     if (!this.goreOn) { audio.sfx("static"); await this.blackout(500); return; }
     const root = document.createElement("div");
     root.className = "behind";
-    root.innerHTML = `<div class="behind-strip"><div style="background-image:url(assets/cg/${frontId}.webp)"></div><div style="background-image:url(assets/cg/${backId}.webp)"></div></div><div class="behind-hint">‹ drag, or use ← → ›</div>`;
+    root.innerHTML = `<div class="behind-strip"><div style="background-image:url(assets/cg/${frontId}.webp)"></div><div style="background-image:url(assets/cg/${stages[0]}.webp)"></div></div><div class="behind-hint">‹ drag, or use ← → ›</div>`;
     this.fx.appendChild(root);
-    const strip = root.firstElementChild, hint = root.lastElementChild;
-    // The player turns the camera themselves: drag, arrow keys / A D, or the wheel. Nothing turns it for them.
-    let pan = 0, vel = 0, dragging = false, lastX = 0, still = 0;
+    [...stages, faceId].forEach(id => { const i = new Image(); i.src = `assets/cg/${id}.webp`; });
+    const strip = root.firstElementChild, hint = root.lastElementChild, back = strip.lastElementChild;
+    let pan = 0, dragging = false, lastX = 0, hold = 0, seen = false, stage = 0, beat = 0, whisper = 0;
     const keys = new Set();
     const down = e => { dragging = true; lastX = e.clientX; };
     const up = () => { dragging = false; };
@@ -173,19 +173,21 @@ export class Meta {
     const kd = e => keys.add(e.key.toLowerCase()), ku = e => keys.delete(e.key.toLowerCase());
     root.addEventListener("pointerdown", down); addEventListener("pointerup", up); addEventListener("pointermove", move);
     addEventListener("wheel", wheel, { passive: true }); addEventListener("keydown", kd); addEventListener("keyup", ku);
-    const t0 = performance.now(); let beat = 0, last = t0;
+    const t0 = performance.now(); let last = t0;
     await new Promise(resolve => {
       const tick = now => {
-        const dt = Math.min(50, now - last); last = now;
-        const t = now - t0, dread = Math.min(1, t / 40000);
+        const dt = Math.min(50, now - last); last = now; const t = now - t0;
         if (keys.has("arrowright") || keys.has("d")) pan = Math.min(1, pan + dt / 1800);
         if (keys.has("arrowleft") || keys.has("a")) pan = Math.max(0, pan - dt / 1800);
         strip.style.transform = `translateX(${-pan * 50}%)`;
-        hint.style.opacity = String(Math.max(0, 0.55 - pan * 1.4) * (0.4 + 0.6 * Math.abs(Math.sin(t / 900))));
-        root.style.filter = `brightness(${1 - 0.3 * pan}) contrast(${1 + 0.4 * dread})`;
-        if (t - beat > 1400 - 800 * Math.max(dread, pan * 0.8)) { beat = t; audio.sfx("heartbeat"); if (pan > 0.4) this.shake(110); }
-        // fully turned: a held, silent beat, then it's there
-        if (pan > 0.97) { still += dt; if (still > 1100) return resolve(); } else still = 0;
+        hint.style.opacity = String(stage === 0 ? Math.max(0, 0.55 - pan * 1.4) * (0.4 + 0.6 * Math.abs(Math.sin(t / 900))) : 0);
+        const dread = Math.min(1, (stage + pan) / 3.5);
+        root.style.filter = `brightness(${1 - 0.25 * pan}) contrast(${1 + 0.5 * dread})`;
+        if (stage < 3 || pan < 0.9) { if (t - beat > 1500 - 1000 * dread) { beat = t; audio.sfx("heartbeat"); if (pan > 0.4) this.shake(100); } }
+        // looked behind: it counts once they've actually stared at it for a moment
+        if (pan > 0.9) { hold += dt; if (hold > (stage >= 3 ? 650 : 900) && !seen) { seen = true; if (stage >= 3) return resolve(); } } else hold = 0;
+        // facing front again: it moves, unseen
+        if (pan < 0.25 && seen) { seen = false; stage++; back.style.backgroundImage = `url(assets/cg/${stage >= 3 ? faceId : stages[stage]}.webp)`; if (t - whisper > 500) { whisper = t; audio.sfx("whisper"); } }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);

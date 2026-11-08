@@ -1274,3 +1274,8 @@ body.inverted, body.inverted * { cursor: none !important; }
   49% { transform: translate(-2%, 0) scaleY(1.03); filter: saturate(0) brightness(1.6); clip-path: none; }
   84% { transform: translate(0, -.8%); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(70% 0 0 0); }
 }
+
+/* 2.3: slow drift and breathing under the boil, on every CG (separate properties, so they stack with the glitch animation) */
+.cg-img { animation: cgDrift 18s ease-in-out infinite alternate; }
+.cg-img.glitchy { animation: cgFail 3.2s steps(1) infinite, cgDrift 18s ease-in-out infinite alternate; }
+@keyframes cgDrift { from { scale: 1.02; translate: 0 0; } to { scale: 1.07; translate: -1.1% -.7%; } }

@@ -25,3 +25,28 @@ else game.title();
     })();
   }
 }
+
+// 2.3: line boil. Every full-screen illustration wobbles like it is being redrawn by hand, a few frames a second, in hard steps
+// (Slay the Princess does this). Horror CGs boil harder. Reduced-motion players get still pictures.
+{
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute";
+    svg.innerHTML = `<filter id="boil" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence id="boil-n" type="fractalNoise" baseFrequency="0.011 0.014" numOctaves="2" seed="1" result="n"/><feDisplacementMap id="boil-d" in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/></filter>`;
+    document.body.appendChild(svg);
+    const noise = svg.querySelector("#boil-n"), disp = svg.querySelector("#boil-d");
+    const css = document.createElement("style");
+    css.textContent = "#cg, .behind-strip { filter: url(#boil); } #cg .cg-img, .behind-strip > div { transform-origin: 50% 50%; }";
+    document.head.appendChild(css);
+    let seed = 1;
+    setInterval(() => {
+      const cg = document.getElementById("cg"), behind = document.querySelector(".behind");
+      if (!(cg && cg.firstChild) && !behind) return;
+      const horror = behind || /^h_/.test(game.v.cg || "");
+      seed = seed % 9 + 1;
+      noise.setAttribute("seed", String(seed));
+      disp.setAttribute("scale", String(horror ? 11 : 4));
+    }, 120);
+  }
+}
