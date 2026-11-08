@@ -5,10 +5,10 @@
  * story_extra.js, a line's `skiptrap`, the Load screen's fake slots, or the title's Quit button.
  * Where it's placed is the point. Nothing here is chosen at random.
  */
-import { persist } from "./persist.js?v=2.2.0";
+import { persist } from "./persist.js?v=2.3.0";
 import {
   bg, music, sfx, show, hide, clear, set, fx, menu, when, say, js, office, noskip, title, subliminal
-} from "./script-helpers.js?v=2.2.0";
+} from "./script-helpers.js?v=2.3.0";
 
 /** The slots the Office fills in after it wipes your saves (engine.js, openSaves). None of them are yours. */
 export const FAKE_SAVES = [

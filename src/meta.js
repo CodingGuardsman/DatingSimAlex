@@ -2,7 +2,7 @@
  * meta.js — The fourth-wall effects. Each one is called deliberately from the story script;
  * nothing here fires at random. Watchers (tab, idle, cursor) only run while the script turns them on.
  */
-import { persist, formatDuration, formatShort } from "./persist.js?v=2.2.0";
+import { persist, formatDuration, formatShort } from "./persist.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

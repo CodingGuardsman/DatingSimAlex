@@ -17,7 +17,7 @@ const baseDir = process.env.PORTABLE_EXECUTABLE_DIR
 const GAME_DIR = path.join(baseDir, "Hoshimi Academy");
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true } }
+  { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }
 ]);
 
 let win = null;

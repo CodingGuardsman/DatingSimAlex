@@ -10,7 +10,7 @@
  * Sound from the hush scene and the frame from Rei's camera stay in memory for this session only. They
  * are never saved or uploaded, and are forgotten when the game closes.
  */
-import { persist, formatShort } from "./persist.js?v=2.2.0";
+import { persist, formatShort } from "./persist.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

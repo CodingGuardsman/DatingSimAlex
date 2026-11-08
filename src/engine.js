@@ -2,17 +2,17 @@
  * engine.js — Runs the story script and owns every screen: title, name entry, dialogue,
  * menus, save/load, settings and the backlog.
  */
-import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.2.0";
-import { AudioSys } from "./audio.js?v=2.2.0";
-import { Meta } from "./meta.js?v=2.2.0";
-import { Dread } from "./dread.js?v=2.2.0";
-import { Minigames } from "./minigames.js?v=2.2.0";
-import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES, FILE_TEXTS } from "./story.js?v=2.2.0";
-import { TITLE_DELETED } from "./story_extra.js?v=2.2.0";
-import { FAKE_SAVES } from "./story_dread.js?v=2.2.0";
-import { ai, PERSONAS, DOWNLOAD_SIZE } from "./ai.js?v=2.2.0";
-import { senses } from "./senses.js?v=2.2.0";
-import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.2.0";
+import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.3.0";
+import { AudioSys } from "./audio.js?v=2.3.0";
+import { Meta } from "./meta.js?v=2.3.0";
+import { Dread } from "./dread.js?v=2.3.0";
+import { Minigames } from "./minigames.js?v=2.3.0";
+import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES, FILE_TEXTS } from "./story.js?v=2.3.0";
+import { TITLE_DELETED } from "./story_extra.js?v=2.3.0";
+import { FAKE_SAVES } from "./story_dread.js?v=2.3.0";
+import { ai, PERSONAS, DOWNLOAD_SIZE } from "./ai.js?v=2.3.0";
+import { senses } from "./senses.js?v=2.3.0";
+import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

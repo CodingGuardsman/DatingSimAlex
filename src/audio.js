@@ -1,6 +1,8 @@
 /**
- * audio.js — Music, sound effects and text blips are generated live with Web Audio.
- * The only audio files are the Office's recorded PA lines (assets/voice/office).
+ * audio.js — Sound effects and text blips are generated live with Web Audio. Music is
+ * synthesized too, unless assets/music/manifest.json supplies a recorded file for a track id
+ * (then the file plays instead, and any load or play error falls back to the synth).
+ * The other audio files are the Office's recorded PA lines (assets/voice/office).
  */
 
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -165,6 +167,9 @@ export class AudioSys {
     this._timer = null;
     this._nodes = [];
     this._blipCount = 0;
+    this._gen = 0;          // bumped by every play()/stop(); a stale async start checks it and bows out
+    this._music = null;     // the recorded-file playback in progress, if any
+    this._mf = undefined;   // music manifest: undefined = not loaded yet, null = none, else the parsed JSON
   }
 
   /** Must be called from a user gesture before anything can play. */
@@ -207,6 +212,7 @@ export class AudioSys {
       this.applyVolumes();
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
+    this._musicManifest(); // start fetching now so it is usually ready before the first play()
   }
 
   /** Muffle the music, as if it were playing in another room. */
@@ -255,7 +261,21 @@ export class AudioSys {
   play(id) {
     if (!this.ctx || id === this.trackId) return;
     this.stop();
-    this.trackId = id;
+    this.trackId = id; // set synchronously: _heartbeat() and the early return above rely on it
+    const gen = this._gen; // stop() just bumped it
+    if (this._mf !== undefined) return this._start(id, gen);
+    // Manifest still loading: wait for it, unless another play()/stop() happens first.
+    this._musicManifest().then(() => { if (gen === this._gen) this._start(id, gen); });
+  }
+
+  /** Recorded file if the manifest lists one for this track, otherwise the synth. */
+  _start(id, gen) {
+    const hit = this._trackEntry(id);
+    if (hit) this._playFile(id, hit, gen);
+    else this._synth(id);
+  }
+
+  _synth(id) {
     const t = TRACKS[id];
     if (!t) return;
     if (t.drone) return this._drone();
@@ -265,6 +285,8 @@ export class AudioSys {
   }
 
   stop(fade = 0.6) {
+    this._gen++; // cancels any recorded track that is still loading
+    if (this._music) { this._dropFile(this._music, fade); this._music = null; }
     clearInterval(this._timer);
     this._timer = null;
     const now = this.ctx ? this.ctx.currentTime : 0;
@@ -325,6 +347,109 @@ export class AudioSys {
     };
     tick();
     this._timer = setInterval(tick, 60);
+  }
+
+  /* ---------- recorded music (optional) ---------- */
+
+  _musicManifest() {
+    if (!this._mfP) {
+      this._mfP = fetch("assets/music/manifest.json")
+        .then(r => r.ok ? r.json() : null).catch(() => null)
+        .then(m => (this._mf = m && m.tracks ? m : null));
+    }
+    return this._mfP;
+  }
+
+  /** { e: manifest entry, slow } for a track id, or null to use the synth. */
+  _trackEntry(id) {
+    const tr = this._mf && this._mf.tracks;
+    if (!tr) return null;
+    if (tr[id] && tr[id].file) return { e: tr[id], slow: false };
+    // No recording of the wrong tape: slow the day recording down on a fixed curve (never a random roll).
+    if (id === "wrong" && tr.day && tr.day.file) return { e: tr.day, slow: true };
+    return null;
+  }
+
+  /**
+   * Streams a recorded file through <audio> elements into musicBus, so muffle(), duck() and
+   * applyVolumes() work as for the synth. With loopStart/loopEnd, two elements alternate: shortly
+   * before loopEnd the other one starts at loopStart and the two crossfade.
+   */
+  _playFile(id, { e, slow }, gen) {
+    const ctx = this.ctx, t0 = ctx.currentTime, XF = 1.5;
+    const loopStart = +e.loopStart || 0, loopEnd = +e.loopEnd > loopStart ? +e.loopEnd : 0;
+    const url = "assets/music/" + encodeURI(e.file);
+    const rec = { dead: false, gain: ctx.createGain(), els: [], cur: null, next: null, swapAt: 0, broken: false, timer: null };
+    rec.gain.gain.setValueAtTime(0, t0);
+    rec.gain.gain.linearRampToValueAtTime(typeof e.gain === "number" ? e.gain : 1, t0 + 0.8);
+    rec.gain.connect(this.musicBus);
+    this._music = rec;
+
+    // 1.0 -> 0.72 over 120s, like the synth's bpm drift down to 46/64.
+    const rate = () => Math.max(0.72, 1 - 0.28 * (ctx.currentTime - t0) / 120);
+    const fail = () => {
+      if (rec.dead || this._music !== rec || gen !== this._gen) return;
+      this._dropFile(rec, 0.05); this._music = null;
+      this._synth(id);
+    };
+    const nextFail = () => { // the loop partner failed: keep the current element looping on its own
+      if (rec.dead || !rec.next) return;
+      this._release(rec, rec.next); rec.next = null; rec.broken = true;
+      rec.cur.el.loop = true;
+      rec.cur.g.gain.cancelScheduledValues(0); rec.cur.g.gain.setValueAtTime(1, ctx.currentTime);
+    };
+    const voice = (from, onFail) => {
+      const el = new Audio(url);
+      el.preload = "auto";
+      el.loop = !loopEnd;
+      if (slow) { el.preservesPitch = el.mozPreservesPitch = el.webkitPreservesPitch = false; el.playbackRate = rate(); }
+      if (from) el.currentTime = from;
+      const src = ctx.createMediaElementSource(el), g = ctx.createGain();
+      src.connect(g); g.connect(rec.gain);
+      const v = { el, src, g };
+      rec.els.push(v);
+      // A released element (after a loop swap) can still report errors; only live ones count.
+      const err = () => { if (rec.els.includes(v)) onFail(); };
+      el.addEventListener("error", err);
+      el.play().catch(err);
+      return v;
+    };
+
+    rec.cur = voice(0, fail);
+    if (!loopEnd && !slow) return;
+    rec.timer = setInterval(() => {
+      const now = ctx.currentTime;
+      if (slow) { const r = rate(); for (const v of rec.els) v.el.playbackRate = r; }
+      if (!loopEnd || rec.broken) return;
+      if (rec.next) {
+        if (now >= rec.swapAt) { // crossfade done: retire the old element
+          this._release(rec, rec.cur); rec.cur = rec.next; rec.next = null;
+        }
+        return;
+      }
+      const el = rec.cur.el;
+      // currentTime is media time, so the lead is scaled by playbackRate to get XF seconds of real time.
+      if (el.currentTime >= loopEnd - XF * el.playbackRate || el.ended) {
+        rec.next = voice(loopStart, nextFail);
+        rec.next.g.gain.setValueAtTime(0, now); rec.next.g.gain.linearRampToValueAtTime(1, now + XF);
+        rec.cur.g.gain.setValueAtTime(1, now); rec.cur.g.gain.linearRampToValueAtTime(0, now + XF);
+        rec.swapAt = now + XF + 0.1;
+      }
+    }, 100);
+  }
+
+  /** Fade a recorded track out, then pause and free its elements. */
+  _dropFile(rec, fade) {
+    rec.dead = true;
+    clearInterval(rec.timer);
+    const g = rec.gain.gain, now = this.ctx.currentTime, v = g.value;
+    g.cancelScheduledValues(now); g.setValueAtTime(v, now); g.setTargetAtTime(0, now, Math.max(fade, 0.01) / 3);
+    setTimeout(() => { for (const x of [...rec.els]) this._release(rec, x); rec.gain.disconnect(); }, fade * 1700 + 200);
+  }
+
+  _release(rec, v) {
+    rec.els = rec.els.filter(x => x !== v);
+    try { v.el.pause(); v.src.disconnect(); v.g.disconnect(); v.el.removeAttribute("src"); v.el.load(); } catch (err) { /* already gone */ }
   }
 
   _note(freq, when, dur, vol, wave = "sine", detune = 0, pluck = false, lowpass = 0) {

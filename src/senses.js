@@ -9,7 +9,7 @@
  * Face detection is MediaPipe's BlazeFace (a ~200 KB model, run locally). It only answers
  * "is somebody looking at the screen right now?" — it doesn't recognise anyone.
  */
-import { ai } from "./ai.js?v=2.2.0";
+import { ai } from "./ai.js?v=2.3.0";
 
 const MP_VERSION = "0.10.14";
 const MP_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;

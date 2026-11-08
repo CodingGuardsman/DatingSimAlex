@@ -6,7 +6,7 @@ A meta-horror dating sim, built as a web game (vanilla JS, ES modules) and packa
 - No framework or bundler. `index.html` loads `src/main.js` as a module. Electron main process is `electron/main.js` (CommonJS), with `electron/preload.js`.
 - `src/`: `main.js`, `engine.js`, `story.js`, `story_act3.js`, `meta.js`, `minigames.js`, `persist.js`, `audio.js`, `config.js`, `script-helpers.js`, plus (2.1) `story_extra.js`, `judge.js`, `ai.js`, `senses.js`, and (2.2) `dread.js`, `story_dread.js`.
 - `styles/game.css`, `assets/` (bg, cg, sprites per character, voice/office). `tools/key_sprite.py` turns generated art into game assets.
-- `itch/` holds store page, devlogs, art and trailer scripts. `tools/` holds Python helpers for the Office voice lines.
+- `itch/` holds store page, devlogs, art and trailer scripts. `tools/` holds Python helpers for the Office voice lines, plus `prep_music.py` for optional recorded music (`assets/music/manifest.json`).
 
 ## Run and build
 - Quick browser test: `python -m http.server 8080` in this folder (see `.claude/launch.json`).

@@ -13,16 +13,16 @@
  * Act 3 (story_act3.js): the second term. You came back after they asked you not to.
  * Behind the title: after the first ending, Sayo draws a door next to the menu.
  */
-import { persist } from "./persist.js?v=2.2.0";
+import { persist } from "./persist.js?v=2.3.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
   watch, log, noskip, end, phone, credits, js, mini, visit, title, call, know,
   cg, scare, subliminal, blood, aiSay, office
-} from "./script-helpers.js?v=2.2.0";
-import { DRAW_SEEN } from "./story_extra.js?v=2.2.0";
-import { ACT3, ACT3_MEMORIES, GRAD_NOTE } from "./story_act3.js?v=2.2.0";
-import { EXTRA } from "./story_extra.js?v=2.2.0";
-import { DREAD } from "./story_dread.js?v=2.2.0";
+} from "./script-helpers.js?v=2.3.0";
+import { DRAW_SEEN } from "./story_extra.js?v=2.3.0";
+import { ACT3, ACT3_MEMORIES, GRAD_NOTE } from "./story_act3.js?v=2.3.0";
+import { EXTRA } from "./story_extra.js?v=2.3.0";
+import { DREAD } from "./story_dread.js?v=2.3.0";
 
 export const CAST = {
   // 2.1: close / glass / grab / aim_close / peek are big close-up poses; turn / twirl / lean are wide action poses.

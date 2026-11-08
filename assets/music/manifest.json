@@ -1,0 +1,11 @@
+{
+  "tracks": {
+    "day": { "file": "day.mp3" },
+    "morning": { "file": "morning.mp3" },
+    "evening": { "file": "evening.mp3" },
+    "romance": { "file": "romance.mp3" },
+    "hearing": { "file": "hearing.mp3" },
+    "secondterm": { "file": "secondterm.mp3" },
+    "musicbox": { "file": "musicbox.mp3" }
+  }
+}

@@ -6,10 +6,10 @@
  * answer gets a reaction and a second chance; the second gets the "again" line, and for anything
  * hateful or crude the character refuses to write it and writes their own instead (REFUSED).
  */
-import { persist } from "./persist.js?v=2.2.0";
+import { persist } from "./persist.js?v=2.3.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, fx, pa, menu, when, say, js, office, mini, cg, scare, subliminal, blood
-} from "./script-helpers.js?v=2.2.0";
+} from "./script-helpers.js?v=2.3.0";
 
 /* ---------- typed answers ---------- */
 
