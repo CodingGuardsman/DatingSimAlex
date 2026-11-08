@@ -1312,7 +1312,6 @@ export const SCRIPT = {
     show("hina", "close"),
     "hina| I like you. Like, a lot. Like, summer-list-item-fourteen a lot.",
     menu([{ text: "I like you too, Hina.", do: [] }, { text: "...Fourteen?", do: ["hina happy| Shut up! It's a lucky number now. I decided."] }]),
-    cg(null),
     jump("a1_break")
   ],
   a1_conf_rei: [
@@ -1323,7 +1322,6 @@ export const SCRIPT = {
     show("rei", "lean"),
     "rei| ...That's the most embarrassing sentence I've ever said. Say something before I jump off this roof just to end the conversation.",
     menu([{ text: "I like you too, Rei.", do: [] }, { text: "Can I get a copy?", do: ["rei laugh| You're the worst. Yes. Obviously."] }]),
-    cg(null),
     jump("a1_break")
   ],
   a1_conf_sayo: [
@@ -1333,7 +1331,6 @@ export const SCRIPT = {
     "sayo| Before.",
     "sayo twirl| I'm glad it was you this time. I really am.",
     menu([{ text: "I like you, Sayo.", do: [] }, { text: "This time?", do: ["sayo sad| Don't. Not yet. Let me have the sunset."] }]),
-    cg(null),
     jump("a1_break")
   ],
   a1_break: [
@@ -1346,7 +1343,7 @@ export const SCRIPT = {
     fx("glitch", 900),
     { t: "js", run: g => g._show(g.v.route, g.v.route === "sayo" ? "scared" : g.v.route === "rei" ? "shocked" : "sad") },
     { t: "js", run: g => g._say({ who: g.v.route, text: "No. No no no, not again. Not when it was finally..." }) },
-    { t: "js", run: g => g.meta.cg(g.v.route === "sayo" ? "h_sayo_scribble" : g.v.route === "rei" ? "h_rei_flash" : "h_hina_blank") },
+    { t: "js", run: g => { const r = g.v.route || "hina"; return g.meta.morph([`cute_${r}`, `m_${r}_1`, `m_${r}_2`, `m_${r}_3`, r === "sayo" ? "h_sayo_scribble" : r === "rei" ? "h_rei_flash" : "h_hina_blank"]); } },
     wait(1400),
     { t: "js", run: g => g.meta.scare(g.v.route === "sayo" ? "h_jump_sayo" : "h_jump_hina", 620) },
     cg(null),

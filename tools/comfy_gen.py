@@ -21,7 +21,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("name"); ap.add_argument("prompt")
     ap.add_argument("--w", type=int, default=1216); ap.add_argument("--h", type=int, default=832)
     ap.add_argument("--seed", type=int); ap.add_argument("--n", type=int, default=1)
-    ap.add_argument("--ref", help="character reference crop in ../_comfy/refs/<ref>.png (IP-Adapter keeps her face, hair and outfit)"); ap.add_argument("--ipw", type=float, default=0.75); ap.add_argument("--end", type=float, default=0.9)
+    ap.add_argument("--ref", help="character reference crop in ../_comfy/refs/<ref>.png (IP-Adapter keeps her face, hair and outfit)"); ap.add_argument("--ipw", type=float, default=0.75); ap.add_argument("--end", type=float, default=0.9); ap.add_argument("--init", help="img2img start image path"); ap.add_argument("--denoise", type=float, default=0.6)
     a = ap.parse_args(); OUT.mkdir(parents=True, exist_ok=True)
     seed = a.seed if a.seed is not None else random.randint(0, 2**31)
     wf = {"1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "animagine-xl-4.0.safetensors"}},
@@ -32,6 +32,10 @@ def main():
                 "seed": seed, "steps": 28, "cfg": 5.0, "sampler_name": "euler_ancestral", "scheduler": "normal", "denoise": 1.0}},
           "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
           "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": f"{a.name}_{seed}"}}}
+    if a.init:
+        wf["20"] = {"class_type": "LoadImage", "inputs": {"image": upload(a.init)}}
+        wf["21"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["20", 0], "vae": ["1", 2]}}
+        wf["5"]["inputs"]["latent_image"] = ["21", 0]; wf["5"]["inputs"]["denoise"] = a.denoise
     if a.ref:
         wf["3"]["inputs"]["text"] += ", pastel, washed out, flat colors, low contrast, overexposed, faded, white background"
         img = upload(OUT.parent / "refs" / f"{a.ref}.png")

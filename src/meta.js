@@ -204,6 +204,25 @@ export class Meta {
     root.remove();
   }
 
+  /**
+   * A face turning from cute to horror, in hard cuts that speed up and stutter back and forth (like a bad connection).
+   * ids = the frames in order, cute first, horror last. Resolves when the last frame is on screen.
+   */
+  async morph(ids, holds = [1100, 800, 520, 340]) {
+    const audio = this.game.audio;
+    if (!this.goreOn) { this.cg(ids[0]); await sleep(900); return; }
+    ids.forEach(id => { const i = new Image(); i.src = `assets/cg/${id}.webp`; });
+    this.cg(ids[0], { fade: false });
+    for (let k = 1; k < ids.length; k++) {
+      await sleep(holds[k - 1] ?? 300);
+      audio.sfx("glitch"); this.shake(140);
+      // stutter: it goes forward, flinches back, then forward again
+      this.cg(ids[k], { fade: false }); await sleep(70);
+      this.cg(ids[k - 1], { fade: false }); await sleep(55);
+      this.cg(ids[k], { fade: false });
+    }
+  }
+
   /** An image for a few frames. You're not sure you saw it. The script pretends you didn't. */
   async subliminal(id, ms = 90) {
     if (this._graphic(id) && !this.goreOn) return;
