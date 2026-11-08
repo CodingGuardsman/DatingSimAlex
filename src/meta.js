@@ -150,6 +150,58 @@ export class Meta {
     el.remove();
   }
 
+  /**
+   * Turn around. The player controls the camera (drag / arrows / wheel) and has to choose to look behind them.
+   * The longer they wait, the faster the heartbeat. Once they turn, there is a short, terrible pause, then the scare.
+   * With "graphic horror off" it skips straight to a blackout.
+   */
+  async lookBehind(frontId, backId) {
+    const audio = this.game.audio;
+    if (!this.goreOn) { audio.sfx("static"); await this.blackout(500); return; }
+    const root = document.createElement("div");
+    root.className = "behind";
+    root.innerHTML = `<div class="behind-strip"><div style="background-image:url(assets/cg/${frontId}.webp)"></div><div style="background-image:url(assets/cg/${backId}.webp)"></div></div><div class="behind-hint">‹ drag, or use ← → ›</div>`;
+    this.fx.appendChild(root);
+    const strip = root.firstElementChild, hint = root.lastElementChild;
+    // The player turns the camera themselves: drag, arrow keys / A D, or the wheel. Nothing turns it for them.
+    let pan = 0, vel = 0, dragging = false, lastX = 0, still = 0;
+    const keys = new Set();
+    const down = e => { dragging = true; lastX = e.clientX; };
+    const up = () => { dragging = false; };
+    const move = e => { if (!dragging) return; pan = Math.max(0, Math.min(1, pan - (e.clientX - lastX) / innerWidth * 1.4)); lastX = e.clientX; };
+    const wheel = e => { pan = Math.max(0, Math.min(1, pan + e.deltaY / 1400)); };
+    const kd = e => keys.add(e.key.toLowerCase()), ku = e => keys.delete(e.key.toLowerCase());
+    root.addEventListener("pointerdown", down); addEventListener("pointerup", up); addEventListener("pointermove", move);
+    addEventListener("wheel", wheel, { passive: true }); addEventListener("keydown", kd); addEventListener("keyup", ku);
+    const t0 = performance.now(); let beat = 0, last = t0;
+    await new Promise(resolve => {
+      const tick = now => {
+        const dt = Math.min(50, now - last); last = now;
+        const t = now - t0, dread = Math.min(1, t / 40000);
+        if (keys.has("arrowright") || keys.has("d")) pan = Math.min(1, pan + dt / 1800);
+        if (keys.has("arrowleft") || keys.has("a")) pan = Math.max(0, pan - dt / 1800);
+        strip.style.transform = `translateX(${-pan * 50}%)`;
+        hint.style.opacity = String(Math.max(0, 0.55 - pan * 1.4) * (0.4 + 0.6 * Math.abs(Math.sin(t / 900))));
+        root.style.filter = `brightness(${1 - 0.3 * pan}) contrast(${1 + 0.4 * dread})`;
+        if (t - beat > 1400 - 800 * Math.max(dread, pan * 0.8)) { beat = t; audio.sfx("heartbeat"); if (pan > 0.4) this.shake(110); }
+        // fully turned: a held, silent beat, then it's there
+        if (pan > 0.97) { still += dt; if (still > 1100) return resolve(); } else still = 0;
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    root.removeEventListener("pointerdown", down); removeEventListener("pointerup", up); removeEventListener("pointermove", move);
+    removeEventListener("wheel", wheel); removeEventListener("keydown", kd); removeEventListener("keyup", ku);
+    audio.sfx("scare");
+    root.classList.add("slam");
+    this.shake(1500);
+    if (this.native) this.native.shake(1200, 18).catch(() => {});
+    await sleep(1600);
+    root.classList.add("out");
+    await sleep(200);
+    root.remove();
+  }
+
   /** An image for a few frames. You're not sure you saw it. The script pretends you didn't. */
   async subliminal(id, ms = 90) {
     if (this._graphic(id) && !this.goreOn) return;

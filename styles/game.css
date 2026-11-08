@@ -1251,3 +1251,13 @@ body.inverted, body.inverted * { cursor: none !important; }
 
 /* The room, changed while you were gone. */
 .bg-img.haunted { transition: opacity 2.4s ease; }
+
+/* 2.3: turn around (meta.lookBehind). A 200%-wide strip: the room in front, and what is behind you. */
+.behind { position: absolute; inset: 0; z-index: 59; overflow: hidden; background: #000; cursor: grab; touch-action: none; user-select: none; }
+.behind-strip { position: absolute; inset: 0 auto 0 0; width: 200%; display: flex; will-change: transform; }
+.behind-strip > div { width: 50%; height: 100%; background: center / cover no-repeat; }
+.behind-hint { position: absolute; right: 2.2%; top: 50%; translate: 0 -50%; font-size: 1.1rem; letter-spacing: .15em; color: #fff; opacity: .3; pointer-events: none; text-shadow: 0 0 18px #000; }
+.behind.slam .behind-strip > div:last-child { animation: behindSlam .16s cubic-bezier(.2,1.8,.4,1) both; }
+.behind.slam .behind-hint { display: none; }
+.behind.out { animation: fadeout .2s ease both; }
+@keyframes behindSlam { from { transform: scale(1.5); filter: brightness(3) contrast(1.6); } to { transform: scale(1.06); filter: brightness(1) contrast(1.3); } }

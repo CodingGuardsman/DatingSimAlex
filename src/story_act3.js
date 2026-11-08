@@ -616,6 +616,7 @@ export const ACT3 = {
   a3_wed_night: [
     clear,
     "| That night the group chat is quiet for a long time.",
+    { t: "js", run: g => g.meta.subliminal("h_okada_reach", 80) },
     when((v, P) => P.restoredK,
       [phone("Summer Squad ☀", [
         ["hina", "is everyone awake"],
@@ -652,6 +653,7 @@ export const ACT3 = {
      ===================================================================== */
   a3_thu: [
     clear,
+    { t: "js", run: g => g.meta.subliminal("h_kanda_board", 80) },
     day("Thursday", "Engagement Hearing.", true),
     set("sabotage", true),
     bg("classroom"),
