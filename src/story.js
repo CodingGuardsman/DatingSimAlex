@@ -1956,6 +1956,8 @@ export const SCRIPT = {
     music("drone"),
     "| The infirmary door is a different color than it was. Like it was painted from memory.",
     call("d_lock"),
+    cg("h_nurse_glitch"),
+    "| Nurse Mori is standing in the doorway. She has been smiling for a very long time.",
     cg("h_d_infirmary"),
     "| The bed is empty. The sheets are the wrong color. Nobody has been in here for a long time, and it still feels like someone just left.",
     cg("h_sketch"),
