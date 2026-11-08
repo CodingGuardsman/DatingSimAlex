@@ -460,12 +460,11 @@ export class Game {
   _contentWarning() {
     const p = this._screen(`<h2>Before you play</h2>
       <p>After Class is a psychological horror game disguised as a dating sim. It is not suitable for children or for anyone easily disturbed.</p>
-      <p>Choices can have permanent consequences, and the game may <b>delete its own save files</b>.</p>
-      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, <b>jumpscares</b> with sudden loud sounds, <b>blood</b>, <b>disturbing images</b> including implied death and suicide, and moments where the game talks about you and your computer${this.meta.native ? ", leaves files in its own folder, and moves its own window" : ""}.</p>
-      <p>It may also <b>pretend to crash</b>, show fake system notifications, change its own settings for a moment, and once put a message in your <b>clipboard</b>.</p>
+      <p>Choices can have permanent consequences, and the game is not always honest about what it is.</p>
+      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, <b>jumpscares</b> with sudden loud sounds, <b>blood</b>, and <b>disturbing images</b> including implied death and suicide.</p>
+      <p>It plays with the fourth wall, and some of what it does may affect your save data or touch your computer in ways you will not expect. It stays inside its own folder, and it will not harm your machine.</p>
       <p>You can turn the graphic images off at any time in Settings.</p>
       <p class="hint">If you are struggling with thoughts of suicide or self-harm, please reach out: findahelpline.com lists free, confidential helplines in every country.</p>
-      <p class="hint">The game never touches anything outside its own folder.</p>
       <div class="row"><button data-a="ok">I understand</button></div>`, "center warning");
     p.addEventListener("click", e => {
       if (e.target.dataset.a !== "ok") return;
@@ -1241,6 +1240,26 @@ export class Game {
     return ["center", "left", "right"].find(p => !used.includes(p)) || "center";
   }
 
+  /** 2.3: the girls blink (neutral face only, cute scenes only). Hand-placed frames, so nothing here is random meta-horror. */
+  _startBlink() {
+    if (this._blinkOn) return;
+    this._blinkOn = true;
+    const WHO = ["hina", "rei", "sayo"];
+    WHO.forEach(w => { const i = new Image(); i.src = `assets/sprites/${w}/blink.webp`; });
+    const tick = () => {
+      const g = document.getElementById("game");
+      const calm = g && !g.classList.contains("uncanny") && !g.classList.contains("mood-still");
+      if (calm) for (const who of WHO) {
+        const el = this.sprites[who];
+        if (!el || el.dataset.expr !== "neutral" || Math.random() > 0.5) continue;
+        el.src = `assets/sprites/${who}/blink.webp`;
+        setTimeout(() => { if (el.dataset.expr === "neutral") el.src = `assets/sprites/${who}/neutral.webp`; }, 140);
+      }
+      setTimeout(tick, 2600 + Math.random() * 3200);
+    };
+    setTimeout(tick, 3000);
+  }
+
   _show(who, expr = "neutral", pos, instant = false) {
     const layer = $("#sprites");
     let el = this.sprites[who];
@@ -1258,6 +1277,8 @@ export class Game {
     }
     const changed = !prev || prev.expr !== expr;
     el.src = `assets/sprites/${who}/${expr}.webp`;
+    el.dataset.expr = expr;
+    this._startBlink();
     el.style.left = POS[pos] + "%";
     if (changed && !instant) this._emote(el, expr);
     el.classList.toggle("is-corrupt", expr === "corrupt");
