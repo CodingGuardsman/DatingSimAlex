@@ -119,7 +119,7 @@ export class Meta {
     this.game.v.cg = id || null;
     if (!id) { layer.classList.remove("in"); setTimeout(() => { if (!this.game.v.cg) layer.innerHTML = ""; }, 700); return; }
     const img = document.createElement("div");
-    img.className = "cg-img" + (this._graphic(id) && !this.goreOn ? " withheld" : "");
+    img.className = "cg-img" + (this._graphic(id) && !this.goreOn ? " withheld" : "") + (this._graphic(id) ? " glitchy" : "");
     img.style.backgroundImage = `url(assets/cg/${id}.webp)`;
     if (!fade) img.style.transition = "none";
     // The darkroom: the rope creaks while it's on screen.
