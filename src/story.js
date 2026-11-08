@@ -1459,6 +1459,8 @@ export const SCRIPT = {
     when((v, P, g) => g.meta.vars().late, ["hina worried| It's the middle of the night, {name}. You should be asleep. ...But I'm glad you're not."]),
     when((v, P) => P.endings.includes("detention"), ["hina sad| Last time you chose to stay. We're still so tired from it."]),
     when((v, P) => P.erased, [
+      cg("h_d_classroom"),
+      "| Every desk in the room has been written on, and they all say the same name. Yours.",
       cg("h_classroom2"),
       "| One desk by the window is covered in red. Someone has written on the board, over and over, in something that isn't chalk.",
       cg(null),
@@ -1954,6 +1956,8 @@ export const SCRIPT = {
     music("drone"),
     "| The infirmary door is a different color than it was. Like it was painted from memory.",
     call("d_lock"),
+    cg("h_d_infirmary"),
+    "| The bed is empty. The sheets are the wrong color. Nobody has been in here for a long time, and it still feels like someone just left.",
     cg("h_sketch"),
     music("lullaby"),
     "| Her sketchbook is open on the bed. Every face in it has been scribbled out in red. The red isn't pencil.",
