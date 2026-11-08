@@ -1305,29 +1305,35 @@ export const SCRIPT = {
   ],
   a1_conf_hina: [
     show("hina", "lean_blush", "center"),
+    cg("cute_hina"),
     "hina| I crossed off as much as I could this week. More than any year. Because you were there.",
     "hina| Thirteen was yours. '{item13}.' I'm still doing it. But I added one more last night. Fourteen. It says... 'Tell {name}.'",
     mem("l14"),
     show("hina", "close"),
     "hina| I like you. Like, a lot. Like, summer-list-item-fourteen a lot.",
     menu([{ text: "I like you too, Hina.", do: [] }, { text: "...Fourteen?", do: ["hina happy| Shut up! It's a lucky number now. I decided."] }]),
+    cg(null),
     jump("a1_break")
   ],
   a1_conf_rei: [
+    cg("cute_rei"),
     show("rei", "photo_soft", "center"),
     "rei| I developed the last roll. You're sharp in all of them. Every single frame.",
     "rei| I think it's because I finally stopped looking at the thing behind you, and just looked at you.",
     show("rei", "lean"),
     "rei| ...That's the most embarrassing sentence I've ever said. Say something before I jump off this roof just to end the conversation.",
     menu([{ text: "I like you too, Rei.", do: [] }, { text: "Can I get a copy?", do: ["rei laugh| You're the worst. Yes. Obviously."] }]),
+    cg(null),
     jump("a1_break")
   ],
   a1_conf_sayo: [
+    cg("cute_sayo"),
     show("sayo", "happy", "center"),
     "sayo| I'm not supposed to be up here. I'm not supposed to be anywhere on Fridays. But I wanted to see one sunset with you before...",
     "sayo| Before.",
     "sayo twirl| I'm glad it was you this time. I really am.",
     menu([{ text: "I like you, Sayo.", do: [] }, { text: "This time?", do: ["sayo sad| Don't. Not yet. Let me have the sunset."] }]),
+    cg(null),
     jump("a1_break")
   ],
   a1_break: [
@@ -1340,7 +1346,10 @@ export const SCRIPT = {
     fx("glitch", 900),
     { t: "js", run: g => g._show(g.v.route, g.v.route === "sayo" ? "scared" : g.v.route === "rei" ? "shocked" : "sad") },
     { t: "js", run: g => g._say({ who: g.v.route, text: "No. No no no, not again. Not when it was finally..." }) },
+    { t: "js", run: g => g.meta.cg(g.v.route === "sayo" ? "h_sayo_scribble" : g.v.route === "rei" ? "h_rei_flash" : "h_hina_blank") },
+    wait(1400),
     { t: "js", run: g => g.meta.scare(g.v.route === "sayo" ? "h_jump_sayo" : "h_jump_hina", 620) },
+    cg(null),
     fx("rollback"),
     fx("mood", null),
     clear,
