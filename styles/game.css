@@ -1029,3 +1029,225 @@ textarea.censored { color: #000 !important; background: #111 !important; letter-
 .title-absent { position: absolute; bottom: 6%; translate: -50% 0; padding: .3rem .9rem; background: #e9e2c8; color: #3b2a2a; font: 800 1.1rem ui-monospace, Consolas, monospace;
   letter-spacing: .2em; rotate: -3deg; box-shadow: 0 2px 6px rgba(0,0,0,.4); text-align: center; }
 .title-absent small { display: block; font-size: .6rem; letter-spacing: .1em; color: #b3303a; }
+
+/* =====================================================================
+   2.1.1: MORE ALIVE. The cute half of the game moves: the room drifts, dust and petals float,
+   the girls hop, blush and jolt. In the uncanny UI it all stops dead, which is worse.
+   ===================================================================== */
+
+/* the room breathes: a very slow drift and zoom */
+.bg-img.in:not(.void) { animation: bgdrift 46s ease-in-out infinite alternate; }
+@keyframes bgdrift {
+  from { transform: scale(1.03) translate(0, 0); }
+  to { transform: scale(1.09) translate(-1.2%, -0.8%); }
+}
+#game.uncanny .bg-img, #game.mood-still .bg-img { animation-play-state: paused; }
+
+/* springier entrances and exits, and the girls don't all breathe in step */
+.sprite { transition: left .6s cubic-bezier(.34,1.3,.64,1), filter .3s ease, opacity .45s ease, translate .55s cubic-bezier(.34,1.56,.64,1), scale .55s cubic-bezier(.34,1.56,.64,1); }
+.sprite.enter { opacity: 0; translate: -50% 48px; scale: .94; }
+.sprite.leave { opacity: 0; translate: -50% 30px; scale: .97; transition-duration: .4s; }
+.sprite:nth-child(2) { animation-delay: -1.8s; }
+.sprite:nth-child(3) { animation-delay: -3.6s; }
+@keyframes breathe { 50% { transform: scale(1.006, 1.013) rotate(.25deg); } }
+@keyframes talk { 0% { transform: scale(1, 1); } 30% { transform: translateY(-11px) scale(.99, 1.015); } 60% { transform: translateY(0) scale(1.01, .99); } }
+
+/* reactions (engine.js _emote) */
+.sprite.emo-hop { animation: emoHop .6s cubic-bezier(.3,1.6,.5,1); }
+.sprite.emo-hearts { animation: emoSway .9s ease-in-out; }
+.sprite.emo-jolt { animation: emoJolt .45s ease-out; }
+.sprite.emo-droop { animation: emoDroop .9s ease-in-out; }
+.sprite.emo-huff { animation: emoHuff .45s ease-in-out; }
+@keyframes emoHop { 0% { transform: none; } 25% { transform: translateY(-34px) scale(.98, 1.03); } 50% { transform: translateY(0) scale(1.03, .97); } 70% { transform: translateY(-12px); } 100% { transform: none; } }
+@keyframes emoSway { 25% { transform: rotate(-1.6deg); } 60% { transform: rotate(1.2deg); } }
+@keyframes emoJolt { 0% { transform: none; } 15% { transform: translateY(-22px) scale(1.03); } 30% { transform: translateX(-8px); } 45% { transform: translateX(7px); } 60% { transform: translateX(-4px); } 100% { transform: none; } }
+@keyframes emoDroop { 40% { transform: translateY(12px) scale(1.01, .985); } }
+@keyframes emoHuff { 20% { transform: translateX(-6px) rotate(-1deg); } 40% { transform: translateX(6px) rotate(1deg); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+/* the uncanny UI doesn't react. They just change faces. */
+#game.uncanny .sprite[class*="emo-"] { animation: breathe 5.5s ease-in-out infinite; }
+#game.mood-still .sprite[class*="emo-"] { animation: none !important; }
+
+.emote-p { position: absolute; z-index: 3; pointer-events: none; translate: -50% 0; font-family: var(--display); }
+.emote-p.heart { color: #ff6f9f; font-size: clamp(1.4rem, 2.6vw, 2.4rem); text-shadow: 0 2px 0 #fff, 0 0 12px rgba(255,120,170,.6); animation: heartUp 1.6s ease-out both; }
+.emote-p.spark { color: #ffd66b; font-size: clamp(1.1rem, 2vw, 1.8rem); text-shadow: 0 0 10px rgba(255,220,120,.9); animation: heartUp 1.3s ease-out both; }
+.emote-p.bang { color: #fff; font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 800; -webkit-text-stroke: 3px #e85a8a; paint-order: stroke; animation: bang .9s cubic-bezier(.3,1.8,.5,1) both; }
+.emote-p.sweat { font-size: clamp(1.2rem, 2vw, 1.8rem); animation: sweat 1.3s ease-in both; }
+@keyframes heartUp {
+  0% { opacity: 0; transform: translate(0, 10px) scale(.4); }
+  20% { opacity: 1; transform: translate(calc(var(--dx) * .2), -10px) scale(1.15); }
+  100% { opacity: 0; transform: translate(var(--dx), -110px) scale(.8) rotate(12deg); }
+}
+@keyframes bang { 0% { opacity: 0; transform: scale(.2) rotate(-20deg); } 30% { opacity: 1; transform: scale(1.2) rotate(8deg); } 70% { opacity: 1; transform: scale(1) rotate(8deg); } 100% { opacity: 0; transform: scale(1) rotate(8deg); } }
+@keyframes sweat { 0% { opacity: 0; transform: translateY(-10px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(36px); } }
+#game.uncanny .emote-p { display: none; }
+
+/* ambient motes (engine.js _ambient) */
+#ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#ambient i { position: absolute; display: block; animation: floatUp 14s linear infinite; scale: var(--s); }
+#ambient i.dust { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle, rgba(255,240,200,.95), rgba(255,220,150,0) 70%); }
+#ambient i.sparkle { width: 10px; height: 10px; background: radial-gradient(circle, #fff, rgba(255,255,255,0) 65%); animation-name: twinkleDrift; }
+#ambient i.firefly { width: 8px; height: 8px; border-radius: 50%; background: radial-gradient(circle, #fff7b0, rgba(255,230,90,0) 70%); box-shadow: 0 0 12px 3px rgba(255,220,90,.35); animation-name: fireflyDrift; }
+#ambient i.petal { width: 12px; height: 9px; border-radius: 80% 0 80% 0; background: linear-gradient(135deg, #ffd3e2, #ff9fc0); opacity: .85; animation-name: petalFall; }
+@keyframes floatUp {
+  0% { transform: translate(0, 30px); opacity: 0; }
+  15%, 80% { opacity: .9; }
+  100% { transform: translate(var(--dx), -220px); opacity: 0; }
+}
+@keyframes twinkleDrift { 0%, 100% { opacity: 0; transform: translate(0, 0) scale(.6); } 50% { opacity: 1; transform: translate(var(--dx), -40px) scale(1.2); } }
+@keyframes fireflyDrift {
+  0% { opacity: 0; transform: translate(0, 0); }
+  25% { opacity: 1; transform: translate(calc(var(--dx) * .5), -30px); }
+  50% { opacity: .3; transform: translate(var(--dx), -10px); }
+  75% { opacity: 1; transform: translate(calc(var(--dx) * .3), -50px); }
+  100% { opacity: 0; transform: translate(0, -20px); }
+}
+@keyframes petalFall {
+  0% { opacity: 0; transform: translate(0, -60px) rotate(0deg); }
+  10%, 85% { opacity: .9; }
+  100% { opacity: 0; transform: translate(calc(var(--dx) * 2), 260px) rotate(540deg); }
+}
+/* When it goes wrong, everything floating stops in mid-air and loses its color. */
+#game.uncanny #ambient i, #game.mood-still #ambient i { animation-play-state: paused; filter: grayscale(1) brightness(.7); box-shadow: none; }
+
+/* the name tag bounces in when someone new talks */
+#say-name.pop { animation: namePop .42s cubic-bezier(.3,1.7,.5,1); }
+@keyframes namePop { 0% { transform: scale(.6) translateY(6px); opacity: .2; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: none; } }
+#game.uncanny #say-name.pop { animation: none; }
+
+/* choices bob gently while you decide */
+.choice { animation: choicein .4s cubic-bezier(.3,1.5,.5,1) backwards, choiceIdle 3.2s ease-in-out .6s infinite; }
+.choice:nth-child(2) { animation-delay: .06s, 1s; }
+.choice:nth-child(3) { animation-delay: .12s, 1.4s; }
+.choice:hover { animation-play-state: running, paused; }
+@keyframes choiceIdle { 50% { translate: 0 -3px; } }
+#game.uncanny .choice { animation: choicein .2s ease backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-img.in:not(.void), #ambient i, .choice, #say-name.pop, .sprite[class*="emo-"] { animation: none !important; }
+  #ambient { display: none; }
+}
+
+/* =====================================================================
+   2.2 — The Mirror Update (dread.js). Every one of these is switched on by the script, then off again.
+   ===================================================================== */
+
+/* Panic: the text box bleeds, twists and slides away from the cursor. */
+#say.panic { transition: margin .18s ease-out, background .4s, border-color .4s; animation: sayTwist 1.1s ease-in-out infinite; border-color: var(--danger); }
+#say.panic::before { content: ""; position: absolute; left: 6%; right: 6%; top: 100%; height: 46px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(150,10,20,.85) 22px 26px, transparent 26px 61px, rgba(150,10,20,.7) 61px 64px);
+  -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent); animation: sayDrip 2.4s ease-in infinite; transform-origin: top; }
+@keyframes sayTwist { 0%, 100% { rotate: 0deg; } 30% { rotate: -1.2deg; } 60% { rotate: .9deg; } }
+@keyframes sayDrip { 0% { transform: scaleY(.2); } 100% { transform: scaleY(1.4); } }
+/* Decoupled dialogue: no arrow, because it isn't waiting for you. */
+#game.decoupled .say-arrow { display: none; }
+#game.fx-refuse #say { animation: refuse .26s steps(2); }
+@keyframes refuse { 50% { margin-left: 8px; } }
+
+/* Haunted sprites: one wrong detail, for one line. */
+.sprite.wrong-mirror { scale: -1 1; transition: none; }
+.sprite.wrong-tall { scale: 1 1.07; transition: none; }
+.sprite.wrong-tilt { rotate: 7deg; transition: none; }
+.sprite.wrong-stare { transition: margin .05s linear; }
+
+/* The backlog: lines that were never on screen. */
+.log-line.ghost { color: #b3303a; font-style: italic; opacity: .82; }
+.log-line.ghost b { color: #b3303a; }
+
+/* Choices that vanish, change their words, or have been crossed out. */
+.choice.vanish { opacity: 0 !important; pointer-events: none; transition: opacity .12s; }
+.choice.morphed { color: var(--danger); border-color: var(--danger); }
+.choice.crossed { cursor: not-allowed; opacity: .78; }
+.choice.crossed .choice-text { text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: rgba(200,40,60,.85); }
+.crossed-note { position: absolute; right: 2.6rem; top: -.75rem; rotate: -4deg; font-family: var(--hand); font-size: 1.15rem; color: #c0392b; background: var(--paper); padding: 0 .4rem; border-radius: 4px; }
+.choice.refused { animation: refuse .3s steps(3); }
+.choice-timer.hidden-timer { display: none; }
+
+/* The Office's own saves. */
+.slot.fake { background-color: #1a1114; background-position: 0 0, right center; background-size: auto, auto 160%; background-repeat: no-repeat; color: #d76b72; border-color: #5a2630; font-family: ui-monospace, Consolas, monospace; font-size: .88rem; }
+.slot.fake .slot-n { background: #5a2630; }
+.title-buttons .quit-glitch { animation: rgbsplit .2s steps(2) infinite; color: var(--danger); }
+.sabotaged { margin: .6rem 0; padding: .4rem .8rem; border: 2px dashed var(--danger); border-radius: 12px; }
+.sabotaged label { color: var(--danger); margin: .4rem 0 !important; }
+
+/* Generic OS-style notifications (deliberately not any real operating system). */
+.sysnote { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display: flex; gap: .8rem; align-items: flex-start; width: 340px; padding: .9rem 1rem;
+  background: #202024; color: #e8e8ea; border: 1px solid #3a3a40; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  font: 13px/1.4 "Segoe UI", system-ui, sans-serif; animation: sysIn .25s ease-out; }
+.sysnote.out { opacity: 0; translate: 0 12px; transition: opacity .4s, translate .4s; }
+.sysnote-icon { font-size: 1.4rem; line-height: 1; color: #9ab; }
+.sysnote-body { display: flex; flex-direction: column; gap: .15rem; }
+.sysnote-body b { font-weight: 600; }
+.sysnote-body small { color: #8a8a92; margin-top: .3rem; }
+@keyframes sysIn { from { opacity: 0; translate: 0 14px; } }
+body.no-cursor, body.no-cursor * { cursor: none !important; }
+
+/* Settings sabotage. */
+#game { transition: rotate .7s ease; }
+#game.flipped { rotate: 180deg; }
+body.inverted, body.inverted * { cursor: none !important; }
+#fake-cursor { position: fixed; left: 0; top: 0; width: 26px; height: 28px; z-index: 10000; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='28' viewBox='0 0 26 28'%3E%3Cpath d='M3 2 L3 21 L8.2 16.2 L11.6 24 L15 22.5 L11.6 15 L18.5 15 Z' fill='%23222' stroke='%23b3303a' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat; }
+
+/* Windowed-mode entrapment, in a browser: the game shrinks into a little window and rattles in the corners. */
+#game.entrapped { animation: entrap 3.4s steps(1) forwards; outline: 2px solid #555; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+@keyframes entrap {
+  0% { scale: .45; translate: 28% 28%; } 8% { translate: 29% 27%; } 14% { translate: 27% 29%; }
+  25% { scale: .45; translate: -28% -28%; } 31% { translate: -27% -29%; } 37% { translate: -29% -27%; }
+  50% { translate: 28% -28%; } 56% { translate: 29% -29%; }
+  75% { translate: -28% 28%; } 81% { translate: -29% 27%; }
+  92% { scale: .45; translate: 28% 28%; } 100% { scale: 1; translate: 0 0; }
+}
+
+/* The pretend crash (browser). */
+.crash-page { position: fixed; inset: 0; z-index: 10001; display: grid; place-items: center; background: #1f1f23; color: #cfcfd4; font: 15px/1.5 "Segoe UI", system-ui, sans-serif; text-align: center; padding: 16px; }
+.crash-page .crash-face { font-size: 4rem; color: #777; }
+.crash-page h2 { font-weight: 500; margin: .4rem 0; }
+.crash-page .hint { color: #777; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+.crash-page button { margin-top: 1rem; padding: .5rem 1.4rem; background: #3a6fd8; color: #fff; border: 0; border-radius: 4px; font: inherit; cursor: pointer; }
+
+/* Lights out: only a small circle around the cursor. */
+#game.lights-out #stage::after { content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: radial-gradient(circle 170px at var(--mx, 50%) var(--my, 50%), transparent 0, rgba(0,0,0,.55) 55%, rgba(0,0,0,.97) 100%); }
+
+/* Threatening achievements. */
+.achieve.threat { background: #140608; border-color: #b3303a; color: #ff9a9a; }
+.achieve.threat .achieve-icon { background: #b3303a; color: #140608; }
+.achieve.threat small { color: #b3303a; }
+
+/* The new Terms of Attendance. */
+.mg-eula .eula { width: min(640px, 92vw); background: #f4f4f6; color: #222; border-radius: 6px; padding: 1.4rem 1.6rem; font: 14px/1.5 "Segoe UI", system-ui, sans-serif; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.mg-eula h3 { margin: 0 0 .3rem; font-weight: 600; }
+.mg-eula .hint { color: #666; margin: 0 0 .8rem; }
+.eula-text { height: 46vh; overflow-y: auto; padding: .8rem 1rem; background: #fff; border: 1px solid #ccc; font-size: 12.5px; color: #444; }
+.eula-text p { margin: 0 0 .7rem; }
+.eula-end { text-align: center; color: #999; }
+.eula-check { display: flex; gap: .5rem; align-items: center; margin: .9rem 0 .4rem; }
+.mg-eula .row { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
+.mg-eula button { padding: .45rem 1.1rem; border-radius: 4px; border: 1px solid #aaa; background: #fff; color: #222; font: inherit; cursor: pointer; }
+.mg-eula button[data-a="agree"]:not(:disabled) { background: #3a6fd8; color: #fff; border-color: #3a6fd8; }
+.mg-eula button:disabled { opacity: .5; cursor: default; }
+
+/* The folder puzzle. */
+.folder-card { width: min(560px, 92vw); text-align: center; color: #eee; }
+.folder-hint { font-family: var(--hand); font-size: 1.6rem; color: #ffb3b3; margin: 0 0 1rem; text-shadow: 0 2px 8px #000, 0 0 2px #000; }
+.folder-win { background: #f6f6f8; color: #222; border-radius: 6px; overflow: hidden; text-align: left; font: 13px "Segoe UI", system-ui, sans-serif; box-shadow: 0 20px 60px rgba(0,0,0,.5); position: relative; }
+.folder-bar { display: flex; justify-content: space-between; padding: .5rem .8rem; background: #e4e4e8; border-bottom: 1px solid #ccc; }
+.folder-files { display: flex; flex-wrap: wrap; gap: .4rem; padding: 1rem 1rem 4.5rem; min-height: 120px; }
+.ffile { width: 120px; padding: .4rem; border-radius: 4px; text-align: center; word-break: break-all; cursor: default; user-select: none; }
+.ffile span { display: block; font-size: 1.8rem; }
+.ffile.sel { background: #cfe0ff; }
+.ffile.lock { color: #a01020; }
+.folder-bin { position: absolute; right: .8rem; bottom: .6rem; font-size: 2rem; text-align: center; padding: .2rem .6rem; border-radius: 6px; cursor: pointer; }
+.folder-bin small { display: block; font-size: .7rem; }
+.folder-bin.over { background: #ffd6d6; }
+
+/* Holding your breath. */
+.mg-hush .hush { text-align: center; color: #ddd; }
+.hush-title { font-family: var(--display); font-size: 2.4rem; margin: 0 0 1rem; color: #eee; letter-spacing: .2em; }
+.hush-meter { width: min(420px, 80vw); height: 10px; margin: 0 auto; border-radius: 6px; background: #222; overflow: hidden; }
+.hush-meter span { display: block; height: 100%; width: 0; background: #8fdccf; transition: width .15s; }
+.mg-hush.heard .hush-meter span { background: var(--danger); }
+.mg-hush.heard .hush-title { color: var(--danger); }
+
+/* The room, changed while you were gone. */
+.bg-img.haunted { transition: opacity 2.4s ease; }

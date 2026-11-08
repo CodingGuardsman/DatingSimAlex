@@ -37,15 +37,29 @@ export const achieve = text => ({ t: "fx", fn: "achievement", args: [text] });
 export const title = { t: "title" };
 export const call = to => ({ t: "call", to });
 
-/** Spend a slot with someone: plays their next scene for that slot ("" = afternoon, "m" = morning). */
-export const visit = (who, slot = "", max = 4) => ({
+/**
+ * Spend a slot with someone: plays their next scene for that slot ("" = afternoon, "m" = morning).
+ * order.sweet / order.until: while v.day <= until, pick from the sweet scenes first (so the early week stays happy).
+ * Every scene still plays once before any repeats.
+ */
+export const visit = (who, slot = "", max = 4, order = null) => ({
   t: "js",
   run: g => {
     const key = slot + who;
     const n = (g.v.seen[key] || 0) + 1;
     g.v.seen[key] = n;
     if (!slot) g.v.picked.push(who);
-    g.frames.push({ id: `${who}${slot}${Math.min(n, max)}`, i: 0 });
+    let pick = Math.min(n, max);
+    if (order) {
+      g.v.scenesDone = g.v.scenesDone || {};
+      // Older saves have no list: assume scenes 1..n-1 already played, in order.
+      const done = g.v.scenesDone[key] = g.v.scenesDone[key] || Array.from({ length: n - 1 }, (_, i) => i + 1);
+      const all = Array.from({ length: max }, (_, i) => i + 1);
+      const early = (g.v.day || 1) <= order.until;
+      pick = (early && order.sweet.find(i => !done.includes(i))) || all.find(i => !done.includes(i)) || max;
+      done.push(pick);
+    }
+    g.frames.push({ id: `${who}${slot}${pick}`, i: 0 });
   }
 });
 

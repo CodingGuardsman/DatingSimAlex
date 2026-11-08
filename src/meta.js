@@ -2,7 +2,7 @@
  * meta.js — The fourth-wall effects. Each one is called deliberately from the story script;
  * nothing here fires at random. Watchers (tab, idle, cursor) only run while the script turns them on.
  */
-import { persist, formatDuration, formatShort } from "./persist.js?v=2.1.0";
+import { persist, formatDuration, formatShort } from "./persist.js?v=2.2.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -219,6 +219,8 @@ export class Meta {
   async photoReal({ senses, file = null, caption = "" }) {
     const shot = senses.snapshot(960, 720);
     if (!shot) return { taken: false };
+    // 2.2: kept in memory for this session only, so the classroom can show your face in the window later.
+    senses.lastShot = senses.snapshot(320, 240);
     this.game.audio.sfx("shutter");
     await this.flash("#fff", 400);
     const W = 960, H = 720;
@@ -279,9 +281,9 @@ export class Meta {
    * The Office's idea of a reward: an achievement popup, the kind that keeps people playing.
    * The girls hate them.
    */
-  achievement(text) {
+  achievement(text, kind = "") {
     const el = document.createElement("div");
-    el.className = "achieve";
+    el.className = "achieve" + (kind ? " " + kind : "");
     el.innerHTML = `<span class="achieve-icon">★</span><span><small>ACHIEVEMENT UNLOCKED</small><b></b></span>`;
     $("b", el).textContent = this.game._fill(text);
     this.fx.appendChild(el);
@@ -617,6 +619,7 @@ export class Meta {
       if (this._absenceResolve) this._absenceStart = Date.now();
     } else {
       const away = Date.now() - this._hiddenAt;
+      if (this.game.dread) this.game.dread.noteAway(away);
       if (this.watch.tab) {
         document.title = this.baseTitle;
         if (away > 1500) setTimeout(() => this.toast(`you were gone for ${Math.round(away / 1000)} seconds`), 600);
@@ -722,7 +725,8 @@ export class Meta {
       oldai: this.game.v.oldAi || "",
       undid: (this.game.v.undid || "").replace(/^["“]|["”]$/g, ""),
       undos: String(persist.data.undos || 0),
-      erased: { hina: "Hina", rei: "Rei", sayo: "Sayo" }[persist.data.erased] || ""
+      erased: { hina: "Hina", rei: "Rei", sayo: "Sayo" }[persist.data.erased] || "",
+      ...(this.game.dread ? this.game.dread.vars() : {})
     };
   }
 }

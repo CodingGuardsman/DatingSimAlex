@@ -2,15 +2,17 @@
  * engine.js — Runs the story script and owns every screen: title, name entry, dialogue,
  * menus, save/load, settings and the backlog.
  */
-import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.1.0";
-import { AudioSys } from "./audio.js?v=2.1.0";
-import { Meta } from "./meta.js?v=2.1.0";
-import { Minigames } from "./minigames.js?v=2.1.0";
-import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES, FILE_TEXTS } from "./story.js?v=2.1.0";
-import { TITLE_DELETED } from "./story_extra.js?v=2.1.0";
-import { ai, PERSONAS, DOWNLOAD_SIZE } from "./ai.js?v=2.1.0";
-import { senses } from "./senses.js?v=2.1.0";
-import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.1.0";
+import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.2.0";
+import { AudioSys } from "./audio.js?v=2.2.0";
+import { Meta } from "./meta.js?v=2.2.0";
+import { Dread } from "./dread.js?v=2.2.0";
+import { Minigames } from "./minigames.js?v=2.2.0";
+import { SCRIPT, CAST, MEMORIES, ENDINGS, NOTES, FILE_TEXTS } from "./story.js?v=2.2.0";
+import { TITLE_DELETED } from "./story_extra.js?v=2.2.0";
+import { FAKE_SAVES } from "./story_dread.js?v=2.2.0";
+import { ai, PERSONAS, DOWNLOAD_SIZE } from "./ai.js?v=2.2.0";
+import { senses } from "./senses.js?v=2.2.0";
+import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.2.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -18,6 +20,19 @@ const POS = { left: 24, center: 50, right: 76, farleft: 14, farright: 86 };
 // 2.1: big poses. Close-ups fill the screen; action poses are a little larger than standing ones.
 const CLOSE = ["close", "glass", "grab", "aim_close", "peek"];
 const WIDE = ["turn", "twirl", "lean"];
+// Little reactions when a girl's expression changes: a hop when she's happy, hearts when she blushes, a jolt when she's startled.
+const EMOTES = {
+  hop: ["happy", "laugh", "draw_happy", "twirl", "turn"],
+  hearts: ["blush", "lean_blush", "soft", "photo_soft"],
+  jolt: ["shocked", "scared", "aim_shocked"],
+  droop: ["sad", "list_sad", "worried"],
+  huff: ["annoyed"]
+};
+// Ambient motes per background. Cute rooms float; in the uncanny UI the motes freeze in the air (see game.css).
+const AMBIENT = {
+  classroom: ["dust", 16], hallway: ["dust", 12], infirmary: ["dust", 10],
+  rooftop: ["petal", 14], riverside: ["firefly", 16], beach: ["sparkle", 18]
+};
 const BG = ["classroom", "hallway", "rooftop", "riverside", "infirmary", "darkroom", "beach"];
 
 export class Game {
@@ -30,6 +45,7 @@ export class Game {
     this.cast = CAST;
     this.memories = MEMORIES;
     this.meta = new Meta(this);
+    this.dread = new Dread(this);
     this.mini = new Minigames(this);
     this.history = [];
     this.v = this._freshVars();
@@ -46,7 +62,7 @@ export class Game {
     if (ai.enabled) ai.init();
     ai.onChange(() => this._aiBadge());
     this.meta.checkFolder();
-    window.addEventListener("beforeunload", () => this._recordTime());
+    window.addEventListener("beforeunload", () => { this.dread.noteQuit(); this._recordTime(); });
     // While the title screen is open, they're standing on it. Keep count.
     this._titleTicks = 0;
     setInterval(() => {
@@ -126,7 +142,7 @@ export class Game {
       this.blocks[id] = arr;
       arr.forEach(c => {
         if (!c || typeof c !== "object") return;
-        for (const key of ["then", "else", "do"]) if (Array.isArray(c[key])) { c[key + "Id"] = "b" + (n++); walk(c[key], c[key + "Id"]); }
+        for (const key of ["then", "else", "do", "timeoutDo"]) if (Array.isArray(c[key])) { c[key + "Id"] = "b" + (n++); walk(c[key], c[key + "Id"]); }
         if (Array.isArray(c.items)) c.items.forEach(it => { if (Array.isArray(it.do)) { it.doId = "b" + (n++); walk(it.do, it.doId); } });
       });
     };
@@ -189,6 +205,8 @@ export class Game {
 
   _advanceClick(fromMode = false) {
     if (this.busy && !this._waitingClick && !this._typing) return;
+    // 2.2: while the dialogue is decoupled, clicking does nothing. It goes at its own pace, not yours.
+    if (!fromMode && this.dread.forced && (this._waitingClick || this._typing)) { this.meta.pulse("fx-refuse", 260); return; }
     if (!fromMode) {
       this.audio.unlock();
       persist.data.clicks++;
@@ -215,6 +233,8 @@ export class Game {
     this.v = this._freshVars();
     this.meta.title(null);
     this.meta.mood(null);
+    this.dread.reset();
+    this._quitTries = 0;
     this.audio.muffle(false);
     ["tab", "idle", "cursor", "context"].forEach(w => this.meta.setWatch(w, false));
     this.meta.guardClose(null);
@@ -441,7 +461,8 @@ export class Game {
     const p = this._screen(`<h2>Before you play</h2>
       <p>After Class is a psychological horror game disguised as a dating sim. It is not suitable for children or for anyone easily disturbed.</p>
       <p>Choices can have permanent consequences, and the game may <b>delete its own save files</b>.</p>
-      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, <b>jumpscares</b> with sudden loud sounds, <b>blood</b>, <b>disturbing images</b> including implied death and suicide, and moments where the game talks about you and your computer${this.meta.native ? ", and leaves files in its own folder" : ""}.</p>
+      <p>It contains <b>flashing lights, screen shake and glitch effects</b>, <b>jumpscares</b> with sudden loud sounds, <b>blood</b>, <b>disturbing images</b> including implied death and suicide, and moments where the game talks about you and your computer${this.meta.native ? ", leaves files in its own folder, and moves its own window" : ""}.</p>
+      <p>It may also <b>pretend to crash</b>, show fake system notifications, change its own settings for a moment, and once put a message in your <b>clipboard</b>.</p>
       <p>You can turn the graphic images off at any time in Settings.</p>
       <p class="hint">If you are struggling with thoughts of suicide or self-harm, please reach out: findahelpline.com lists free, confidential helplines in every country.</p>
       <p class="hint">The game never touches anything outside its own folder.</p>
@@ -483,11 +504,21 @@ export class Game {
   }
 
   async _quit() {
-    if (persist.data.runs > 0) {
-      this.meta.toast("Where would you even go?", 3000);
-      this.audio.sfx("error");
-      return;
+    // 2.2: the menu you can't quit. The first press glitches into a plea; the second opens a menu that's
+    // gone wrong, with someone waiting in it. Saying goodbye there really quits. (Closing the window always works.)
+    if (persist.data.runs > 0 && !this._quitOk) {
+      this._quitTries = (this._quitTries || 0) + 1;
+      const b = $('.title [data-t="quit"]');
+      if (this._quitTries === 1 && b) {
+        this.audio.sfx("glitch");
+        b.classList.add("quit-glitch");
+        b.textContent = "please stay";
+        this.meta.toast("Where would you even go?", 3000);
+        return;
+      }
+      return this.start("d_quit_menu");
     }
+    this._quitOk = false;
     if (this.meta.native) { this._recordTime(); return this.meta.native.quit(); }
     this.closeScreen();
     this.audio.stop();
@@ -590,6 +621,11 @@ export class Game {
       let label = d ? `${d.dayLabel || "Day " + d.v.day} · ${new Date(d.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "empty";
       if (this.v.sabotage && !d) label = ["DON'T", "PLEASE", "STAY", "SHE'S STILL IN HERE", "GO HOME", "K"][s.n - 1];
       if (P.wiped && !d && this.v.sabotage) label = "consolidated by the Office";
+      // 2.2: after the Office wipes the saves, it fills the empty slots with its own. None of them are yours.
+      if (P.wiped && !d && (this.v.sabotage || P.act3)) {
+        const f = FAKE_SAVES[s.n - 1];
+        return `<button class="slot fake" data-fake="${s.n - 1}" style="background-image:linear-gradient(90deg, #1a1114 55%, rgba(26,17,20,.35)), url(${f.thumb})"><span class="slot-n">${s.n}</span><span>${this._fill(f.label)}</span></button>`;
+      }
       const thumb = d && d.v && d.v.bg ? ` style="--thumb:url(assets/bg/${d.v.bg}.webp)"` : "";
       return `<button class="slot ${d ? "has-thumb" : "empty"}" data-n="${s.n}"${thumb}><span class="slot-n">${s.n}</span><span>${label}</span></button>`;
     }).join("");
@@ -600,10 +636,21 @@ export class Game {
       </div>
       <div class="row"><button data-a="close">Close</button></div>`);
     p.addEventListener("click", async e => {
-      const b = e.target.closest("[data-n],[data-a]");
+      const b = e.target.closest("[data-n],[data-a],[data-fake]");
       if (!b) return;
       this.audio.sfx("click");
       if (b.dataset.a === "close") return fromTitle ? this.title() : this.closeScreen();
+      if (b.dataset.fake != null) {
+        if (mode === "save") { this.audio.sfx("error"); this.meta.toast("That slot is taken.", 2500); return; }
+        this._fakeIdx = Number(b.dataset.fake);
+        this.closeScreen();
+        if (fromTitle || !this.frames.length) return this.start("d_fake_save");
+        // Whatever line or menu was waiting is said again afterwards.
+        if (this._menuResolve || this._waitingClick) this.frames[this.frames.length - 1].i--;
+        this.frames.push({ id: "d_fake_save", i: 0 });
+        this._interrupt();
+        return;
+      }
       const n = b.dataset.n;
       if (n === "K") {
         if (mode === "save") { this.audio.sfx("error"); this.meta.toast("That one isn't yours.", 2500); return; }
@@ -653,6 +700,7 @@ export class Game {
       <label class="check"><input type="checkbox" ${s.voice ? "checked" : ""} data-s="voice"> Character voices and announcements</label>
       <label class="check"><input type="checkbox" ${s.gore !== false ? "checked" : ""} data-s="gore"> Graphic horror (blood, jumpscares, disturbing images)</label>
       <label class="check"><input type="checkbox" ${s.ai ? "checked" : ""} data-s="ai"> Enhanced pack <small>on-device models · ${DOWNLOAD_SIZE} once · runs only on this computer · <span class="ai-state">${{ off: "off", loading: "downloading…", ready: "ready", failed: "couldn't load" }[ai.state]}</span></small></label>
+      ${Object.keys(this.dread.sabotaged).length ? `<div class="sabotaged">${Object.entries(this.dread.sabotaged).map(([k, val]) => `<label class="check off"><input type="checkbox" checked disabled> ${{ music: "Music", sfx: "Sound &amp; voices", flip: "Screen", mouse: "Mouse" }[k] || k}: <b>${val}</b></label>`).join("")}</div>` : ""}
       ${this.meta.native ? `<div class="row left"><button data-a="full">Toggle fullscreen</button><button data-a="folder">Open the game folder</button></div>` : ""}
       ${fromTitle && persist.data.runs > 0 ? `<div class="row left"><button data-a="restart">Start over from the first week</button></div>` : ""}
       <p class="keys">Space / Enter: next &middot; 1&ndash;9: choose &middot; H: hide text box &middot; Esc: close menus</p>
@@ -686,7 +734,7 @@ export class Game {
   }
 
   openHistory() {
-    const items = this.history.slice(-60).map(h => `<div class="log-line"><b>${h.who || ""}</b> ${h.deleted ? `<s>${h.deleted}</s> ` : ""}${h.text}</div>`);
+    const items = this.history.slice(-60).map(h => `<div class="log-line${h.ghost ? " ghost" : ""}"><b>${h.who || ""}</b> ${h.deleted ? `<s>${h.deleted}</s> ` : ""}${h.text}</div>`);
     if (persist.data.runs > 0) items.splice(Math.max(0, items.length - 3), 0, `<div class="log-line k"><b>K</b> i'm still here. i never left. please don't let them rewind me again</div>`);
     const p = this._screen(`<h2>Backlog</h2><div class="log">${items.join("")}</div><div class="row"><button data-a="close">Close</button></div>`);
     const log = $(".log", p);
@@ -705,6 +753,7 @@ export class Game {
   }
 
   _restore(d) {
+    this.dread.reset();
     this.v = { ...this._freshVars(), ...d.v };
     this.frames = d.frames.map(f => ({ ...f }));
     this._dayLabel = d.dayLabel;
@@ -742,6 +791,7 @@ export class Game {
     this.meta.mood(null);
     this.meta.cg(null);
     this.meta.blood(false);
+    this.dread.reset();
     this._inDelete = false;
     this._portrait(null);
     if (label !== "behind_title") this.audio.muffle(false);
@@ -848,6 +898,14 @@ export class Game {
       return;
     }
 
+    // 2.2: a line that punishes skipping. If it goes by while Skip is on, Skip stops and the scene answers.
+    if (c.skiptrap && this.mode === "skip") {
+      this._setMode(null);
+      persist.set("skipped", (persist.data.skipped || 0) + 1);
+      this.frames.push({ id: c.skiptrap, i: 0 });
+      return;
+    }
+
     // The Office's speaker lights up while it talks and goes back to listening when someone else does.
     if (this.sprites.office && who !== "office" && (this.v.shown.office || {}).expr === "speak") this._show("office", "neutral");
     let portrait = null;
@@ -865,9 +923,12 @@ export class Game {
     Object.entries(this.sprites).forEach(([k, el]) => el.classList.toggle("dim", !!who && k !== who && !!info && !!info.sprite && !(CAST[k] || {}).office));
     const speaker = who && this.sprites[who];
     if (speaker) { speaker.classList.remove("talk"); void speaker.offsetWidth; speaker.classList.add("talk"); }
+    // 2.2: one detail of the sprite is wrong for this line only. It snaps back when the player advances.
+    if (c.wrong) this.dread.wrong(c.wrongWho || who, c.wrong);
 
     let display = who === "me" ? this.name() : info ? info.name : "";
     if (c.as) display = this._fill(c.as);
+    if (nameEl.textContent !== display && display) { nameEl.classList.remove("pop"); void nameEl.offsetWidth; nameEl.classList.add("pop"); }
     nameEl.textContent = display;
     nameEl.style.display = display ? "" : "none";
     nameEl.style.setProperty("--who", info ? info.color : "#ccc");
@@ -901,7 +962,7 @@ export class Game {
       el.textContent += text[i];
       if (/\S/.test(text[i])) this.audio.blip(who, !!c.corrupt);
       const ch = text[i];
-      await sleep(1000 / cps * (".!?".includes(ch) ? 5 : ch === "," ? 2.5 : 1));
+      await sleep(1000 / cps * (".!?".includes(ch) ? 5 : ch === "," ? 2.5 : 1) * this.dread.typeJitter());
     }
     this._typing = false;
   }
@@ -916,9 +977,20 @@ export class Game {
 
   _waitAdvance(c) {
     $("#say").classList.add("ready");
+    const shownAt = Date.now();
+    const awayBefore = this.v.sceneAway || 0;
     return new Promise(resolve => {
-      const done = () => { $("#say").classList.remove("ready"); clearTimeout(this._modeTimer); resolve(); };
+      const done = () => {
+        $("#say").classList.remove("ready");
+        clearTimeout(this._modeTimer);
+        this.dread.wrongClear();
+        this.dread.noteAdvance();
+        // 2.2: how long the player looked at this one line (time spent in another window doesn't count).
+        if (!this.mode && !this.dread.forced) this.dread.noteStare(Date.now() - shownAt - ((this.v.sceneAway || 0) - awayBefore), $("#say-text").textContent);
+        resolve();
+      };
       this._waitingClick = done;
+      if (this.dread.forced) this._modeTimer = setTimeout(() => this._advanceClick(true), this.dread.forced + $("#say-text").textContent.length * 22);
       if (this.mode === "skip" && !c.noskip) this._modeTimer = setTimeout(() => this._advanceClick(true), 70);
       if (this.mode === "auto") this._modeTimer = setTimeout(() => this._advanceClick(true), 1400 + $("#say-text").textContent.length * 35);
     });
@@ -934,6 +1006,7 @@ export class Game {
     wrap.style.display = "flex";
     this.busy = true;
     const token = {};
+    const shownAt = performance.now();
     return new Promise(resolve => {
       this._menuResolve = () => {
         this._menuResolve = null;
@@ -959,6 +1032,13 @@ export class Game {
         b.addEventListener("pointerleave", () => { if (b._enter) b._hover += performance.now() - b._enter; b._enter = 0; });
         b.addEventListener("click", async e => {
           e.stopPropagation();
+          // 2.2: an option somebody has crossed out. You can see it. You can't have it.
+          if (it.crossed) {
+            this.audio.sfx("error");
+            b.classList.remove("refused"); void b.offsetWidth; b.classList.add("refused");
+            if (it.crossedSay) this.meta.toast(this._fill(it.crossedSay), 2600);
+            return;
+          }
           // One pick per menu, even if the click lands twice during the hijack animation.
           if (wrap._picked === token) return;
           wrap._picked = token;
@@ -970,7 +1050,11 @@ export class Game {
             await this.meta.glitch(400);
             await sleep(700);
           }
+          // 2.2: a choice that changed its words while you hovered is recorded by what it said when you clicked.
           const picked = b.querySelector(".choice-text").textContent;
+          const secs = Math.round((performance.now() - shownAt) / 100) / 10;
+          this.v.decideSecs = secs;
+          if (!persist.data.slowest || secs > persist.data.slowest.secs) persist.set("slowest", { secs, text: picked });
           let longest = null;
           wrap.querySelectorAll(".choice").forEach(x => {
             if (x === b) return;
@@ -988,6 +1072,30 @@ export class Game {
           else if (chosen.doId) this.frames.push({ id: chosen.doId, i: 0 });
           if (this._menuResolve) this._menuResolve();
         });
+        // 2.2: it disappears while the cursor is on it. After three tries it stays put.
+        if (it.vanish) {
+          let gone = 0;
+          b.addEventListener("pointerenter", () => {
+            if (++gone > 3) return;
+            b.classList.add("vanish");
+            this.audio.sfx("whisper");
+            setTimeout(() => b.classList.remove("vanish"), 1100);
+          });
+        }
+        // 2.2: hovering changes what it says. It goes back when you look away from it.
+        if (it.morph) {
+          const t = b.querySelector(".choice-text");
+          const orig = t.textContent;
+          b.addEventListener("pointerenter", () => { t.textContent = this._fill(it.morph); b.classList.add("morphed"); this.audio.sfx("glitch"); });
+          b.addEventListener("pointerleave", () => { t.textContent = orig; b.classList.remove("morphed"); });
+        }
+        if (it.crossed) {
+          b.classList.add("crossed");
+          const note = document.createElement("span");
+          note.className = "crossed-note";
+          note.textContent = this._fill(it.crossed);
+          b.appendChild(note);
+        }
         if (it.flee) {
           let tries = 0;
           b.addEventListener("pointerenter", () => {
@@ -1002,7 +1110,8 @@ export class Game {
       // A choice with a clock on it. Not choosing is also a choice: when time runs out, the script goes to timeoutGo.
       if (c.timeout) {
         const bar = document.createElement("div");
-        bar.className = "choice-timer";
+        // 2.2: a hidden timer has no bar. You don't know there's a clock until it runs out.
+        bar.className = "choice-timer" + (c.hidden ? " hidden-timer" : "");
         bar.innerHTML = `<span></span><small>${this._fill(c.timerLabel || "")}</small>`;
         wrap.appendChild(bar);
         const fill = bar.querySelector("span");
@@ -1018,6 +1127,7 @@ export class Game {
           this.v.lastChoiceIndex = -1;
           this.history.push({ who: this.name(), text: "» (nothing)" });
           if (c.timeoutGo) this._jump(c.timeoutGo);
+          else if (c.timeoutDoId) this.frames.push({ id: c.timeoutDoId, i: 0 });
           if (this._menuResolve) this._menuResolve();
         }, 200);
       }
@@ -1038,8 +1148,10 @@ export class Game {
     } else img.style.backgroundImage = `url(assets/bg/${id}.webp)`;
     if (!fade) img.style.transition = "none";
     stage.appendChild(img);
+    this._ambient(id);
     requestAnimationFrame(() => img.classList.add("in"));
     setTimeout(() => { while (stage.children.length > 1) stage.firstElementChild.remove(); }, fade ? 900 : 0);
+    this.dread.onBg(id);
   }
 
   /** A stage spot nobody is standing on, or null if the stage is full. */
@@ -1144,8 +1256,10 @@ export class Game {
       this.sprites[who] = el;
       if (!instant) { el.classList.add("enter"); requestAnimationFrame(() => el.classList.remove("enter")); }
     }
+    const changed = !prev || prev.expr !== expr;
     el.src = `assets/sprites/${who}/${expr}.webp`;
     el.style.left = POS[pos] + "%";
+    if (changed && !instant) this._emote(el, expr);
     el.classList.toggle("is-corrupt", expr === "corrupt");
     el.classList.toggle("pose-close", CLOSE.includes(expr));
     el.classList.toggle("pose-wide", WIDE.includes(expr));
@@ -1156,6 +1270,71 @@ export class Game {
     // A main character taking a spot pushes a minor one out of it.
     if (!(CAST[who] || {}).minor) Object.entries(this.v.shown).forEach(([m, sh]) => { if (m !== who && (CAST[m] || {}).minor && sh.pos === pos) this._hide(m); });
     this.v.shown[who] = { expr, pos };
+  }
+
+  /** A small, cute reaction to a new expression. Purely decorative: it never fires in the uncanny UI's place. */
+  _emote(el, expr) {
+    const kind = Object.keys(EMOTES).find(k => EMOTES[k].includes(expr));
+    if (!kind || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    el.classList.remove(...Object.keys(EMOTES).map(k => "emo-" + k));
+    void el.offsetWidth;
+    el.classList.add("emo-" + kind);
+    clearTimeout(el._emoT);
+    el._emoT = setTimeout(() => el.classList.remove("emo-" + kind), 900);
+    if (kind === "hearts" || kind === "hop") {
+      // A few hearts (or sparkles) float up from around her head.
+      const n = kind === "hearts" ? 4 : 3;
+      for (let i = 0; i < n; i++) {
+        const p = document.createElement("span");
+        p.className = "emote-p " + (kind === "hearts" ? "heart" : "spark");
+        p.textContent = kind === "hearts" ? "♥" : "✦";
+        p.style.left = `calc(${el.style.left} + ${(Math.random() * 14 - 7).toFixed(1)}%)`;
+        p.style.top = `${(el.classList.contains("pose-close") ? 8 : 14) + Math.random() * 8}%`;
+        p.style.animationDelay = `${i * 0.12}s`;
+        p.style.setProperty("--dx", `${(Math.random() * 60 - 30).toFixed(0)}px`);
+        $("#sprites").appendChild(p);
+        setTimeout(() => p.remove(), 1800);
+      }
+    }
+    if (kind === "jolt") {
+      const p = document.createElement("span");
+      p.className = "emote-p bang";
+      p.textContent = "!";
+      p.style.left = `calc(${el.style.left} + 6%)`;
+      p.style.top = "12%";
+      $("#sprites").appendChild(p);
+      setTimeout(() => p.remove(), 1000);
+    }
+    if (kind === "droop") {
+      const p = document.createElement("span");
+      p.className = "emote-p sweat";
+      p.textContent = "💧";
+      p.style.left = `calc(${el.style.left} + 5%)`;
+      p.style.top = "16%";
+      $("#sprites").appendChild(p);
+      setTimeout(() => p.remove(), 1400);
+    }
+  }
+
+  /** Floating dust, petals or fireflies for the room. Rebuilt on every background change. */
+  _ambient(id) {
+    let layer = $("#ambient");
+    if (!layer) { layer = document.createElement("div"); layer.id = "ambient"; $("#stage").insertBefore(layer, $("#sprites")); }
+    const [kind, count] = AMBIENT[id] || [null, 0];
+    if (layer.dataset.kind === (kind || "")) return;
+    layer.dataset.kind = kind || "";
+    layer.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("i");
+      p.className = kind;
+      p.style.left = (Math.random() * 100).toFixed(1) + "%";
+      p.style.top = (Math.random() * 100).toFixed(1) + "%";
+      p.style.setProperty("--s", (0.6 + Math.random() * 0.9).toFixed(2));
+      p.style.setProperty("--dx", (Math.random() * 120 - 60).toFixed(0) + "px");
+      p.style.animationDuration = (9 + Math.random() * 10).toFixed(1) + "s";
+      p.style.animationDelay = (-Math.random() * 18).toFixed(1) + "s";
+      layer.appendChild(p);
+    }
   }
 
   _hide(who) {
@@ -1194,6 +1373,7 @@ export class Game {
   }
 
   async _ending(c) {
+    this.dread.noteRun(c.id);
     persist.addEnding(c.id);
     this._checkNotes(true);
     persist.set("lastEnding", c.id);

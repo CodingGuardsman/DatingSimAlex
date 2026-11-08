@@ -202,6 +202,43 @@ Menus now accept `timeout`, `timeoutGo` and `timerLabel`. The `start` label rout
 - **Detention costs a girl.** The one you spent the least time with is "kept back": she's missing from the title screen (a strip of tape where she stood) and absent in Act 2 until you reach Summer.
 - **The hearing is readable now**: a how-to card in round 1, a 1-2-3 step tracker, evidence details, and hints that escalate (the others pulse the help button, point at the lie, then light up the right proof). Losing all patience gets a jumpscare, then the round restarts.
 
+## 2.2: The Mirror Update (it watches how you play)
+
+New code: `src/dread.js` (the effects) and `src/story_dread.js` (the scenes behind them, `d_*` labels). Same rule as always: each effect is called from one fixed place. Nothing is random, and `dread.reset()` turns every watcher off on the title screen, on a new game and on load.
+
+| Effect | Where |
+|---|---|
+| **They remember how you played.** Your exact words on the Act 1 roof (`runLog`), the line you stared at longest (`stare`), and how often you closed the game during a frightening scene, with the last line you saw (`fearQuits`, `fearLine`) | Act 2 opening (`d_memory2`) |
+| **The good ending, used against you.** The Office reads back the choices that got you Summer, then offers only those again ("Something new." is crossed out) | Act 3 Monday (`d_history3`) |
+| **Gaslighting.** After the bloody classroom the Office (live LLM if the enhanced pack is on, written fallback otherwise) says nothing happened and quotes how long you hesitated (`decideSecs`), then strikes through and rewrites that line in the backlog | Act 2 Thursday |
+| **Backlog poisoning.** Lines that were never on screen, only in the Log (`ghostlog`) | Hina's river evening, Sayo's infirmary, after the gaslight |
+| **The room changed while you were gone.** The classroom is armed on Monday; when you come back on Thursday someone is sitting at your desk, your name is chalked on the board, and (if Rei borrowed the camera this session) your face is faint in the window. The .exe also saves `classroom_after_you_left.png` | Act 2 Monday → Thursday |
+| **Crash to desktop.** "Close the program" really closes it: the window vanishes (.exe) or the page dies (browser), then the game comes back at the same line and the girls talk about the crash (`crashToDesktop`, `d_after_crash`) | Act 2 Thursday |
+| **Settings sabotage.** The Office turns the volume down on screen, slider by slider, right before a jumpscare that skips the slider (the player's saved settings are never changed). In Act 3 it flips the screen upside down, then inverts the mouse for one menu (number keys still work). Settings lists what it changed | Act 2 Thursday, Act 3 Tuesday (`d_inspect2`) |
+| **New Terms of Attendance.** A EULA you must scroll to the bottom of, with personal clauses at the end. Disagreeing twice gets "Agreement assumed." | Act 2 Thursday, after the save wipe |
+| **Choices that won't hold still.** "Fight it." vanishes when hovered; "Leave, like K did." is crossed out by Hina; "Let summer start." reads "Leave them in the dark." while hovered | Act 2 Monday, Thursday, Friday |
+| **Hidden timer.** No bar. Wait 6.5 s and your legs choose for you | Act 2, the dark hallway (`d_hall`) |
+| **Panic and decoupled dialogue.** The text types unevenly, the box bleeds and slides away from the cursor, and lines advance on their own (clicks do nothing) | Act 2, the chase (`d_hall`) |
+| **Lights out.** Only a circle around the cursor is lit | Act 2, the dark hallway |
+| **The lock is a file.** The infirmary door only opens once you delete `infirmary_door.lock` from the game folder (.exe), or drag it to the bin in a pretend folder (browser). "I can't" appears after 45 s. Afterwards the .exe leaves `nurse_sign_in.txt` | Act 2 (`d_lock`) |
+| **Fake device disconnect.** A generic "mouse was removed" notice with a falling two-note chime; the cursor disappears while Sayo's scare lands | Act 2, the infirmary |
+| **Holding your breath.** With the microphone (asked first, 12 s, nothing saved) dead silence gets "Why did you stop breathing?" and a loud sound means it heard you. Without it, the mouse has to stay still | Act 2 (`d_hush`) |
+| **Your own voice.** The thing in the hall answers with the loudest moment the mic heard, reversed and slowed (memory only, this session). Without a recording it uses Hina's voice, synthesized and wrong, while Hina stands there with her mouth shut | Act 2 (`d_hush`) |
+| **Looking away from the camera.** While Rei has the webcam, leaving the frame gets "Rei: hey. Come back into frame." | Act 2 Rei |
+| **Threatening achievements.** Red popups: "I See You — turned around when you were told to", "Found — made a sound" | Act 2 Rei, the hush |
+| **Haunted sprites.** One wrong detail for exactly one line (eyes follow the cursor, mirrored, too tall, head tilted too far), gone the moment you advance | Act 2 Monday (Hina), Sayo's first line, Hina at the river |
+| **Punishing Skip.** K is at the window during roll call for under a second. Skip through it and Kanda-sensei stops, breaks character and tells you what you missed (`skiptrap`) | Act 2 Wednesday (`d_skip_roll`) |
+| **Alt-tab and idle punishment.** Leave Hina standing by the river (another window for 15 s, or no input for a minute) and the sparkler has burned out, and she says how long you were gone | Act 2, Hina's evening |
+| **The Office's saves.** After the wipe, empty slots are filled with fakes ("Day 0 · tomorrow · the door is open"); each one opens a short scene and puts you back where you were | Load screen (`d_fake_save`) |
+| **The menu you can't quit.** After the first ending, Quit glitches into "please stay"; pressed again it opens a menu gone wrong with Sayo waiting. Saying goodbye there really quits. Closing the window always works | Title (`d_quit_menu`) |
+| **Windowed-mode entrapment.** The .exe leaves fullscreen, shrinks, and throws itself into each corner of the desktop before putting itself back; the browser version shrinks the game into a little window | Act 2 Friday, choosing summer (`d_entrap`) |
+| **The clipboard.** One silent copy: "why did you leave me to look at this? — S." Sayo only mentions it on Friday, and only if the copy worked | Act 2, leaving the infirmary |
+| **Gamepad.** Basic controller support (A advances; X/Y/B pick choices 1–3), and the pad beats like a heart during the hallway | Act 2, the dark hallway |
+
+**What it deliberately doesn't do.** No real voice cloning or live image generation (too heavy to run in the game, and the effect lands without them); the "cloned" voice is the player's own recorded sound played back. No RGB keyboard or mouse control (that needs vendor SDKs); the hallway's lights-out stands in for it. Nothing is written outside the game folder, and no effect fires on a random roll: the haunted sprites are placed line by line.
+
+**Testing tip:** `__afterClass.game.start("d_hall")` runs the hallway, `"d_inspect2"` the flip and inverted mouse, `"d_fake_save"` a fake save. Setting `persist.data.wiped = true` fills the Load screen with the Office's saves.
+
 ## Next ideas
 - Add a CG or two: the three girls on the beach seen from behind, and K's last photo.
 - Add a sound pass with real voice acting for key lines, if you ever get a VA.

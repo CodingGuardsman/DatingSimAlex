@@ -9,7 +9,7 @@
  * Face detection is MediaPipe's BlazeFace (a ~200 KB model, run locally). It only answers
  * "is somebody looking at the screen right now?" — it doesn't recognise anyone.
  */
-import { ai } from "./ai.js?v=2.1.0";
+import { ai } from "./ai.js?v=2.2.0";
 
 const MP_VERSION = "0.10.14";
 const MP_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -117,6 +117,56 @@ export const senses = {
     ctx.translate(w, 0); ctx.scale(-1, 1);
     ctx.drawImage(this.video, 0, 0, w, h);
     return c;
+  },
+
+  /**
+   * 2.2: listen for `seconds` while the player tries to stay quiet. onLevel(level 0..1, msOfSilence) on every chunk.
+   * Resolves { echo, rate } — echo is the loudest ~1.4 s, kept in memory only — or null if declined.
+   * The microphone is turned off again before this resolves.
+   */
+  async hush(seconds = 12, onLevel) {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: false } });
+    } catch (e) {
+      console.info("[senses] microphone declined or unavailable:", e.name);
+      return null;
+    }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    const ring = [];
+    let best = { rms: 0, at: 0 }, quietSince = performance.now();
+    const start = performance.now();
+    await new Promise(resolve => {
+      proc.onaudioprocess = e => {
+        const data = new Float32Array(e.inputBuffer.getChannelData(0));
+        ring.push(data);
+        let rms = 0;
+        for (let i = 0; i < data.length; i++) rms += data[i] * data[i];
+        rms = Math.sqrt(rms / data.length);
+        const t = performance.now();
+        if (rms > 0.012) quietSince = t;
+        if (rms > best.rms) best = { rms, at: ring.length - 1 };
+        if (onLevel) onLevel(Math.min(1, rms * 9), t - quietSince);
+        if (t - start > seconds * 1000) resolve();
+      };
+      src.connect(proc);
+      proc.connect(ctx.destination);
+    });
+    proc.disconnect(); src.disconnect();
+    stream.getTracks().forEach(t => t.stop());
+    const rate = ctx.sampleRate;
+    ctx.close();
+    let echo = null;
+    if (best.rms > 0.03) {
+      const per = ring[0].length, want = Math.ceil(rate * 1.4 / per);
+      const from = Math.max(0, best.at - Math.floor(want / 2));
+      const parts = ring.slice(from, from + want);
+      echo = new Float32Array(parts.length * per);
+      parts.forEach((p, i) => echo.set(p, i * per));
+    }
+    return { echo, rate };
   },
 
   stopCamera() {

@@ -4,11 +4,11 @@
  * Office's computer. Each one returns a promise, so the script just awaits it (see mini() in script-helpers.js).
  * The words live in the story files; these only know how to run.
  */
-import { persist } from "./persist.js?v=2.1.0";
-import { judgeText } from "./judge.js?v=2.1.0";
-import { ai, PERSONAS } from "./ai.js?v=2.1.0";
-import { senses } from "./senses.js?v=2.1.0";
-import { REACTIONS, REFUSED, HARMLESS, DISTRESS_CARD, DRAW_SEEN } from "./story_extra.js?v=2.1.0";
+import { persist } from "./persist.js?v=2.2.0";
+import { judgeText } from "./judge.js?v=2.2.0";
+import { ai, PERSONAS } from "./ai.js?v=2.2.0";
+import { senses } from "./senses.js?v=2.2.0";
+import { REACTIONS, REFUSED, HARMLESS, DISTRESS_CARD, DRAW_SEEN } from "./story_extra.js?v=2.2.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));

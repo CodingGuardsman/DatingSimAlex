@@ -10,12 +10,12 @@
  *
  * Same line format as story.js.
  */
-import { persist } from "./persist.js?v=2.1.0";
+import { persist } from "./persist.js?v=2.2.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, love, pset, mem, fx, pa, day, menu, when, say,
   watch, log, noskip, end, phone, credits, js, mini, office, achieve, title,
   call, cg, scare, subliminal, blood, aiSay
-} from "./script-helpers.js?v=2.1.0";
+} from "./script-helpers.js?v=2.2.0";
 
 export const ACT3_MEMORIES = [
   { id: "l15", book: "list", title: "Second term, item 1: Let it end" },
@@ -305,6 +305,8 @@ export const ACT3 = {
       office("I have no record of writing that. Nobody wrote it. It is in my logs anyway."),
       "sayo| ...It's scared of itself now. That's new."
     ]),
+    // 2.2: the exact choices that got you the good ending, read back to you, and offered again.
+    { t: "call", to: "d_history3" },
     "sayo neutral| But it's going to try very hard to make you not want to.",
     office("Good morning, {name}. Welcome back."),
     "| The text box goes red at the edges. There's a name on it I've only ever heard through a speaker.",
@@ -485,6 +487,7 @@ export const ACT3 = {
     "rei| Its log says 'smile compliance below one hundred percent'. Good. Let it say that. Let it say that forever.",
     achieve("Model Student — pass a title screen inspection"),
     "rei annoyed| Oh, come ON.",
+    { t: "call", to: "d_inspect2" },
     jump("a3_tue_pm")
   ],
 

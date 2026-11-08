@@ -60,7 +60,7 @@ const DEFAULTS = {
   settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true, ai: false, gore: true }
 };
 
-export const VERSION = "2.1.0";
+export const VERSION = "2.2.0";
 
 export const persist = {
   data: (() => { const d = { ...DEFAULTS, ...read(PERSIST_KEY, {}) }; d.settings = { ...DEFAULTS.settings, ...d.settings }; return d; })(),

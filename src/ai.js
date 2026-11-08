@@ -12,8 +12,8 @@
  * with it off, on a slow machine, or offline. The script decides *when* a line is generated (see aiSay in
  * script-helpers.js); the model only decides the words. Its output goes through judge.js before anyone says it.
  */
-import { persist } from "./persist.js?v=2.1.0";
-import { judgeText, DRAW_LABELS } from "./judge.js?v=2.1.0";
+import { persist } from "./persist.js?v=2.2.0";
+import { judgeText, DRAW_LABELS } from "./judge.js?v=2.2.0";
 
 const TJS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1";
 export const MODELS = {

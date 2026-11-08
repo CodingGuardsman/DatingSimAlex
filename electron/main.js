@@ -127,6 +127,44 @@ app.whenReady().then(() => {
     win.setPosition(x, y);
     return true;
   });
+  // 2.2: windowed-mode entrapment. Out of fullscreen, shrunk, thrown around the desktop, pinned in a corner,
+  // then put back exactly as it was. Only called from one place in the script.
+  ipcMain.handle("win:entrap", async () => {
+    if (!win || shaking) return false;
+    shaking = true;
+    const wasFull = win.isFullScreen(), wasMax = win.isMaximized();
+    if (wasFull) { win.setFullScreen(false); await new Promise(r => setTimeout(r, 700)); }
+    if (wasMax) { win.unmaximize(); await new Promise(r => setTimeout(r, 300)); }
+    const before = win.getBounds();
+    const area = screen.getDisplayMatching(before).workArea;
+    const w = 640, h = 380;
+    win.setMinimumSize(320, 200);
+    const corners = [[area.x + area.width - w, area.y + area.height - h], [area.x, area.y], [area.x + area.width - w, area.y], [area.x, area.y + area.height - h]];
+    for (const [cx, cy] of corners) {
+      const end = Date.now() + 520;
+      while (Date.now() < end) {
+        win.setBounds({ x: cx + Math.round((Math.random() - 0.5) * 40), y: cy + Math.round((Math.random() - 0.5) * 40), width: w, height: h });
+        await new Promise(r => setTimeout(r, 16));
+      }
+      win.setBounds({ x: cx, y: cy, width: w, height: h });
+      await new Promise(r => setTimeout(r, 380));
+    }
+    await new Promise(r => setTimeout(r, 900));
+    win.setMinimumSize(960, 560);
+    win.setBounds(before);
+    if (wasMax) win.maximize();
+    if (wasFull) win.setFullScreen(true);
+    shaking = false;
+    return true;
+  });
+  // 2.2: a pretend crash to desktop. The window disappears, then comes back on its own and reloads.
+  ipcMain.handle("win:crash", () => {
+    if (!win) return false;
+    closeGuard = null;
+    win.hide();
+    setTimeout(() => { if (!win) return; win.reload(); win.show(); win.focus(); }, 3500);
+    return true;
+  });
   ipcMain.handle("win:flash", () => { win && win.flashFrame(true); return true; });
   ipcMain.handle("win:progress", (e, v) => { win && win.setProgressBar(v); return true; });
   ipcMain.handle("win:fullscreen", (e, on) => { win && win.setFullScreen(!!on); return win ? win.isFullScreen() : false; });

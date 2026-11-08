@@ -6,10 +6,10 @@
  * answer gets a reaction and a second chance; the second gets the "again" line, and for anything
  * hateful or crude the character refuses to write it and writes their own instead (REFUSED).
  */
-import { persist } from "./persist.js?v=2.1.0";
+import { persist } from "./persist.js?v=2.2.0";
 import {
   bg, music, sfx, show, hide, clear, wait, jump, set, fx, pa, menu, when, say, js, office, mini, cg, scare, subliminal, blood
-} from "./script-helpers.js?v=2.1.0";
+} from "./script-helpers.js?v=2.2.0";
 
 /* ---------- typed answers ---------- */
 
@@ -239,10 +239,12 @@ export const EXTRA = {
             "| A small light comes on above my screen.",
             "rei soft| ...Oh. There you are.",
             "rei| Hi. Don't smile, it looks fake when people smile on purpose.",
-            js(async g => { g.senses.watch(); await new Promise(r => setTimeout(r, 900)); await g.meta.photoReal({ senses: g.senses, ...REI_PHOTO }); }),
+            // 2.2: while the camera is on, looking away from it gets noticed.
+            js(async g => { g.senses.watch(p => { if (!p) g.meta.toast("Rei: hey. Come back into frame.", 2600); }); await new Promise(r => setTimeout(r, 900)); await g.meta.photoReal({ senses: g.senses, ...REI_PHOTO }); }),
             show("rei", "aim_shocked"),
             "rei| ...Look behind you. In the print. In your room.",
             "rei| Don't turn around. ...Okay. Turn around. Is anything there?",
+            fx("achievement", "I See You — turned around when you were told to", "threat"),
             "rei neutral| Nothing. Right. There never is, when you look.",
             when((v, P, g) => !!g.meta.native, ["rei photo| I left the print in your folder with the others. rei_photo_of_you.png. That one's really you."])
           ], [

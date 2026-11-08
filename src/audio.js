@@ -193,7 +193,17 @@ export class AudioSys {
       this.musicFilter.connect(delay);
       delay.connect(fb); fb.connect(delay);
       delay.connect(wet); wet.connect(this.master);
-      this.sfxBus.connect(this.master);
+      // 2.2: the Office can turn the volume down (duck) without touching the saved settings.
+      // A jumpscare goes through sfxLoud, which skips the duck: muting the game first is the trick.
+      this.musicDuck = this.ctx.createGain();
+      this.sfxDuck = this.ctx.createGain();
+      this.sfxLoud = this.ctx.createGain();
+      this.musicFilter.disconnect(this.master);
+      this.musicFilter.connect(this.musicDuck);
+      this.musicDuck.connect(this.master);
+      this.sfxBus.connect(this.sfxDuck);
+      this.sfxDuck.connect(this.master);
+      this.sfxLoud.connect(this.master);
       this.applyVolumes();
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
@@ -209,6 +219,35 @@ export class AudioSys {
     if (!this.ctx) return;
     this.musicBus.gain.value = this.settings.music;
     this.sfxBus.gain.value = this.settings.sfx;
+    this.sfxLoud.gain.value = this.settings.sfx;
+  }
+
+  /** 2.2: scale music and sound down without changing the player's settings. duck(1, 1) puts them back. */
+  duck(music = 1, sfx = 1) {
+    if (!this.ctx) return;
+    this.musicDuck.gain.setTargetAtTime(music, this.ctx.currentTime, 0.05);
+    this.sfxDuck.gain.setTargetAtTime(sfx, this.ctx.currentTime, 0.05);
+  }
+
+  /** 2.2: play raw microphone samples back (reversed, slowed) through a whispery room. Memory only. */
+  playSamples(samples, sampleRate, { reverse = true, rate = 0.75 } = {}) {
+    if (!this.ctx || !samples || !samples.length) return Promise.resolve();
+    const data = reverse ? Float32Array.from(samples).reverse() : samples;
+    let peak = 0.0001;
+    for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+    const buf = this.ctx.createBuffer(1, data.length, sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) ch[i] = data[i] / peak * 0.8;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 2400;
+    const g = this.ctx.createGain();
+    g.gain.value = 0.9;
+    src.connect(lp); lp.connect(g); g.connect(this.sfxBus);
+    src.start();
+    return new Promise(r => { src.onended = r; setTimeout(r, (data.length / sampleRate / rate) * 1000 + 300); });
   }
 
   /* ---------- music ---------- */
@@ -428,7 +467,8 @@ export class AudioSys {
   sfx(name) {
     if (!this.ctx) return;
     const ctx = this.ctx, now = ctx.currentTime;
-    const tone = (f, t, d, v, w = "sine", bus = this.sfxBus) => {
+    const out = name === "scare" ? this.sfxLoud : this.sfxBus;
+    const tone = (f, t, d, v, w = "sine", bus = out) => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.type = w; o.frequency.value = f;
       g.gain.setValueAtTime(0, now + t);
@@ -442,7 +482,7 @@ export class AudioSys {
       f.type = "bandpass"; f.frequency.value = freq;
       g.gain.setValueAtTime(v, now + t);
       g.gain.exponentialRampToValueAtTime(0.0001, now + t + d);
-      n.connect(f); f.connect(g); g.connect(this.sfxBus); n.start(now + t); n.stop(now + t + d + 0.05);
+      n.connect(f); f.connect(g); g.connect(out); n.start(now + t); n.stop(now + t + d + 0.05);
     };
     switch (name) {
       case "chime": // PA system: ding-dong
@@ -517,6 +557,12 @@ export class AudioSys {
         break;
       case "whisper":
         for (let i = 0; i < 7; i++) noise(i * 0.22 + Math.random() * 0.1, 0.25, 0.09, 3000 + Math.random() * 3000);
+        break;
+      case "unplug": // a generic device-removed chime: two notes, falling (not any real OS's sound)
+        tone(880, 0, 0.18, 0.16, "triangle"); tone(587, 0.16, 0.3, 0.16, "triangle");
+        break;
+      case "plug": // and rising again
+        tone(587, 0, 0.18, 0.16, "triangle"); tone(880, 0.16, 0.3, 0.16, "triangle");
         break;
       case "type": // the Office thinking: keys under a desk
         for (let i = 0; i < 6; i++) noise(i * 0.06 + Math.random() * 0.03, 0.03, 0.12, 2500);
