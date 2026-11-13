@@ -45,4 +45,4 @@ def grade(src, dst, seed):
     Image.fromarray((a * 255).astype(np.uint8)).save(dst, quality=90)
 if __name__ == "__main__":
     for i, n in enumerate(sys.argv[1:]):
-        grade(ROOT.parent / "_comfy" / "orig_cg" / f"{n}.webp", ROOT / "assets" / "cg" / f"{n}.webp", 100 + i)
+        grade(ROOT.parent / "_comfy" / "orig_cg" / f"{n}.webp", ROOT / "assets" / "cg" / f"{n}.webp", 100 + i + int(os.environ.get("GSEED", "0")))

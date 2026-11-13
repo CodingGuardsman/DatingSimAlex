@@ -2,6 +2,8 @@
  * script-helpers.js — The little functions every story file uses to write commands.
  * See the top of story.js for the line format.
  */
+import { persist } from "./persist.js?v=2.3.0";
+
 export const bg = (id, fade = true) => ({ t: "bg", id, fade });
 export const music = id => ({ t: "music", id });
 export const sfx = id => ({ t: "sfx", id });
@@ -36,6 +38,13 @@ export const office = (text, opts = {}) => ({ t: "say", who: "office", text, ...
 export const achieve = text => ({ t: "fx", fn: "achievement", args: [text] });
 export const title = { t: "title" };
 export const call = to => ({ t: "call", to });
+
+// Replace one beat without changing the saved cursor for the rest of the scene.
+// Use simple commands or call()/jump() to an authored block.
+export const without = (who, usual, replacement = null) => js(g => {
+  const command = persist.data.erased === who ? replacement : usual;
+  if (command) return g._exec(typeof command === "string" ? g._parse(command) : command);
+});
 
 /**
  * Spend a slot with someone: plays their next scene for that slot ("" = afternoon, "m" = morning).

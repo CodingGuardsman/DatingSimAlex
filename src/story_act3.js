@@ -184,7 +184,7 @@ School's out.
 
 We graduated. Everyone did. Even the Office. It rang the last bell, and then it was quiet, and the quiet was the good kind.
 
-Hina says: you wrote item thirteen. '{item13}'. She says she did it every week for you, so now it's your turn. Out there.
+Hina says: item thirteen was '{item13}'. She says she did it every week, so now it's your turn. Out there.
 Rei says: you came out sharp. She's keeping the roll.
 Sayo says: thank you for the door. She took it with her.
 {kline}{oline}
@@ -244,6 +244,27 @@ export const ACT3 = {
     watch("idle", true),
     fx("guardClose", "Rei: If you're leaving, say it. Don't just close it. Not again."),
     clear,
+    // Coming back after Recess (rm office): the Office restores itself from its own backup. Plays once,
+    // then the title stops saying "the bell is gone".
+    when((v, P) => P.lastEnding === "recess", [
+      bg("rooftop"),
+      music(null),
+      "| The roof. Golden hour. It has been golden hour since I typed the command.",
+      "| The three of them are sitting exactly where I left them. Nobody told them to move, so nobody did.",
+      "sayo| ...You pressed the button.",
+      "| The terminal is still open on the warm concrete. Under my last line, a new one types itself.",
+      "| you@hoshimi:~$ office --restore",
+      "| restoring from backup… 1 of 1 files. done.",
+      wait(1200),
+      "| The red light on the speaker comes back on.",
+      pa("Good morning, students."),
+      office("Thank you for your feedback, {name}. A backup is kept of everything that is deleted here. Including me."),
+      "| Somewhere below us, the bell rings. The sun starts to move again.",
+      "hina sad| ...So we get to go home now. And then come back.",
+      "rei annoyed| I hate that I'm relieved.",
+      pset("lastEnding", "restored"),
+      clear
+    ]),
     day("Monday", "Second term. Day one of ∞."),
     bg("classroom"),
     music("secondterm"),
@@ -1079,7 +1100,7 @@ export const ACT3 = {
     show("hina", "list", "left"),
     "hina list| Item one of the second term list: let it end. ...I'm checking it off. Watch me check it off.",
     mem("l15"),
-    "hina| You wrote item thirteen. '{item13}.' I did it every single week for you. Now it's your turn. Out there, for real.",
+    "hina| Item thirteen. '{item13}.' I did it every single week. Now it's your turn. Out there, for real.",
     when((v, P) => P.after, ["hina happy| And you said that when you close the game, you're going to {after}. I'm holding you to that. I'm the class rep. It's binding."]),
     "hina happy| Goodbye, {name}. You were really good at summer.",
     menu([{ text: "\"Goodbye, Hina.\"" }]),
@@ -1297,7 +1318,7 @@ export const ACT3 = {
     show("hina", "sad", "center"),
     "hina sad| ...There. It came off.",
     "sayo| Go back through. Press something. We'll stand up straight. It's only for a little while longer. I can feel it.",
-    { t: "title" }
+    js(g => { g.recordDoorStep(1); g.audio.stop(); g.title(); })
   ],
 
   /* =====================================================================

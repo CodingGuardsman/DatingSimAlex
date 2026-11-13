@@ -7,6 +7,7 @@ const { app, BrowserWindow, ipcMain, protocol, net, shell, Notification, screen,
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const { execFile } = require("child_process");
 const { pathToFileURL } = require("url");
 
 const ROOT = path.join(__dirname, "..");
@@ -23,6 +24,52 @@ protocol.registerSchemesAsPrivileged([
 let win = null;
 let closeGuard = null;   // a message to show the first time the player tries to close, or null
 let shaking = false;
+
+// Priority order; only these display names can cross the native bridge.
+const RUNNING_APPS = new Map([
+  ["steam", "Steam"], ["epicgameslauncher", "Epic Games"],
+  ["ddlc", "Doki Doki Literature Club"], ["doki doki literature club", "Doki Doki Literature Club"],
+  ["robloxplayerbeta", "Roblox"], ["leagueclient", "League of Legends"],
+  ["valorant", "VALORANT"], ["genshinimpact", "Genshin Impact"], ["osu!", "osu!"],
+  ["discord", "Discord"], ["obs64", "OBS"], ["obs", "OBS"],
+  ["spotify", "Spotify"], ["code", "Visual Studio Code"], ["blender", "Blender"],
+  ["unityhub", "Unity"], ["unity", "Unity"], ["photoshop", "Photoshop"],
+  ["vlc", "VLC"], ["telegram", "Telegram"], ["slack", "Slack"], ["zoom", "Zoom"]
+]);
+let runningAppCache = "", runningAppExpires = 0, runningAppPending = null;
+
+function runningApp() {
+  if (Date.now() < runningAppExpires) return Promise.resolve(runningAppCache);
+  if (runningAppPending) return runningAppPending;
+  runningAppPending = new Promise(resolve => {
+    const finish = value => {
+      runningAppCache = value;
+      runningAppExpires = Date.now() + 60000;
+      resolve(value);
+    };
+    const windows = process.platform === "win32";
+    try {
+      execFile(windows ? "tasklist" : "ps", windows ? ["/FO", "CSV", "/NH"] : ["-axco", "comm"],
+        { timeout: 3000, windowsHide: true }, (err, stdout) => {
+          if (err) return finish("");
+          try {
+            const images = new Set();
+            for (const line of stdout.split(/\r?\n/)) {
+              // tasklist's first CSV field is the image name; ignore all other fields.
+              const first = windows ? /^"((?:[^"]|"")*)"/.exec(line) : null;
+              const image = windows ? (first ? first[1].replace(/""/g, '"') : "") : path.basename(line.trim());
+              images.add(image.toLowerCase().replace(/\.exe$/, ""));
+            }
+            for (const [image, display] of RUNNING_APPS) {
+              if (images.has(image)) return finish(display);
+            }
+            finish("");
+          } catch (e) { finish(""); }
+        });
+    } catch (e) { finish(""); }
+  }).finally(() => { runningAppPending = null; });
+  return runningAppPending;
+}
 
 function safeName(name) {
   // Only plain file names inside the game folder: no paths, no traversal.
@@ -80,6 +127,7 @@ app.whenReady().then(() => {
     platform: process.platform,
     gameDir: GAME_DIR
   }));
+  ipcMain.handle("apps:running", () => runningApp());
 
   ipcMain.handle("file:write", (e, name, text) => {
     fs.mkdirSync(GAME_DIR, { recursive: true });

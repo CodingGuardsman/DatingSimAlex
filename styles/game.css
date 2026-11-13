@@ -62,12 +62,20 @@ button { font: inherit; color: inherit; cursor: inherit; }
 .bg-img.void .mark:nth-child(2) { rotate: 1.5deg; }
 
 .sprite {
-  position: absolute; bottom: -2%; height: 96%; translate: -50% 0; transform-origin: 50% 100%;
+  --pose-height: 96vh;
+  --pose-width: 72vw;
+  --sprite-ratio: .68;
+  --sprite-height: min(var(--pose-height), calc(var(--pose-width) / var(--sprite-ratio)));
+  position: absolute; height: var(--sprite-height);
+  bottom: calc(var(--sprite-lift, 0vh) - var(--sprite-height) * var(--sprite-crop, .02));
+  translate: -50% 0; transform-origin: 50% 100%;
   transition: left .5s ease, filter .3s ease, opacity .45s ease, translate .45s ease;
   filter: drop-shadow(0 10px 24px rgba(90,40,60,.28));
   pointer-events: none;
   animation: breathe 5.5s ease-in-out infinite;
 }
+.sprite:is([data-pos="left"], [data-pos="right"]) { --pose-width: 44vw; }
+.sprite:is([data-pos="farleft"], [data-pos="farright"]) { --pose-width: 26vw; }
 .sprite.enter { opacity: 0; translate: -50% 22px; }
 .sprite.leave { opacity: 0; translate: -50% 12px; }
 .sprite.dim { filter: brightness(.68) saturate(.85) drop-shadow(0 10px 24px rgba(90,40,60,.28)); }
@@ -167,6 +175,7 @@ button { font: inherit; color: inherit; cursor: inherit; }
   background: none; border: none; padding: .22rem .7rem; font-size: .74rem; font-weight: 700; letter-spacing: .06em; border-radius: 999px;
   color: var(--ink-soft); transition: color .15s, background .15s, transform .15s;
 }
+#quick [data-q="title"] { white-space: nowrap; }
 #quick button:hover { color: #fff; background: var(--pink); transform: translateY(-1px); }
 #quick button.on { color: #fff; background: var(--pink-deep); }
 #quick .q-wrong { display: none; }
@@ -420,6 +429,7 @@ button { font: inherit; color: inherit; cursor: inherit; }
 #screen { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
 #screen > * { pointer-events: auto; }
 #screen:empty { display: none; }
+#screen:has(> .pause-panel) { pointer-events: auto; }
 .panel {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(620px, 94vw); max-height: 88vh; overflow: auto; padding: 2rem 2.2rem 1.6rem 3rem; color: var(--ink);
@@ -472,7 +482,7 @@ button { font: inherit; color: inherit; cursor: inherit; }
 #game.uncanny .slot.has-thumb { background: linear-gradient(90deg, #19161a 45%, rgba(25,22,26,.6)), var(--thumb) right / cover no-repeat; }
 #game.uncanny .slot-n { background: #3a2e33; border-radius: 2px; }
 
-.log { max-height: 58vh; overflow: auto; display: flex; flex-direction: column; gap: .7rem; padding-right: .5rem; }
+.log { max-height: 58vh; overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: .7rem; padding-right: .5rem; }
 .log-line { line-height: 1.55; color: var(--ink-soft); }
 .log-line b { color: var(--pink-deep); margin-right: .4rem; }
 .log-line s { color: #e0483c; }
@@ -500,7 +510,7 @@ button { font: inherit; color: inherit; cursor: inherit; }
 .mini-pol:nth-child(2n) { rotate: 2deg; }
 .mini-img { position: relative; aspect-ratio: 16 / 10; background: #ddd center / cover no-repeat; overflow: hidden; filter: grayscale(1) contrast(1.05); }
 .mini-img img { position: absolute; left: 50%; bottom: -60%; height: 170%; translate: -50% 0; }
-.mini-pol.ghosted .mini-img::after { content: ""; position: absolute; right: 12%; bottom: 0; width: 18%; height: 80%; border-radius: 40% 40% 0 0; background: rgba(10,10,14,.75); filter: blur(5px); }
+.mini-pol.ghosted .mini-img::after { content: ""; position: absolute; right: 12%; bottom: 4%; width: 24%; height: 68%; background: url(../assets/sprites/k/neutral.webp) center bottom / contain no-repeat; opacity: .62; filter: grayscale(1) brightness(.22) blur(1px); }
 .mini-pol figcaption { margin-top: .4rem; font-family: var(--hand); font-size: 1.05rem; color: #3b2a33; text-align: center; line-height: 1.1; }
 .mini-pol.blank .mini-img { background: #2b2630; filter: none; }
 .mini-pol.blank figcaption { color: #aaa; }
@@ -526,6 +536,8 @@ button { font: inherit; color: inherit; cursor: inherit; }
 @keyframes fall { to { transform: translate(40px, 112vh) rotate(360deg); } }
 .title-girls img { position: absolute; bottom: -6%; height: 88%; translate: -50% 0; filter: drop-shadow(0 12px 30px rgba(90,40,60,.3)); transition: scale 6s ease-in, left 6s ease-in, filter 1.5s; }
 .title-girls img:nth-child(1), .title-girls img:nth-child(2) { height: 80%; }
+.title-girls img { max-width: 32vw; object-fit: contain; object-position: center bottom; }
+.title-girls img[data-g="hina"] { max-width: 54vw; }
 .title-card {
   position: relative; text-align: center; padding: 1.4rem 2.6rem 1.4rem; border-radius: 34px; color: var(--ink);
   background: rgba(255,250,246,.92); border: 4px solid #fff; box-shadow: 0 8px 0 var(--line), 0 24px 50px rgba(120,50,80,.3);
@@ -589,7 +601,7 @@ button { font: inherit; color: inherit; cursor: inherit; }
 
 /* ---------- small screens ---------- */
 @media (max-width: 720px) {
-  .sprite { height: 72%; bottom: 20%; }
+  .sprite { --pose-height: 72vh; --sprite-lift: 20vh; }
   #say { min-height: 26vh; padding: 1.8rem 1.2rem 1.2rem; bottom: 6%; }
   #say-name { left: 1rem; }
   #quick { max-width: 96vw; overflow-x: auto; }
@@ -781,9 +793,10 @@ button { font: inherit; color: inherit; cursor: inherit; }
 .mg .desk-icon span { font-size: 1.7rem; line-height: 1; font-family: ui-monospace, Consolas, monospace; }
 .mg .desk-icon:hover:not(:disabled) { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.3); box-shadow: none; color: #fff; }
 .desk-note { position: absolute; right: 1.2rem; top: 1.2rem; width: 250px; padding: .9rem 1rem; background: #fff6a8; color: #3b3440; font-family: var(--hand); font-size: 1.15rem; line-height: 1.2; rotate: 2deg; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
-.desk-note ol { margin: .4rem 0 0; padding-left: 1.2rem; }
-.desk-note li { margin: .3rem 0; }
-.desk-note li.ok { text-decoration: line-through; opacity: .55; }
+.desk-note ol { margin: .4rem 0 0; padding: 0; list-style: none; }
+.desk-note li { display: grid; grid-template-columns: 1em 1fr; gap: .35em; margin: .4rem 0; }
+.desk-check { font: 700 .9em/1.3 system-ui, sans-serif; }
+.desk-note li.ok { color: #345038; }
 .desk-note small { display: block; font-size: .95rem; opacity: .75; }
 .desk-note code { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
 .desk-note p { margin: .5rem 0 0; color: #c0392b; }
@@ -875,8 +888,8 @@ button { font: inherit; color: inherit; cursor: inherit; }
 /* =================== 2.1 =================== */
 
 /* Big poses. Close-ups fill the screen from the bottom edge; action poses are a little larger than standing ones. */
-.sprite.pose-close { height: 132%; bottom: -36%; }
-.sprite.pose-wide { height: 106%; bottom: -6%; }
+.sprite.pose-close { --pose-height: 124vh; --sprite-crop: .23; }
+.sprite.pose-wide { --pose-height: 102vh; --sprite-crop: .06; }
 .sprite.pose-close.dim { filter: brightness(.55) saturate(.8) blur(1px); }
 /* The Office: a speaker leaning in from the edge of the room. */
 /* The Office hangs from the ceiling in the corner, the way school speakers do: pole up out of frame,
@@ -888,7 +901,13 @@ button { font: inherit; color: inherit; cursor: inherit; }
 .sprite.is-office.talk { animation: officeTalk .5s ease-out; }
 .sprite.is-eye { animation: rgbsplit .18s steps(2) infinite; }
 @keyframes officeTalk { 30% { transform: scale(1.04); } }
-.sprite.is-minor { height: 88%; }
+.sprite.is-minor { --pose-height: 88vh; }
+/* Nurse Mori's art sits left of centre in its canvas (figure centre ~x434 of 1100), so nudge her onto her mark. */
+/* Bleed poses are full-body at a smaller scale: grow and crop them so the head matches neutral. Sayo's sits left of centre. */
+/* Scaled from whatever height the standing pose gets on this mark (1.354x), so it also holds when the width cap applies at the side marks. */
+.sprite.pose-full { --sprite-height: calc(min(var(--pose-height), calc(var(--pose-width) / var(--sprite-ratio))) * 1.354); --sprite-crop: .30; }
+.sprite.pose-full[data-who="sayo"] { margin-left: calc(var(--sprite-height) * var(--sprite-ratio) * .106); }
+.sprite[data-who="nurse"] { margin-left: calc(var(--sprite-height) * var(--sprite-ratio) * .105); }
 .sprite.is-ghost { opacity: .55; filter: blur(1.5px) grayscale(1) drop-shadow(0 0 20px rgba(0,0,0,.6)); animation: ghostDrift 6s ease-in-out infinite; }
 @keyframes ghostDrift { 50% { opacity: .35; transform: translateX(6px); } }
 
@@ -908,9 +927,18 @@ button { font: inherit; color: inherit; cursor: inherit; }
 #cg:has(.withheld)::after { content: "▒ graphic image hidden (Settings) ▒"; position: absolute; left: 50%; top: 40%; translate: -50% 0; color: #a89a9d; font: 700 .9rem ui-monospace, Consolas, monospace; letter-spacing: .12em; }
 
 /* Jumpscares and subliminal frames. */
-.scare { position: absolute; inset: 0; z-index: 60; background: #000 center / cover no-repeat; animation: scareIn .14s cubic-bezier(.2,1.6,.4,1) both; }
-.scare.out { animation: fadeout .15s ease both; }
-@keyframes scareIn { from { transform: scale(1.6); filter: brightness(3); } to { transform: scale(1.04); filter: brightness(1) contrast(1.2); } }
+.scare { position: absolute; inset: 0; z-index: 60; overflow: hidden; background: #000; cursor: none; }
+.scare-art {
+  display: none; width: 100%; height: 100%; object-fit: cover;
+  transform-origin: 55% 32%; transform: scale(1.46);
+  filter: saturate(.22) brightness(.84) contrast(1.28);
+}
+.scare.hit .scare-art { display: block; animation: scareClose .52s steps(1, end) both; }
+.scare.hit::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 52% 35%, transparent 18%, #000 92%); }
+@keyframes scareClose { 0% { transform: scale(1.46); } 64%, 100% { transform: scale(1.67); } }
+@media (prefers-reduced-motion: reduce) {
+  .scare.hit .scare-art { animation: none; }
+}
 .subliminal { position: absolute; inset: 0; z-index: 58; background: center / cover no-repeat; opacity: .9; }
 
 /* Blood running from the top of the screen. */
@@ -1016,7 +1044,7 @@ textarea.censored { color: #000 !important; background: #111 !important; letter-
 .listen-state { color: #a89a9d; font-size: .9rem; font-family: ui-monospace, Consolas, monospace; }
 
 /* Sora is six. */
-.sprite[data-who="sora"] { height: 56%; }
+.sprite[data-who="sora"] { --pose-height: 56vh; }
 
 /* The Office deleting the save slots, one at a time. */
 .wipe { width: min(420px, 90vw); padding: 1.4rem 1.6rem; border-radius: 4px; background: #0d0a0e; color: #e9dfe0; border: 1px solid #e0483c; font-family: ui-monospace, Consolas, monospace; }
@@ -1256,15 +1284,14 @@ body.inverted, body.inverted * { cursor: none !important; }
 .behind { position: absolute; inset: 0; z-index: 59; overflow: hidden; background: #000; cursor: grab; touch-action: none; user-select: none; }
 .behind-strip { position: absolute; inset: 0 auto 0 0; width: 200%; display: flex; will-change: transform; }
 .behind-strip > div { width: 50%; height: 100%; background: center / cover no-repeat; }
-.behind-hint { position: absolute; right: 2.2%; top: 50%; translate: 0 -50%; font-size: 1.1rem; letter-spacing: .15em; color: #fff; opacity: .3; pointer-events: none; text-shadow: 0 0 18px #000; }
-.behind.slam .behind-strip > div:last-child { animation: behindSlam .16s cubic-bezier(.2,1.8,.4,1) both; }
+.behind-hint { position: absolute; left: 50%; bottom: 6%; translate: -50% 0; max-width: 90%; width: max-content; padding: .45em .8em; text-align: center; font-size: clamp(.85rem, 2.8vw, 1.1rem); color: #fff; background: #101015d9; border-radius: 3px; pointer-events: none; }
+.behind { perspective: 1100px; }
+.behind.slam .behind-strip > div { transform-origin: 50% 35%; transform: scale(1.38); filter: saturate(.35) contrast(1.25); }
 .behind.slam .behind-hint { display: none; }
 .behind.out { animation: fadeout .2s ease both; }
-@keyframes behindSlam { from { transform: scale(1.5); filter: brightness(3) contrast(1.6); } to { transform: scale(1.06); filter: brightness(1) contrast(1.3); } }
 
 /* 2.3: horror CGs stutter. Hard steps, never smooth: it should look like the picture is failing, not animating. */
-.cg-img.glitchy, .scare, .behind.slam .behind-strip > div:last-child { animation-timing-function: steps(1); }
-.cg-img.glitchy { animation: cgFail 3.2s steps(1) infinite; }
+.cg-img.glitchy { animation-timing-function: steps(1); }
 @keyframes cgFail {
   0%, 12%, 20%, 47%, 55%, 83%, 100% { transform: none; filter: none; clip-path: none; }
   13% { transform: translate(-1.2%, 0) scale(1.01); filter: hue-rotate(-25deg) contrast(1.4); clip-path: inset(0 0 63% 0); }
@@ -1277,5 +1304,46 @@ body.inverted, body.inverted * { cursor: none !important; }
 
 /* 2.3: slow drift and breathing under the boil, on every CG (separate properties, so they stack with the glitch animation) */
 .cg-img { animation: cgDrift 18s ease-in-out infinite alternate; }
-.cg-img.glitchy { animation: cgFail 3.2s steps(1) infinite, cgDrift 18s ease-in-out infinite alternate; }
+.cg-img.glitchy:not(.withheld) { animation: cgFail 3.2s steps(1) infinite, cgDrift 18s ease-in-out infinite alternate; }
 @keyframes cgDrift { from { scale: 1.02; translate: 0 0; } to { scale: 1.07; translate: -1.1% -.7%; } }
+/* 2.3: CGs with real redrawn frames drop the filter boil (the frames do the work), keeping only a gentler wobble */
+#cg.framed { filter: none !important; }
+
+/* Keep the early turns readable; the final close-up supplies its own distortion. */
+.behind.clean-shadow .behind-strip, .behind.framed .behind-strip { filter: none; }
+.clean-shadow .behind-strip > div { position: relative; background-position: center bottom; }
+.clean-shadow .behind-strip > div:first-child::before, .behind-shadow-scene::before {
+  content: ""; position: absolute; inset: 0; backdrop-filter: grayscale(.9); background: radial-gradient(ellipse at 50% 60%, #13121a44, #080711d9);
+}
+/* The shadow: no face, no colour, too tall. A cut-out of black that flickers like a bad tape. */
+.behind-figure { position: absolute; left: 50%; bottom: -6%; height: 92%; width: auto; translate: -50% 0; opacity: .94; filter: brightness(0) blur(2.5px); transform-origin: center bottom; transform: scale(.5, .62); animation: shadowTape 2.6s steps(1) infinite; }
+.behind-shadow-scene[data-stage="1"] .behind-figure { transform: scale(.72, .9); }
+.behind-shadow-scene[data-stage="2"] .behind-figure { transform: scale(.98, 1.22); filter: brightness(0) blur(1.5px); }
+.behind-shadow-scene::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 60%; height: 22%; translate: -50% 40%; background: radial-gradient(ellipse at 50% 30%, #000d, transparent 70%); pointer-events: none; }
+@keyframes shadowTape { 0%, 100% { translate: -50% 0; opacity: .94; } 37% { translate: calc(-50% + 6px) 0; opacity: .7; } 39% { translate: -50% 0; opacity: .94; } 81% { translate: calc(-50% - 9px) 0; clip-path: inset(30% 0 52% 0); } 83% { clip-path: none; translate: -50% 0; } }
+.behind.clean-shadow::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, #0000 0 2px, #0003 2px 3px); mix-blend-mode: multiply; }
+/* How far you've turned: a dial under the hint so the player can see that they are the one turning. */
+.behind-dial { position: absolute; left: 50%; bottom: calc(6% + 2.6em); translate: -50% 0; width: min(320px, 70vw); height: 4px; background: #ffffff2e; border-radius: 2px; pointer-events: none; z-index: 1; }
+.behind-dial i { position: absolute; top: 50%; width: 12px; height: 12px; translate: -50% -50%; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff; }
+.behind-dial::before, .behind-dial::after { position: absolute; top: -1.6em; font-size: .75rem; color: #fffa; }
+.behind-dial::before { content: "front"; left: 0; translate: -50% 0; }
+.behind-dial::after { content: "behind"; right: 0; translate: 50% 0; }
+.behind.slam .behind-dial { display: none; }
+
+/* 2.3: Hina calling you out. Not a card: the whole screen. */
+.hina-callout { position: fixed; inset: 0; z-index: 400; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; animation: calloutIn .09s steps(1) both; }
+.hina-callout img { position: absolute; left: 50%; top: -8%; height: 190%; width: auto; translate: -50% 0; object-fit: contain; filter: grayscale(.55) contrast(1.3) brightness(.8); animation: calloutLean 5s ease-out both; }
+.hina-callout::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 35%, transparent 30%, #000e 80%), repeating-linear-gradient(0deg, #0000 0 2px, #0004 2px 3px); }
+.hina-callout p { position: relative; z-index: 1; margin: 0 0 8vh; max-width: min(900px, 88vw); text-align: center; font-size: clamp(1.3rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.3; color: #fff; text-shadow: 0 0 12px #000, 0 0 2px #000; }
+.hina-callout.bad img { filter: grayscale(1) contrast(1.6) brightness(.7) sepia(1) hue-rotate(-40deg) saturate(4); }
+.hina-callout.bad p { color: #ffb3ad; letter-spacing: .02em; }
+.hina-callout.out { animation: fadeout .2s ease both; }
+/* Act 1, silly answer: same sudden cut, but she's pouting, not haunting. */
+.hina-callout.soft { background: #ffe3ee; animation: none; }
+.hina-callout.soft::after { background: radial-gradient(ellipse at 50% 35%, transparent 45%, #ffb6cf99 95%); }
+.hina-callout.soft img { filter: none; animation: calloutPout .35s cubic-bezier(.3, 1.6, .5, 1) both; }
+.hina-callout.soft p { color: #5a2340; text-shadow: 0 0 10px #fff, 0 0 2px #fff; }
+@keyframes calloutPout { from { scale: .85; translate: -50% 6%; } to { scale: 1; translate: -50% 0; } }
+@keyframes calloutIn { 0% { background: #fff; } 100% { background: #000; } }
+@keyframes calloutLean { from { scale: 1; } to { scale: 1.12; } }
+@media (prefers-reduced-motion: reduce) { .hina-callout img, .behind-figure { animation: none; } }

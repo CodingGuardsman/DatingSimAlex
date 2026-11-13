@@ -5,6 +5,8 @@
 const PREFIX = "ac2_";
 const PERSIST_KEY = PREFIX + "persistent";
 export const SLOT_COUNT = 6;
+export const AUTO_SLOT = "auto";
+export const SAVE_REV = 2;
 
 function read(key, fallback) {
   try {
@@ -35,7 +37,9 @@ const DEFAULTS = {
   quitHovers: 0,      // times the cursor rested on Quit
   caught: 0,          // times the player moved and caught them out of pose on the title screen
   behind: false,      // went through Sayo's door behind the menu
+  doorVisits: {},     // note exchanges behind the menu, one for each version of the title
   mem: {},            // the scrapbook: memories kept, by id. Survives forgetAll().
+  wasName: "",        // the name the player used before changing it; cleared once the girls mention it
   lastEnding: "",     // the most recent ending, in the order they were seen
   item13: "",         // what the player wrote at the bottom of Hina's summer list
   survey: "",         // the comment the player left on the Office's five-star survey
@@ -54,8 +58,9 @@ const DEFAULTS = {
   aiLog: [],          // lines the language model wrote, so the Office can quote them back next time
   rude: {},           // what kinds of junk the player typed or drew, by kind ("lewd": 2, "meme": 1...)
   refused: {},        // answers a girl refused to write down, by key ("item13": "lewd")
-  written: {},        // files the game wrote into its folder (.exe), so it notices when one goes missing
-  deleted: {},        // files the player deleted from the game folder, by name: when it was noticed
+  written: {},        // legacy file records, before they were scoped to a game folder
+  deleted: {},
+  fileFolders: {},    // written and deleted files, tracked separately for each game folder
   sensesAsked: {},    // which scenes already asked for the camera or microphone, and the answer
   settings: { textSpeed: 32, music: 0.55, sfx: 0.7, voice: true, ai: false, gore: true }
 };
@@ -91,7 +96,8 @@ export const persist = {
       forgets: (d.forgets || 0) + 1, legacy: d.legacy, version: d.version, warned: d.warned,
       known: d.known || {}, noted: d.noted || {},
       // The Office keeps its own records. So does the folder.
-      aiAsked: d.aiAsked, aiLog: d.aiLog || [], rude: d.rude || {}, written: d.written || {}, deleted: d.deleted || {}, sensesAsked: d.sensesAsked || {} };
+      aiAsked: d.aiAsked, aiLog: d.aiLog || [], rude: d.rude || {}, written: d.written || {}, deleted: d.deleted || {},
+      fileFolders: d.fileFolders || {}, sensesAsked: d.sensesAsked || {} };
     this.save();
   }
 };
@@ -112,6 +118,10 @@ export function saveSlot(n, state) {
 
 export function loadSlot(n) {
   return read(PREFIX + "slot_" + n, null);
+}
+
+export function clearSlot(n) {
+  try { localStorage.removeItem(PREFIX + "slot_" + n); } catch (e) { /* storage unavailable */ }
 }
 
 export function listSlots() {

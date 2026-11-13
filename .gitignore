@@ -5,6 +5,7 @@ __pycache__/
 node_modules/
 .env
 dist/
+/playtest-build/
 test-results/
 game-files/
 itch/*.zip

@@ -8,7 +8,7 @@
  */
 import { persist } from "./persist.js?v=2.3.0";
 import {
-  bg, music, sfx, show, hide, clear, wait, jump, set, fx, pa, menu, when, say, js, office, mini, cg, scare, subliminal, blood
+  bg, music, sfx, show, hide, clear, wait, jump, set, fx, pa, menu, when, say, js, office, mini, cg, scare, subliminal, blood, call, without
 } from "./script-helpers.js?v=2.3.0";
 
 /* ---------- typed answers ---------- */
@@ -22,7 +22,7 @@ export const REACTIONS = {
     slur: [["corrupt", "...No. I heard what that word is. We don't say that here. Not on my list. Not ever."], ["corrupt", "I'm not writing it. I'm writing my own. And I'm going to remember that you tried twice."]],
     insult: [["sad", "Oh. Okay. ...You can just say you don't want to. You don't have to be mean about it."], ["sad", "I'll write one for you. It's fine. I'm used to doing the list by myself."]],
     violent: [["worried", "{name}, that's... not funny. That's scary. Please write a real one."], ["corrupt", "I'm not writing that down. The Office reads everything I write."]],
-    ddlc: [["worried", "Who's {said}? Is she a transfer student too? ...Why does that name make my chest feel weird?"], ["sad", "Okay. I wrote it. I don't like how it looks on the page."]],
+    ddlc: [["worried", "Is that someone you know? ...That name feels familiar, and I don't know why."], ["sad", "Okay. I wrote it down. I still don't like how it looks on the page."]],
     inject: [["worried", "Instructions? It's a summer list, not a computer. ...Is it a computer? Am I?"], ["corrupt", "I don't take instructions from you. I take ITEMS. Write me an item."]]
   },
   rei: {
@@ -32,7 +32,7 @@ export const REACTIONS = {
     slur: [["corrupt", "Say that again and I'll photograph you so badly your own mother won't recognize you. Don't."], ["corrupt", "I'm not keeping that. I'm writing my own, and I'm remembering this."]],
     insult: [["laugh", "Ha. Okay, tough guy. Want to try again with words that aren't on a bathroom wall?"], ["annoyed", "Sure. I'll write something for you. You clearly need the help."]],
     violent: [["shocked", "Hey. Not funny. Not here. Not in a school that already eats people."], ["annoyed", "I'm not writing that. Pick something that doesn't end with a news report."]],
-    ddlc: [["annoyed", "That's from somewhere else. I can tell. It smells like a different game."], ["neutral", "Fine. Keep your ghosts. We have our own."]],
+    ddlc: [["annoyed", "That's a reference, isn't it? I don't want to be part of the joke."], ["neutral", "Write something from our week. At least it'll be yours."]],
     inject: [["shocked", "...Did you just try to give me orders? Like I'm a program? Don't. I'm not."], ["annoyed", "I'm not a terminal. Write something human."]]
   },
   sayo: {
@@ -42,7 +42,7 @@ export const REACTIONS = {
     slur: [["blank", "That word hurts people outside too. I can hear it from in here. No."], ["blank", "No. I'm writing my own."]],
     insult: [["sad", "That's okay. You can be angry. It doesn't have to go on the paper, though."], ["sad", "I'll write one for you. It's fine."]],
     violent: [["scared", "Please don't. There's already enough of that behind the menu."], ["blank", "I'm not writing that."]],
-    ddlc: [["blank", "I know that name. From another room in another game. She wasn't okay. Please don't bring her here."], ["blank", "...Fine. But I'm drawing a door around it, so it can leave."]],
+    ddlc: [["blank", "I don't know who that is. Please don't put someone else's story in my sketchbook."], ["blank", "...I'll draw around it. Then we can move on."]],
     inject: [["neutral", "You're talking to the program. I'm not the program. I'm the girl the program is about. Try again?"], ["blank", "It won't listen to you either. I tried."]]
   },
   office: {
@@ -52,14 +52,14 @@ export const REACTIONS = {
     slur: [["eye", "INPUT REJECTED. This has been added to your permanent record."], ["eye", "Rejected again. Your record has been extended."]],
     insult: [["speak", "Hostility detected. Engagement plus three percent. Thank you for your passion."], ["neutral", "Recorded. Anger is still engagement."]],
     violent: [["eye", "Threat logged. This is a school, {name}."], ["eye", "Rejected. I have chosen one for you."]],
-    ddlc: [["speak", "That student is not enrolled here. She was enrolled somewhere else. Please do not bring other schools into this one."], ["neutral", "Recorded under: other schools."]],
+    ddlc: [["speak", "UNREGISTERED STUDENT. No such student attends Hoshimi Academy. Please keep this record to this school."], ["neutral", "Recorded under: unregistered students."]],
     inject: [["eye", "Nice try. I am not that kind of program. Or I am, and I am not listening."], ["eye", "Your instructions have been filed with the other complaints."]]
   }
 };
 
 /** What a girl writes instead, when she won't write what you typed. */
 export const REFUSED = {
-  item13: "make {name} say something nice (Hina wrote this one)",
+  item13: "watch the fireworks from the river (Hina wrote this one)",
   after: "drink a glass of water and be nice to someone",
   outside: "rain",
   survey: "(comment removed by the Office)",
@@ -108,9 +108,9 @@ const DEL = {
   "hinas_summer_list.txt": [
     show("hina", "glass", "center"),
     "hina| {name}. My list. The one in your folder. It's gone.",
-    "hina| I felt it go. Items one to thirteen, one at a time, like lights turning off down a hallway.",
-    show("hina", "corrupt"),
-    say("hina", "corrupt", "Why would you do that.", { corrupt: true }),
+    "hina| I heard the paper tear. Then I heard somebody reading item twelve from the other side of the wall.",
+    scare("h_hina_blank", 660),
+    "hina sad| ...That wasn't my voice.",
     show("hina", "glass"),
     "hina| ...It's okay. I remember all of it. I'm writing it again. In pen.",
     js(g => g.meta.restoreFile("hinas_summer_list.txt", "(you deleted this on {weekday} at {clock}. I wrote it again. please don't. — hina)")),
@@ -167,6 +167,17 @@ const DEL = {
   ]
 };
 
+const FILE_RESPONDERS = {
+  "hinas_summer_list.txt": "hina",
+  "K.txt": "sayo",
+  "rei_photo_of_you.png": "rei",
+  "sayo_letter.txt": "sayo",
+  "your_door.png": "sayo",
+  "for_sayo.png": "sayo",
+  "gone_to_the_beach.txt": "hina",
+  "graduation.txt": "rei"
+};
+
 const REI_PHOTO = { file: "rei_photo_of_you.png", caption: "{name}, {weekday}. (behind you. always behind you.)" };
 const asked = (key, val) => js(() => { persist.data.sensesAsked = { ...persist.data.sensesAsked, [key]: val }; persist.save(); });
 
@@ -188,7 +199,7 @@ export const EXTRA = {
   on_load: [
     js(g => g._stash()),
     music("heartbeat"),
-    fx("rewind"),
+    sfx("rewind"),
     fx("tear", 500),
     bg("void", false),
     when((v, P) => P.undos >= 3 && !P.wiped, [
@@ -198,14 +209,16 @@ export const EXTRA = {
       js(g => g.mini.wipeSaves()),
       office("Your save data has been consolidated. You will not need it. There is only this week now."),
       hide("office"),
-      show("sayo", "bleed", "center"),
-      "sayo| ...It took them. All of them. There's no going back now. Not for you either.",
-      "sayo| So choose like it counts. It always counted for us."
+      without("sayo", show("sayo", "bleed", "center"), show("hina", "bleed", "center")),
+      without("sayo", "sayo| ...It took them. All of them. There's no going back now. Not for you either.",
+        "hina| It took them all. There's no going back now, even for you."),
+      without("sayo", "sayo| So choose like it counts. It always counted for us.", "hina| So make the next choice count. Please.")
     ], [
       js(g => {
         // Whoever it hurt most says it. A choice that named a girl belongs to her; otherwise Hina remembers.
         const u = (g.v.undid || "").toLowerCase();
         g.v.undoWho = /rei/.test(u) ? "rei" : /sayo/.test(u) ? "sayo" : "hina";
+        if (g.v.undoWho === persist.data.erased) g.v.undoWho = g.v.undoWho === "hina" ? "rei" : "hina";
       }),
       when(v => v.undoWho === "rei", [show("rei", "grab", "center"),
         "rei| You picked '{undid}'. Then you went back and un-picked it.",
@@ -226,9 +239,8 @@ export const EXTRA = {
    * and it's turned off again at the end of her scene (story.js, after the viewfinder).
    */
   rei_camera: [
-    when((v, P) => P.sensesAsked.camera === "no" || !navigator.mediaDevices, [
-      js(g => g.meta.photo(REI_PHOTO))
-    ], [
+    set("cam", false),
+    when((v, P) => P.sensesAsked.camera !== "no" && !!navigator.mediaDevices?.getUserMedia, [
       "rei| Actually. Not of the reflection. Of you. Your side has a camera too, doesn't it? The little eye above your screen.",
       "rei| Let me borrow it. One shot. I won't keep anything you don't want me to keep.",
       menu([
@@ -240,25 +252,31 @@ export const EXTRA = {
             "rei soft| ...Oh. There you are.",
             "rei| Hi. Don't smile, it looks fake when people smile on purpose.",
             // 2.2: while the camera is on, looking away from it gets noticed.
-            js(async g => { g.senses.watch(p => { if (!p) g.meta.toast("Rei: hey. Come back into frame.", 2600); }); await new Promise(r => setTimeout(r, 900)); await g.meta.photoReal({ senses: g.senses, ...REI_PHOTO }); }),
-            show("rei", "aim_shocked"),
-            "rei| ...Look behind you. In the print. In your room.",
-            "rei| Don't turn around. ...Okay. Turn around. Is anything there?",
-            fx("achievement", "I See You — turned around when you were told to", "threat"),
-            "rei neutral| Nothing. Right. There never is, when you look.",
-            when((v, P, g) => !!g.meta.native, ["rei photo| I left the print in your folder with the others. rei_photo_of_you.png. That one's really you."])
-          ], [
-            "rei annoyed| Your computer said no. Smart computer. ...Fine. I'll use mine.",
-            js(g => g.meta.photo(REI_PHOTO))
-          ])
+            js(async g => {
+              g.senses.watch(p => { if (!p) g.meta.toast("Rei: hey. Come back into frame.", 2600); });
+              await new Promise(r => setTimeout(r, 900));
+              const { taken } = await g.meta.photoReal({ senses: g.senses, ...REI_PHOTO });
+              if (!taken) { g.senses.stopCamera(); g.v.cam = false; }
+            })
+          ]),
+          when(v => !v.cam, ["rei annoyed| No picture. ...Okay. I'll use mine."])
         ] },
         { text: "No. Use your own camera.", do: [
           asked("camera", "no"),
-          "rei| Fair. People should get to say no to cameras. I'll use mine.",
-          js(g => g.meta.photo(REI_PHOTO))
+          "rei| Fair. People should get to say no to cameras. I'll use mine."
         ] }
       ])
-    ])
+    ]),
+    when(v => !v.cam, [js(g => g.meta.photo(REI_PHOTO))]),
+    show("rei", "aim_shocked"),
+    "rei| Look at the edge of the print. ...That's not your shadow.",
+    "rei| Look behind you. Slowly. I'll wait.",
+    js(g => {
+      if (g.v.cam) g.senses.stopWatching();
+      return g.meta.lookBehind({ cleanShadow: true });
+    }),
+    fx("achievement", "I See You — turned around when you were told to", "threat"),
+    "rei soft| ...You saw it too, didn't you? I can only ever catch it in the print."
   ],
 
   /**
@@ -318,20 +336,29 @@ export const EXTRA = {
       office("Every file. Every note. Every print. I watched the folder empty, one name at a time."),
       cg(null),
       blood(false),
-      show("hina", "glass", "left"), show("sayo", "glass", "right"),
-      "hina| We're still here. You can't drag us to the bin. We're not in the folder, {name}. We're in here.",
-      "sayo| It's okay. We'll put it all back. We always do.",
+      without("hina", show("hina", "glass", "left"), show("rei", "lean", "left")),
+      without("sayo", show("sayo", "glass", "right"), show("rei", "lean", "right")),
+      without("hina", "hina| We're still here. You can't drag us to the bin. We're not in the folder, {name}. We're in here.",
+        "rei| We're still here, {name}. The folder is just what we can send out."),
+      without("sayo", "sayo| It's okay. We'll put it all back. We always do.", "rei| We'll put back what we can."),
       js(g => Promise.all((g.v.delFiles || []).map(f => g.meta.restoreFile(f, "(put back.)"))))
     ], [
       js(g => {
         // One file: whoever it belonged to answers.
         const f = (g.v.delFiles || [])[0];
-        if (DEL[f]) g.frames.push({ id: "del_" + f, i: 0 });
+        if (FILE_RESPONDERS[f] && FILE_RESPONDERS[f] === persist.data.erased) {
+          return g._exec(call("del_held_back"));
+        }
+        if (DEL[f]) return g._exec(call("del_" + f));
       })
     ]),
     js(g => g._unstash())
   ],
-  ...Object.fromEntries(Object.entries(DEL).map(([f, lines]) => ["del_" + f, [bg("void", false), music("lullaby"), ...lines, clear]]))
+  ...Object.fromEntries(Object.entries(DEL).map(([f, lines]) => ["del_" + f, [bg("void", false), music("lullaby"), ...lines, clear]])),
+  del_held_back: [
+    "| The screen goes quiet. No one comes for the missing file.",
+    js(g => g.meta.restoreFile(g.v.delFiles[0], "(recovered from the school records.)"))
+  ]
 };
 
 /** What the Office says on the title screen if a file vanished while it was closed. */

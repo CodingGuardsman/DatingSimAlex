@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("native", {
   info: () => ipcRenderer.invoke("info"),
+  runningApp: () => ipcRenderer.invoke("apps:running"),
   writeFile: (name, text) => ipcRenderer.invoke("file:write", name, text),
   writeImage: (name, dataUrl) => ipcRenderer.invoke("file:writeImage", name, dataUrl),
   readFile: name => ipcRenderer.invoke("file:read", name),

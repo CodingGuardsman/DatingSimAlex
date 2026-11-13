@@ -6,6 +6,26 @@ import { persist, formatDuration, formatShort } from "./persist.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const K_SPRITE = "assets/sprites/k/neutral.webp";
+const loadImage = src => new Promise(resolve => {
+  const img = new Image();
+  img.onload = () => resolve(img);
+  img.onerror = () => resolve(null);
+  img.src = src;
+});
+
+async function drawPhotoGhost(ctx, { x, bottom, height, opacity }) {
+  const figure = await loadImage(K_SPRITE);
+  if (!figure) return;
+  const { width, height: frameHeight } = ctx.canvas;
+  const h = frameHeight * height;
+  const w = h * figure.naturalWidth / figure.naturalHeight;
+  ctx.save();
+  ctx.filter = "grayscale(1) brightness(.3) blur(1.8px)";
+  ctx.globalAlpha = opacity;
+  ctx.drawImage(figure, width * x - w / 2, frameHeight * bottom - h, w, h);
+  ctx.restore();
+}
 
 export class Meta {
   constructor(game) {
@@ -22,11 +42,12 @@ export class Meta {
     this.baseTitle = document.title;
 
     // Desktop build only: the Electron bridge from electron/preload.js.
-    this.native = window.native ? this._wrapNative(window.native) : null;
     this.osName = "";
+    this.otherApp = "";
     this.pendingDeleted = [];
+    this.native = window.native ? this._wrapNative(window.native) : null;
+    this.refreshOtherApp();
     if (this.native) {
-      this.native.info().then(i => { this.osName = i.username || ""; this.gameDir = i.gameDir; });
       this.native.onCloseAttempt(msg => this._onCloseAttempt(msg));
       this.native.onFocusChange(focused => this._setAway(!focused));
     }
@@ -42,6 +63,22 @@ export class Meta {
   }
 
   /* ---------- small visual effects ---------- */
+
+  async refreshOtherApp() {
+    const request = this._otherAppRequest = {};
+    if (!this.native || typeof this.native.runningApp !== "function" || persist.data.settings.notice === false) {
+      this.otherApp = "";
+      return;
+    }
+    try {
+      const app = await this.native.runningApp();
+      if (this._otherAppRequest === request && persist.data.settings.notice !== false) {
+        this.otherApp = typeof app === "string" ? app : "";
+      }
+    } catch (e) {
+      if (this._otherAppRequest === request) this.otherApp = "";
+    }
+  }
 
   pulse(cls, ms) {
     this.root.classList.remove(cls);
@@ -112,12 +149,40 @@ export class Meta {
    * It stays until cleared, and comes back when a save is loaded. With "graphic horror" off in Settings,
    * graphic ones are shown blurred and dark instead.
    */
+  /** CGs with redrawn frames (<id>_f1..f3.webp). They cycle in hard steps, a different drawing each time (Slay the Princess does this). */
+  _frames(id) { return ["cute_hina","cute_rei","cute_sayo","cute_hina_desk","h_hina_blank","h_rei_flash","h_sayo_scribble","h_nurse_glitch","h_okada_reach","h_kanda_board","h_stalk_2","h_stalk_3","h_stalk_face","m_hina_4","m_rei_4","m_sayo_4"].includes(id) ? [id, id + "_f1", id + "_f2", id + "_f3"] : null; }
+
+  _frameLoop(el, id) {
+    const frames = !matchMedia("(prefers-reduced-motion: reduce)").matches && this._frames(id);
+    if (!frames) return null;
+    const images = frames.map(f => { const img = new Image(); img.src = `assets/cg/${f}.webp`; return img; });
+    const horror = this._graphic(id);
+    let k = 0, dir = 1, timer;
+    const step = () => {
+      if (!el.isConnected) return;
+      k += dir;
+      if (Math.random() < (horror ? 0.25 : 0.1)) k = Math.floor(Math.random() * frames.length);
+      if (k >= frames.length - 1) dir = -1;
+      if (k <= 0) dir = 1;
+      if (images[k].naturalWidth) el.style.backgroundImage = `url(${images[k].src})`;
+      // Calm CGs hold each drawing for about a second; flicking redrawn frames every ~200ms made them boil.
+      timer = setTimeout(step, (horror ? 70 : 800) + Math.random() * (horror ? 90 : 900));
+    };
+    timer = setTimeout(step, 400);
+    return () => clearTimeout(timer);
+  }
+
   cg(id, { fade = true } = {}) {
     const stage = $("#stage");
     let layer = $("#cg");
     if (!layer) { layer = document.createElement("div"); layer.id = "cg"; stage.appendChild(layer); }
     this.game.v.cg = id || null;
-    if (!id) { layer.classList.remove("in"); setTimeout(() => { if (!this.game.v.cg) layer.innerHTML = ""; }, 700); return; }
+    if (!id) {
+      this._animatedCgUntil = 0;
+      layer.classList.remove("in");
+      setTimeout(() => { if (!this.game.v.cg) layer.innerHTML = ""; }, 700);
+      return;
+    }
     const img = document.createElement("div");
     img.className = "cg-img" + (this._graphic(id) && !this.goreOn ? " withheld" : "") + (this._graphic(id) ? " glitchy" : "");
     img.style.backgroundImage = `url(assets/cg/${id}.webp)`;
@@ -125,29 +190,54 @@ export class Meta {
     // The darkroom: the rope creaks while it's on screen.
     if (id === "h_darkroom" && this.goreOn) this.game.audio.sfx("creak");
     layer.appendChild(img);
+    const animated = !!this._frameLoop(img, id);
+    layer.classList.toggle("framed", animated);
+    this._animatedCgUntil = animated ? performance.now() + 3000 : 0;
     layer.classList.add("in");
     requestAnimationFrame(() => img.classList.add("in"));
     setTimeout(() => { while (layer.children.length > 1) layer.firstElementChild.remove(); }, fade ? 900 : 0);
   }
 
+  /** Let an animated illustration breathe before the script replaces it. */
+  async nextCG(id) {
+    const frames = this.game.frames;
+    const remaining = this._animatedCgUntil - performance.now();
+    if (remaining > 0) await sleep(remaining);
+    if (this.game.frames === frames) this.cg(id);
+  }
+
   /**
-   * A jumpscare: an image slams into the screen with a screech, the screen shakes, and it's gone.
-   * Only ever called from a fixed place in the script. Gentle mode swaps it for a black flash.
+   * A cut to black, a close-up, then darkness again. Called at fixed points in the script.
+   * Gentle mode swaps the reveal for a brief blackout.
    */
   async scare(id, ms = 700) {
     const audio = this.game.audio;
     if (!this.goreOn) { audio.sfx("static"); await this.blackout(Math.min(ms, 400)); return; }
-    audio.sfx("scare");
     const el = document.createElement("div");
     el.className = "scare";
-    el.style.backgroundImage = `url(assets/cg/${id}.webp)`;
+    el.setAttribute("aria-hidden", "true");
+    const art = new Image();
+    art.className = "scare-art";
+    art.alt = "";
+    art.src = `assets/cg/${id}.webp`;
+    el.appendChild(art);
     this.fx.appendChild(el);
-    this.shake(ms);
-    if (this.native) this.native.shake(ms * 0.8, 16).catch(() => {});
-    await sleep(ms);
-    el.classList.add("out");
-    await sleep(160);
-    el.remove();
+    audio.scareSilence(true);
+    try {
+      const [decoded] = await Promise.all([art.decode().then(() => true, () => false), sleep(340)]);
+      audio.sfx("scare");
+      if (decoded) el.classList.add("hit");
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        this.shake(130);
+        if (this.native) this.native.shake(130, 8).catch(() => {});
+      }
+      await sleep(ms);
+      el.classList.remove("hit");
+      await sleep(220);
+    } finally {
+      el.remove();
+      audio.scareSilence(false);
+    }
   }
 
   /**
@@ -155,50 +245,121 @@ export class Meta {
    * and it is closer every time they look away from it: each look behind shows the next stage, the swap happening while they face
    * front. The fourth time they turn, it is right there. Resolves after the scare.
    */
-  async lookBehind(frontId = "h_stalk_front", stages = ["h_stalk_1", "h_stalk_2", "h_stalk_3"], faceId = "h_stalk_face") {
+  async lookBehind({ cleanShadow = false } = {}) {
     const audio = this.game.audio;
-    if (!this.goreOn) { audio.sfx("static"); await this.blackout(500); return; }
+    const gentle = !this.goreOn;
+    // 2.3: the stalker art is a faceless shadow now (no gore), so Rei's scene uses it too. The sprite silhouette is for gore-off.
+    const silhouette = gentle;
+    const front = silhouette ? "assets/bg/classroom.webp" : "assets/cg/h_stalk_front.webp";
+    const stages = ["h_stalk_1", "h_stalk_2", "h_stalk_3", "h_stalk_face"];
     const root = document.createElement("div");
-    root.className = "behind";
-    root.innerHTML = `<div class="behind-strip"><div style="background-image:url(assets/cg/${frontId}.webp)"></div><div style="background-image:url(assets/cg/${stages[0]}.webp)"></div></div><div class="behind-hint">‹ drag, or use ← → ›</div>`;
+    root.className = silhouette ? "behind clean-shadow" : "behind";
+    root.innerHTML = `<div class="behind-strip"><div style="background-image:url(${front})"></div><div></div></div>
+      <div class="behind-dial"><i></i></div>
+      <div class="behind-hint">Hold → or drag left to look behind you.</div>`;
     this.fx.appendChild(root);
-    [...stages, faceId].forEach(id => { const i = new Image(); i.src = `assets/cg/${id}.webp`; });
+    if (!gentle) (silhouette ? stages.slice(-1) : stages).forEach(id => { const i = new Image(); i.src = `assets/cg/${id}.webp`; });
     const strip = root.firstElementChild, hint = root.lastElementChild, back = strip.lastElementChild;
-    let pan = 0, dragging = false, lastX = 0, hold = 0, seen = false, stage = 0, beat = 0, whisper = 0;
+    const knob = root.querySelector(".behind-dial i");
+    let stopBackFrames;
+    if (silhouette) {
+      back.classList.add("behind-shadow-scene");
+      back.style.backgroundImage = `url(${front})`;
+      back.innerHTML = `<img class="behind-figure" src="${K_SPRITE}" alt="" draggable="false">`;
+      back.dataset.stage = "0";
+    } else {
+      back.style.backgroundImage = `url(assets/cg/${stages[0]}.webp)`;
+    }
+    let pan = 0, lastPan = 0, dragging = false, lastX = 0, hold = 0, seen = false, stage = 0, beat = 0, whisper = 0;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const keys = new Set();
     const down = e => { dragging = true; lastX = e.clientX; };
     const up = () => { dragging = false; };
     const move = e => { if (!dragging) return; pan = Math.max(0, Math.min(1, pan - (e.clientX - lastX) / innerWidth * 1.4)); lastX = e.clientX; };
     const wheel = e => { pan = Math.max(0, Math.min(1, pan + e.deltaY / 1400)); };
-    const kd = e => keys.add(e.key.toLowerCase()), ku = e => keys.delete(e.key.toLowerCase());
+    const kd = e => {
+      const key = e.key.toLowerCase();
+      if (!["arrowleft", "arrowright", "a", "d"].includes(key)) return;
+      e.preventDefault(); e.stopImmediatePropagation(); keys.add(key);
+    };
+    const ku = e => keys.delete(e.key.toLowerCase());
+    const blur = () => { keys.clear(); up(); };
     root.addEventListener("pointerdown", down); addEventListener("pointerup", up); addEventListener("pointermove", move);
-    addEventListener("wheel", wheel, { passive: true }); addEventListener("keydown", kd); addEventListener("keyup", ku);
+    addEventListener("pointercancel", up); addEventListener("blur", blur);
+    addEventListener("wheel", wheel, { passive: true }); addEventListener("keydown", kd, true); addEventListener("keyup", ku);
     const t0 = performance.now(); let last = t0;
     await new Promise(resolve => {
       const tick = now => {
         const dt = Math.min(50, now - last); last = now; const t = now - t0;
         if (keys.has("arrowright") || keys.has("d")) pan = Math.min(1, pan + dt / 1800);
         if (keys.has("arrowleft") || keys.has("a")) pan = Math.max(0, pan - dt / 1800);
-        strip.style.transform = `translateX(${-pan * 50}%)`;
-        hint.style.opacity = String(stage === 0 ? Math.max(0, 0.55 - pan * 1.4) * (0.4 + 0.6 * Math.abs(Math.sin(t / 900))) : 0);
+        // Turning your head, not sliding a picture: the room swings round the middle of the screen and smears when you turn fast.
+        const speed = Math.abs(pan - lastPan) / Math.max(dt, 1) * 1000; lastPan = pan;
+        strip.style.transformOrigin = `${25 + pan * 50}% 50%`;
+        strip.style.transform = reduce ? `translateX(${-pan * 50}%)` : `translateX(${-pan * 50}%) rotateY(${-Math.sin(pan * Math.PI) * 14}deg) scale(${1 + Math.sin(pan * Math.PI) * 0.08})`;
+        strip.style.filter = reduce ? "" : `blur(${Math.min(5, speed * 4).toFixed(1)}px)`;
+        knob.style.left = `${pan * 100}%`;
         const dread = Math.min(1, (stage + pan) / 3.5);
-        root.style.filter = `brightness(${1 - 0.25 * pan}) contrast(${1 + 0.5 * dread})`;
-        if (stage < 3 || pan < 0.9) { if (t - beat > 1500 - 1000 * dread) { beat = t; audio.sfx("heartbeat"); if (pan > 0.4) this.shake(100); } }
+        if (!silhouette) root.style.filter = `brightness(${1 - 0.25 * pan}) contrast(${1 + 0.5 * dread})`;
+        if (stage < 3 || pan < 0.9) { if (t - beat > 1500 - 1000 * dread) { beat = t; audio.sfx("heartbeat"); if (!gentle && pan > 0.4) this.shake(100); } }
         // looked behind: it counts once they've actually stared at it for a moment
-        if (pan > 0.9) { hold += dt; if (hold > (stage >= 3 ? 650 : 900) && !seen) { seen = true; if (stage >= 3) return resolve(); } } else hold = 0;
+        if (pan > 0.9) {
+          hold += dt;
+          if (hold > 900 && !seen) {
+            if (gentle) return resolve();
+            seen = true;
+            hint.textContent = stage >= 3 ? "...It's gone. Turn back around." : "Hold ← or drag right to turn back.";
+          }
+        } else hold = 0;
+        // The last time, the room behind you is empty. It is in front of you now.
+        if (pan < 0.12 && seen && stage >= 3) {
+          strip.firstElementChild.style.backgroundImage = `url(assets/cg/${stages[3]}.webp)`;
+          stopBackFrames?.();
+          stopBackFrames = this._frameLoop(strip.firstElementChild, stages[3]);
+          return resolve();
+        }
         // facing front again: it moves, unseen
-        if (pan < 0.25 && seen) { seen = false; stage++; back.style.backgroundImage = `url(assets/cg/${stage >= 3 ? faceId : stages[stage]}.webp)`; if (t - whisper > 500) { whisper = t; audio.sfx("whisper"); } }
+        if (pan < 0.25 && seen && stage < 3) {
+          seen = false;
+          stage++;
+          if (stage >= 3 && !silhouette) {
+            // it has left the room behind you: show the same room, empty
+            stopBackFrames?.(); stopBackFrames = null;
+            back.style.backgroundImage = `url(${front})`;
+            hint.textContent = "Hold → or drag left to look behind you.";
+            if (t - whisper > 500) { whisper = t; audio.sfx("whisper"); }
+            requestAnimationFrame(tick);
+            return;
+          }
+          hint.textContent = "Hold → or drag left to look behind you.";
+          if (silhouette && stage < 3) back.dataset.stage = String(stage);
+          else {
+            back.classList.remove("behind-shadow-scene");
+            back.replaceChildren();
+            back.style.backgroundImage = `url(assets/cg/${stages[stage]}.webp)`;
+            stopBackFrames?.();
+            stopBackFrames = this._frameLoop(back, stages[stage]);
+            root.classList.toggle("framed", !!stopBackFrames);
+          }
+          if (t - whisper > 500) { whisper = t; audio.sfx("whisper"); }
+        }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     });
     root.removeEventListener("pointerdown", down); removeEventListener("pointerup", up); removeEventListener("pointermove", move);
-    removeEventListener("wheel", wheel); removeEventListener("keydown", kd); removeEventListener("keyup", ku);
-    audio.sfx("scare");
-    root.classList.add("slam");
-    this.shake(1500);
-    if (this.native) this.native.shake(1200, 18).catch(() => {});
+    removeEventListener("pointercancel", up); removeEventListener("blur", blur);
+    removeEventListener("wheel", wheel); removeEventListener("keydown", kd, true); removeEventListener("keyup", ku);
+    audio.sfx(gentle ? "whisper" : "scare");
+    if (!gentle) {
+      root.classList.add("slam");
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        this.shake(130);
+        if (this.native) this.native.shake(130, 8).catch(() => {});
+      }
+    }
     await sleep(1600);
+    stopBackFrames?.();
     root.classList.add("out");
     await sleep(200);
     root.remove();
@@ -240,36 +401,83 @@ export class Meta {
     this.root.classList.toggle("fx-blood", !!on && this.goreOn);
   }
 
+  syncGraphicHorror() {
+    this.blood(this.game.v.blood);
+    document.querySelectorAll("#cg .cg-img.glitchy").forEach(img => img.classList.toggle("withheld", !this.goreOn));
+  }
+
   /* ---------- the game folder (.exe) ---------- */
 
   /**
-   * Wraps the native file calls so the game remembers every file it has put in its folder.
-   * When one of them disappears (the player deleted it), the girls notice: see noticeDeleted().
+   * Copies share a save profile, but each copy has its own game folder.
+   * Only a file recorded in this folder can go missing from it.
    */
   _wrapNative(raw) {
-    const remember = name => { persist.data.written = { ...persist.data.written, [name]: Date.now() }; persist.save(); if (raw.fileWritten) raw.fileWritten(name); };
+    this._fileStateReady = this._openFileState(raw).catch(() => null);
+    const remember = async name => {
+      const state = await this._fileStateReady;
+      if (!state) return;
+      state.written[name] = Date.now();
+      delete state.deleted[name];
+      this.pendingDeleted = this.pendingDeleted.filter(file => file !== name);
+      persist.save();
+      if (raw.fileWritten) await raw.fileWritten(name).catch(() => {});
+    };
     const api = { ...raw };
-    api.writeFile = async (name, text) => { const ok = await raw.writeFile(name, text); remember(name); return ok; };
-    api.writeImage = async (name, url) => { const ok = await raw.writeImage(name, url); remember(name); return ok; };
+    api.writeFile = async (name, text) => {
+      const ok = await raw.writeFile(name, text);
+      if (ok) await remember(name);
+      return ok;
+    };
+    api.writeImage = async (name, url) => {
+      const ok = await raw.writeImage(name, url);
+      if (ok) await remember(name);
+      return ok;
+    };
     if (raw.onFileGone) raw.onFileGone(name => this._fileGone(name));
-    if (raw.watchFiles) raw.watchFiles(Object.keys(persist.data.written || {}));
     return api;
+  }
+
+  async _openFileState(raw) {
+    const info = await raw.info();
+    this.osName = info.username || "";
+    this.gameDir = info.gameDir;
+    if (!this.gameDir) return null;
+    const folders = persist.data.fileFolders;
+    let state = folders[this.gameDir];
+    if (!state) {
+      state = { written: {}, deleted: {} };
+      // Legacy records have no folder. Only adopt copies that can be found here.
+      for (const [name, writtenAt] of Object.entries(persist.data.written || {})) {
+        if (await raw.exists(name).catch(() => false)) state.written[name] = writtenAt;
+      }
+      folders[this.gameDir] = state;
+      persist.save();
+    }
+    if (raw.watchFiles) {
+      await raw.watchFiles(Object.keys(state.written).filter(name => !state.deleted[name])).catch(() => {});
+    }
+    return state;
   }
 
   /** On start-up: anything we wrote that isn't there any more was deleted while the game was closed. */
   async checkFolder() {
-    if (!this.native) return;
-    for (const name of Object.keys(persist.data.written || {})) {
-      if (persist.data.deleted[name]) continue;
-      try { if (!(await this.native.exists(name))) this._fileGone(name); } catch (e) { /* folder unreadable */ }
+    const state = await this._fileStateReady;
+    if (!state) return;
+    for (const name of Object.keys(state.written)) {
+      await this._fileGone(name);
     }
   }
 
-  _fileGone(name) {
-    if (!persist.data.written[name] || persist.data.deleted[name]) return;
-    persist.data.deleted = { ...persist.data.deleted, [name]: Date.now() };
+  async _fileGone(name) {
+    const state = await this._fileStateReady;
+    if (!state || !state.written[name] || state.deleted[name]) return;
+    const writtenAt = state.written[name];
+    // The file may have been rewritten since the watcher reported it.
+    if (await this.native.exists(name).catch(() => true)) return;
+    if (state.written[name] !== writtenAt || state.deleted[name]) return;
+    state.deleted[name] = Date.now();
     persist.save();
-    this.pendingDeleted = this.pendingDeleted || [];
     if (!this.pendingDeleted.includes(name)) this.pendingDeleted.push(name);
     this.console("sayo", `someone deleted ${name}. it was ours.`);
   }
@@ -279,8 +487,6 @@ export class Meta {
     if (!this.native) return;
     const text = this.game._restoreText ? this.game._restoreText(name) : null;
     if (text != null) await this.native.writeFile(name, this.game._fill(text + (note ? "\n\n" + note : "")));
-    delete persist.data.deleted[name];
-    persist.save();
   }
 
   /* ---------- the player's camera (opt-in, see senses.js) ---------- */
@@ -301,12 +507,8 @@ export class Meta {
     c.width = W; c.height = H;
     const ctx = c.getContext("2d");
     ctx.drawImage(shot, 0, 0, W, H);
-    // Something stands over your shoulder. It is a little too tall.
-    ctx.filter = "blur(10px)";
-    ctx.fillStyle = "rgba(8,8,12,0.78)";
-    ctx.beginPath(); ctx.ellipse(W * 0.82, H * 0.24, 46, 58, 0.05, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(W * 0.84, H * 0.78, 120, 230, 0.04, 0, Math.PI * 2); ctx.fill();
-    ctx.filter = "none";
+    // Keep K at the edge of the frame, away from the center of the selfie.
+    await drawPhotoGhost(ctx, { x: .87, bottom: 1.04, height: .86, opacity: .72 });
     const data = ctx.getImageData(0, 0, W, H);
     for (let i = 0; i < data.data.length; i += 4) {
       const g = data.data[i] * 0.3 + data.data[i + 1] * 0.59 + data.data[i + 2] * 0.11;
@@ -625,21 +827,14 @@ export class Meta {
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const ctx = c.getContext("2d");
-    const load = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
     const bgUrl = (($("#bg .bg-img:last-child") || {}).style || {}).backgroundImage || "";
     const bgSrc = (bgUrl.match(/url\("?(.*?)"?\)/) || [])[1];
-    const bgImg = bgSrc ? await load(bgSrc) : null;
+    const bgImg = bgSrc ? await loadImage(bgSrc) : null;
     if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
     // The figure that is always behind you: drawn before the girls, so it stands behind them.
-    if (ghost) {
-      ctx.filter = "blur(9px)";
-      ctx.fillStyle = "rgba(10,10,14,0.8)";
-      ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.36, 34, 42, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(W * 0.76, H * 0.86, 95, 175, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.filter = "none";
-    }
+    if (ghost) await drawPhotoGhost(ctx, { x: .76, bottom: .94, height: .67, opacity: .62 });
     for (const el of document.querySelectorAll("#sprites .sprite")) {
-      const img = await load(el.src);
+      const img = await loadImage(el.src);
       if (!img) continue;
       const h = H * 0.98, w = h * img.width / img.height;
       const x = parseFloat(el.style.left) / 100 * W - w / 2;
@@ -760,6 +955,7 @@ export class Meta {
     const away = persist.data.lastPlayed ? Date.now() - persist.data.lastPlayed : 0;
     return {
       name: this.game.name(),
+      was: this.game.v.wasName || persist.data.wasName || "",
       clock: now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
       weekday: now.toLocaleDateString([], { weekday: "long" }),
       daypart,
@@ -772,6 +968,7 @@ export class Meta {
       away: formatDuration(this.game.awayMs || away),
       screen: `${window.innerWidth} by ${window.innerHeight}`,
       osname: this.osName || "",
+      app: this.otherApp || "",
       hesitated: (this.game.v.hesitate && this.game.v.hesitate.text) || "",
       hesitatedSecs: (this.game.v.hesitate && String(this.game.v.hesitate.secs)) || "",
       lastChoice: this.game.v.lastChoice || "",

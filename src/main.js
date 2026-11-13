@@ -5,6 +5,7 @@ import { Game } from "./engine.js?v=2.3.0";
 import { persist } from "./persist.js?v=2.3.0";
 
 const game = new Game();
+await game.folderCheck;
 // Exposed for debugging from the console. (The girls leave messages there too.)
 window.__afterClass = { game, persist };
 // 2.2: if the game "crashed" last time, it comes back to the same moment, and they know.

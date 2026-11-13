@@ -10,7 +10,7 @@
  * Sound from the hush scene and the frame from Rei's camera stay in memory for this session only. They
  * are never saved or uploaded, and are forgotten when the game closes.
  */
-import { persist, formatShort } from "./persist.js?v=2.3.0";
+import { persist, formatShort, SAVE_REV } from "./persist.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -269,7 +269,7 @@ export class Dread {
     const g = this.game;
     persist.set("crash", {
       at: Date.now(), resume,
-      snap: { v: JSON.parse(JSON.stringify(g.v)), frames: g.frames.map(f => ({ ...f })), dayLabel: g._dayLabel }
+      snap: { rev: SAVE_REV, v: JSON.parse(JSON.stringify(g.v)), frames: g.frames.map(f => ({ ...f })), dayLabel: g._dayLabel }
     });
     persist.set("crashes", (persist.data.crashes || 0) + 1);
     g._crashing = true;
@@ -300,7 +300,7 @@ export class Dread {
       if (a === "no" || !c || !c.snap) return this.game.title();
       this.game.closeScreen();
       const snap = c.snap;
-      snap.frames = [...snap.frames, { id: c.resume, i: 0 }];
+      if (snap.rev != null && snap.rev >= SAVE_REV) snap.frames = [...snap.frames, { id: c.resume, i: 0 }];
       snap.v = { ...snap.v, crashAgo: Date.now() - c.at };
       this.game._restore(snap);
     });
@@ -443,7 +443,7 @@ export class Dread {
     return new Promise(async resolve => {
       const el = document.createElement("div");
       el.className = "mg mg-hush";
-      el.innerHTML = `<div class="hush"><p class="hush-title">${mic ? "Stay quiet." : "Don't move."}</p><div class="hush-meter"><span></span></div><p class="hint">${mic ? "Sayo is listening for you. Nothing is recorded or saved." : "Keep the mouse perfectly still."}</p></div>`;
+      el.innerHTML = `<div class="hush"><p class="hush-title">${mic ? "Stay quiet." : "Don't move."}</p><div class="hush-meter"><span></span></div><p class="hint">${mic ? "Stay quiet until the sound passes. Nothing is recorded or saved." : "Keep the mouse perfectly still."}</p></div>`;
       this.fx.appendChild(el);
       const bar = $(".hush-meter span", el);
       let heard = false, whispered = false;
@@ -524,14 +524,16 @@ export class Dread {
   /** The controller beats like a heart. Only does anything if a gamepad with rumble is connected. */
   rumble(on = true, bpm = 92) {
     clearInterval(this._rumbleT);
+    clearTimeout(this._rumbleTail);
     this._rumbleT = null;
+    this._rumbleTail = null;
     if (!on) return;
     const beat = () => {
       const p = this._pad();
       const act = p && p.vibrationActuator;
       if (!act || !act.playEffect) return;
       act.playEffect("dual-rumble", { duration: 90, strongMagnitude: 0.9, weakMagnitude: 0.3 }).catch(() => {});
-      setTimeout(() => act.playEffect("dual-rumble", { duration: 120, strongMagnitude: 0.55, weakMagnitude: 0.2 }).catch(() => {}), 260);
+      this._rumbleTail = setTimeout(() => act.playEffect("dual-rumble", { duration: 120, strongMagnitude: 0.55, weakMagnitude: 0.2 }).catch(() => {}), 260);
     };
     beat();
     this._rumbleT = setInterval(beat, 60000 / bpm);

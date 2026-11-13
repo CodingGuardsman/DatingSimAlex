@@ -4,7 +4,7 @@
  * Office's computer. Each one returns a promise, so the script just awaits it (see mini() in script-helpers.js).
  * The words live in the story files; these only know how to run.
  */
-import { persist } from "./persist.js?v=2.3.0";
+import { persist, listSlots, loadSlot, clearSlot, AUTO_SLOT } from "./persist.js?v=2.3.0";
 import { judgeText } from "./judge.js?v=2.3.0";
 import { ai, PERSONAS } from "./ai.js?v=2.3.0";
 import { senses } from "./senses.js?v=2.3.0";
@@ -41,6 +41,43 @@ export class Minigames {
     setTimeout(() => el.remove(), 400);
   }
 
+  /**
+   * Hina calling the player out for a cheeky answer: the music cuts dead, the screen goes black, her face fills it.
+   * Crude or hateful answers get the corrupt face, red light and a shake. Click (after a beat) or wait to go back.
+   */
+  _hinaCallout(kind, expr, line) {
+    const bad = ["lewd", "slur", "violent", "inject", "insult"].includes(kind);
+    // Act 1 is still a romance (VISION.md): silly answers get Hina pouting up close, not the horror version.
+    const soft = !bad && persist.data.runs === 0 && !persist.data.act3;
+    const audio = this.audio;
+    audio.duck(0, 1);
+    audio.sfx(bad ? "scare" : soft ? "error" : "static");
+    const el = document.createElement("div");
+    el.className = "hina-callout" + (bad ? " bad" : soft ? " soft" : "");
+    el.innerHTML = `<img alt="" draggable="false"><p></p>`;
+    $("img", el).src = `assets/sprites/hina/${bad ? "corrupt" : expr}.webp`;
+    $("p", el).textContent = line;
+    document.body.appendChild(el);
+    if (bad && !matchMedia("(prefers-reduced-motion: reduce)").matches) this.game.meta.shake?.(160);
+    return new Promise(resolve => {
+      const t0 = performance.now();
+      let gone = false;
+      const done = () => {
+        if (gone || performance.now() - t0 < 1400) return;
+        gone = true;
+        el.removeEventListener("pointerdown", done); removeEventListener("keydown", key, true);
+        clearTimeout(timer);
+        el.classList.add("out");
+        audio.duck(1, 1);
+        setTimeout(() => { el.remove(); resolve(); }, 220);
+      };
+      const key = e => { e.preventDefault(); e.stopImmediatePropagation(); done(); };
+      const timer = setTimeout(() => { el.style.cursor = "pointer"; }, 1400);
+      setTimeout(done, bad ? 5200 : 4200);
+      el.addEventListener("pointerdown", done); addEventListener("keydown", key, true);
+    });
+  }
+
   /* ---------- a typed answer ---------- */
 
   /**
@@ -70,6 +107,8 @@ export class Minigames {
       const react = (kind, said, n) => {
         const table = REACTIONS[who] || REACTIONS.hina;
         const [expr, line] = (table[kind] || table.nonsense)[Math.min(n, 1)];
+        // Hina doesn't do small cards. The music stops and she is suddenly the whole screen.
+        if ((who || "hina") === "hina") return this._hinaCallout(kind, expr, this.fill(line).replace("{said}", said));
         const box = $(".ask-react", el);
         box.hidden = false;
         box.className = "ask-react who-" + (who || "hina") + (["lewd", "slur", "violent", "inject"].includes(kind) ? " bad" : "");
@@ -96,16 +135,28 @@ export class Minigames {
         persist.data.rude = { ...persist.data.rude, [kind]: (persist.data.rude[kind] || 0) + 1 };
         persist.save();
         g.v.askKind = kind;
+        if (key === "item13" && who === "hina" && kind === "lewd") {
+          busy = true;
+          g.v.askRefused = true;
+          g.v.item13Closed = true;
+          persist.set("refused", { ...persist.data.refused, [key]: kind });
+          el.remove();
+          await g.meta.scare("h_hina_blank", 1450);
+          finish(this.fill(REFUSED.item13));
+          return;
+        }
         if (strikes === 0) {
           strikes++;
-          react(kind, text, 0);
+          busy = true;
+          await react(kind, text, 0);
+          busy = false;
           input.value = "";
           input.focus();
           return;
         }
-        react(kind, text, 1);
         busy = true; btn.disabled = true; input.disabled = true;
-        await sleep(2600);
+        const callout = react(kind, text, 1);
+        if (callout) await callout; else await sleep(2600);
         if (HARMLESS.includes(kind)) return finish(text);
         // Refused. They write their own, and they remember that they had to.
         g.v.askRefused = true;
@@ -149,10 +200,13 @@ export class Minigames {
   async wipeSaves() {
     const el = this._overlay("mg-wipe", `<div class="wipe"><h3>SAVE DATA</h3><ol></ol><p class="wipe-msg">consolidating…</p></div>`);
     const list = $("ol", el);
-    for (let n = 1; n <= 6; n++) {
-      const raw = localStorage.getItem("ac2_slot_" + n);
+    const slots = listSlots();
+    const autosave = loadSlot(AUTO_SLOT);
+    if (autosave) slots.unshift({ n: AUTO_SLOT, data: autosave });
+    for (const { n, data } of slots) {
       const li = document.createElement("li");
-      li.textContent = `slot ${n} · ${raw ? (JSON.parse(raw).dayLabel || "saved") : "empty"}`;
+      const label = n === AUTO_SLOT ? "autosave" : `slot ${n}`;
+      li.textContent = `${label} · ${data ? (data.dayLabel || "saved") : "empty"}`;
       list.appendChild(li);
     }
     await sleep(900);
@@ -161,16 +215,16 @@ export class Minigames {
       this.audio.sfx("glitch");
       await sleep(420);
     }
-    for (let n = 1; n <= 6; n++) localStorage.removeItem("ac2_slot_" + n);
+    for (const { n } of slots) clearSlot(n);
     persist.set("wiped", true);
-    $(".wipe-msg", el).textContent = "6 slots consolidated. 0 remaining.";
+    $(".wipe-msg", el).textContent = `${slots.length} slots consolidated. 0 remaining.`;
     this.audio.sfx("thud");
     await sleep(1500);
     this._close(el);
   }
 
   /** Out of character, on top of whatever minigame is open. Then back to the same question. */
-  _distress(parent, then) {
+  _distress(parent, then, resumeMusic = true) {
     const card = document.createElement("div");
     card.className = "distress";
     card.innerHTML = `<div class="distress-card">${DISTRESS_CARD}<div class="row"><button data-a="ok">Back to the game</button><button data-a="pause">Take a break</button></div></div>`;
@@ -180,7 +234,7 @@ export class Minigames {
       const a = e.target.dataset && e.target.dataset.a;
       if (!a) return;
       card.remove();
-      if (this.game.v.music) this.audio.play(this.game.v.music);
+      if (resumeMusic && this.game.v.music) this.audio.play(this.game.v.music);
       if (a === "pause") {
         // A real pause: the screen dims and nothing happens until they click.
         const rest = document.createElement("div");
@@ -571,7 +625,7 @@ export class Minigames {
         </div>
         <div class="row"><button data-a="hint">Ask the others for help</button><button data-a="present" disabled>Present proof</button></div>
       </div>`);
-      let hearts = 5, misses = 0, line = null, proof = null, wrongN = 0, wrongLine = 0;
+      let hearts = 5, misses = 0, line = null, proof = null, wrongN = 0, wrongLine = 0, resolving = false;
       const heartsEl = $(".hear-hearts", el), msg = $(".hear-msg", el), present = $('[data-a="present"]', el), hintBtn = $('[data-a="hint"]', el);
       const drawHearts = () => { heartsEl.textContent = "its patience " + "♥".repeat(hearts) + "♡".repeat(5 - hearts); };
       drawHearts();
@@ -611,6 +665,7 @@ export class Minigames {
         if (misses >= 4) spec.accept.forEach(id => { const b = el.querySelector(`.proof[data-id="${id}"]`); if (b) b.classList.add("glow"); });
       };
       el.addEventListener("click", async e => {
+        if (resolving) return;
         const li = e.target.closest(".hear-lines li");
         if (li) {
           el.querySelectorAll(".hear-lines li").forEach(x => x.classList.toggle("on", x === li));
@@ -634,6 +689,8 @@ export class Minigames {
         if (a === "hint") { const [who, text] = spec.hint; hintBtn.classList.remove("pulse"); say(`${g.cast[who].name}: "${text}"`, "hint"); return; }
         if (a !== "present") return;
         if (line === spec.weak && spec.accept.includes(proof)) {
+          resolving = true;
+          present.disabled = true;
           const stamp = document.createElement("div");
           stamp.className = "hear-stamp";
           stamp.textContent = "THAT'S A LIE";
@@ -656,12 +713,16 @@ export class Minigames {
         } else say((spec.wrong || ["Right lie, wrong proof. Think about which memory shows it's false."])[wrongN++ % (spec.wrong || [1]).length], "bad");
         escalate();
         if (hearts <= 0) {
+          resolving = true;
+          present.disabled = true;
           await sleep(900);
           // It gets one moment to look at you. Then it starts the round over, smiling.
           await this.game.meta.scare("h_jump_office", 520);
           say("OVERRULED. The Office smiles at you through every speaker in the building. ...Rei: \"Ignore it. Again. We have all week.\"", "bad");
           hearts = 5;
           drawHearts();
+          resolving = false;
+          step();
         }
       });
     });
@@ -695,7 +756,11 @@ remember       = partial   # hina: counts. rei: looks. sayo: draws.
           ${[["mail", "✉", "Mail"], ["files", "🗀", "Files"], ["bin", "♻", "Recycle Bin"], ["board", "☰", "Hoshimi Board"], ["settings", "⚙", "Engagement"], ["term", ">_", "Terminal"]]
             .map(([id, ico, label]) => `<button class="desk-icon" data-app="${id}"><span>${ico}</span>${label}</button>`).join("")}
         </div>
-        <div class="desk-note"></div>
+        <div class="desk-note"><b>sayo's note</b><ol>
+          <li data-step="mail"><span class="desk-check" role="img"></span><span>read the Management directive in Mail</span></li>
+          <li data-step="bin"><span class="desk-check" role="img"></span><span>open the Recycle Bin</span></li>
+          <li data-step="changed"><span class="desk-check" role="img"></span><span>turn off <code>extend_week</code><small>it needs a password. the terminal can do it. so can the settings, maybe.</small></span></li>
+        </ol><p role="status" class="desk-progress"></p></div>
         <div class="desk-win hidden"><div class="win-bar"><b></b><button data-a="x">✕</button></div><div class="win-body"></div></div>
         <div class="desk-task"><span class="start">◉ OFFICE-PC</span><span class="task-msg"></span><button data-a="logoff" disabled>Log off</button><span class="task-clock"></span></div>
       </div>`);
@@ -706,12 +771,17 @@ remember       = partial   # hina: counts. rei: looks. sayo: draws.
       const taskMsg = t => { $(".task-msg", el).textContent = this.fill(t); };
 
       const note = () => {
-        const done = st.mail && st.bin && st.changed;
-        $(".desk-note", el).innerHTML = `<b>sayo's note</b><ol>
-          <li class="${st.mail ? "ok" : ""}">read the Office's mail</li>
-          <li class="${st.bin ? "ok" : ""}">find out where K went</li>
-          <li class="${st.changed ? "ok" : ""}">turn off <code>extend_week</code><small>it needs a password. the terminal can do it. so can the settings, maybe.</small></li>
-        </ol>${done ? "<p>log off before it notices ♡</p>" : ""}`;
+        let completed = 0;
+        for (const step of el.querySelectorAll(".desk-note [data-step]")) {
+          const checked = st[step.dataset.step];
+          const mark = $(".desk-check", step);
+          step.classList.toggle("ok", checked);
+          mark.textContent = checked ? "✓" : "□";
+          mark.setAttribute("aria-label", checked ? "Complete" : "Pending");
+          if (checked) completed++;
+        }
+        const done = completed === 3;
+        $(".desk-progress", el).textContent = done ? "3/3 · log off before it notices ♡" : `${completed}/3 · finish these to log off`;
         $('[data-a="logoff"]', el).disabled = !done;
       };
       note();

@@ -2,7 +2,7 @@
  * engine.js — Runs the story script and owns every screen: title, name entry, dialogue,
  * menus, save/load, settings and the backlog.
  */
-import { persist, listSlots, saveSlot, loadSlot, K_SLOT } from "./persist.js?v=2.3.0";
+import { persist, listSlots, saveSlot, loadSlot, clearSlot, AUTO_SLOT, K_SLOT, SAVE_REV } from "./persist.js?v=2.3.0";
 import { AudioSys } from "./audio.js?v=2.3.0";
 import { Meta } from "./meta.js?v=2.3.0";
 import { Dread } from "./dread.js?v=2.3.0";
@@ -16,10 +16,13 @@ import { IS_DEMO, STORE_URL, STORE_READY } from "./config.js?v=2.3.0";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const POS = { left: 24, center: 50, right: 76, farleft: 14, farright: 86 };
 // 2.1: big poses. Close-ups fill the screen; action poses are a little larger than standing ones.
 const CLOSE = ["close", "glass", "grab", "aim_close", "peek"];
-const WIDE = ["turn", "twirl", "lean"];
+const WIDE = ["turn", "twirl", "lean", "lean_blush"];
+// Full-body art drawn smaller than the standing poses; scaled up so the head stays where it was.
+const FULL = ["bleed"];
 // Little reactions when a girl's expression changes: a hop when she's happy, hearts when she blushes, a jolt when she's startled.
 const EMOTES = {
   hop: ["happy", "laugh", "draw_happy", "twirl", "turn"],
@@ -61,8 +64,11 @@ export class Game {
     // The local AI loads in the background if the player turned it on. The game never waits for it.
     if (ai.enabled) ai.init();
     ai.onChange(() => this._aiBadge());
-    this.meta.checkFolder();
-    window.addEventListener("beforeunload", () => { this.dread.noteQuit(); this._recordTime(); });
+    this.folderCheck = this.meta.checkFolder();
+    window.addEventListener("beforeunload", () => {
+      if (!this._returningToTitle) this.dread.noteQuit();
+      this._recordTime();
+    });
     // While the title screen is open, they're standing on it. Keep count.
     this._titleTicks = 0;
     setInterval(() => {
@@ -155,7 +161,7 @@ export class Game {
     }
     BG.forEach(b => { const i = new Image(); i.src = `assets/bg/${b}.webp`; });
     // Illustrations load after everything else; the jumpscares need to be ready the instant they're used.
-    setTimeout(() => ["h_jump_hina", "h_jump_sayo", "h_jump_office", "hearing", "beach", "backstage"].forEach(c => { const i = new Image(); i.src = `assets/cg/${c}.webp`; }), 4000);
+    setTimeout(() => ["h_hina_blank", "h_jump_sayo", "h_jump_office", "h_nurse_loom", "hearing", "beach", "backstage"].forEach(c => { const i = new Image(); i.src = `assets/cg/${c}.webp`; }), 4000);
   }
 
   /* =================== UI wiring =================== */
@@ -166,8 +172,28 @@ export class Game {
       if ($("#game").classList.contains("ui-hidden")) return $("#game").classList.remove("ui-hidden");
       this._advanceClick();
     });
+    $("#game").addEventListener("wheel", e => {
+      if (e.deltaY >= 0 || e.ctrlKey || $("#screen").childElementCount || e.target.closest("#fx")) return;
+      if (!this.history.length || this.dread.forced || !(this._typing || this._waitingClick || this._menuResolve)) return;
+      e.preventDefault();
+      this.openHistory({ scrollBack: true });
+    }, { passive: false });
     window.addEventListener("keydown", e => {
-      if ($("#screen").childElementCount) { if (e.key === "Escape") this.closeScreen(); return; }
+      const screen = $("#screen");
+      if (screen.childElementCount) {
+        if (e.key === "Escape") {
+          const dismiss = $("button[data-a='close'], button[data-a='back']", screen);
+          if (dismiss) { e.preventDefault(); dismiss.click(); }
+        }
+        return;
+      }
+      if (e.key === "Control") {
+        if (!e.repeat && this.mode !== "skip" && (this._typing || this._waitingClick)) {
+          this._setMode("skip");
+          this._ctrlSkip = this.mode === "skip";
+        }
+        return;
+      }
       if (/^[1-9]$/.test(e.key)) {
         const b = document.querySelectorAll("#choices .choice")[Number(e.key) - 1];
         if (b && $("#choices").style.display !== "none") { b.click(); return; }
@@ -176,6 +202,10 @@ export class Game {
       if ($("#game").classList.contains("ui-hidden")) { $("#game").classList.remove("ui-hidden"); return; }
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); this._advanceClick(); }
     });
+    window.addEventListener("keyup", e => {
+      if (e.key === "Control" && !e.ctrlKey) this._stopCtrlSkip();
+    }, true);
+    window.addEventListener("blur", () => this._stopCtrlSkip());
     $("#quick").addEventListener("click", e => {
       const btn = e.target.closest("[data-q]");
       const a = btn && btn.dataset.q;
@@ -189,21 +219,29 @@ export class Game {
       if (a === "log") this.openHistory();
       if (a === "book") this.openScrapbook();
       if (a === "settings") this.openSettings();
+      if (a === "title") this.openReturnToTitle();
     });
   }
 
   _setMode(m) {
-    if (m === "skip" && this._noskip) {
+    if (m === "skip" && (this._noskip || this._lineNoSkip || this.dread.forced)) {
       this.meta.toast("Don't skip me.", 2500);
       this.audio.sfx("error");
       return;
     }
+    if (m !== "skip") this._ctrlSkip = false;
+    clearTimeout(this._modeTimer);
     this.mode = m;
     document.querySelectorAll("#quick [data-q]").forEach(b => b.classList.toggle("on", b.dataset.q === m));
-    if (m && this._waitingClick) this._advanceClick(true);
+    if (m && (this._waitingClick || (m === "skip" && this._typing))) this._advanceClick(true);
+  }
+
+  _stopCtrlSkip() {
+    if (this._ctrlSkip) this._setMode(null);
   }
 
   _advanceClick(fromMode = false) {
+    if (!fromMode && $("#screen > .pause-panel")) return;
     if (this.busy && !this._waitingClick && !this._typing) return;
     // 2.2: while the dialogue is decoupled, clicking does nothing. It goes at its own pace, not yours.
     if (!fromMode && this.dread.forced && (this._waitingClick || this._typing)) { this.meta.pulse("fx-refuse", 260); return; }
@@ -223,12 +261,14 @@ export class Game {
   closeScreen() { $("#screen").innerHTML = ""; }
 
   _screen(html, cls = "") {
+    this._stopCtrlSkip();
     const el = $("#screen");
     el.innerHTML = `<div class="panel ${cls}">${html}</div>`;
     return el.firstElementChild;
   }
 
   title() {
+    this._stopCtrlSkip();
     this.frames = [];
     this.v = this._freshVars();
     this.meta.title(null);
@@ -278,12 +318,14 @@ export class Game {
     const buttons = summer
       ? `<button data-t="visit">Visit anyway</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="forget">Forget them</button>`
       : `<button data-t="new">${term2 ? "Back to class" : rerun ? "Again" : "New Game"}</button><button data-t="load">Load</button><button data-t="book">Scrapbook</button><button data-t="settings">Settings</button><button data-t="quit">Quit</button>`;
+    const continueButton = loadSlot(AUTO_SLOT) ? '<button data-t="continue">Continue</button>' : "";
     // After the first ending, Sayo draws a fifth button. It goes behind the menu.
     // Once the player has drawn their own door for her, it's that one.
     const doorArt = P.door
       ? `<svg viewBox="0 0 120 170" class="drawn"><path d="${P.door}"/></svg>`
       : `<svg viewBox="0 0 120 170"><path d="M16 162 L13 24 Q15 9 60 8 Q105 9 107 24 L110 162 M13 163 L111 161"/><circle cx="91" cy="96" r="4"/></svg>`;
-    const door = rerun ? `<button class="door-btn" data-t="door" aria-label="door">${doorArt}<span>${P.door ? "your door" : "door"}</span></button>` : "";
+    const doorLabel = this.doorState().step === 3 ? "knock" : P.door ? "your door" : "door";
+    const door = rerun ? `<button class="door-btn" data-t="door" aria-label="${doorLabel}">${doorArt}<span>${doorLabel}</span></button>` : "";
     const foot = summer ? "They said not to wait up. · notice: the second term begins soon"
       : term2 ? (last === "retention" ? `retention: ${this.meta.vars().playtime}` : "♡ we missed you ♡ — the Office")
       : rerun ? (P.behind ? "they are holding very still for you" : "slot K · 412:13:09")
@@ -294,8 +336,8 @@ export class Game {
       <div class="title-card">
         <div class="title-ribbon">${rerun && !summer ? "◉ Hoshimi Academy ◉" : "♡ Hoshimi Academy ♡"}</div>
         <h1>${detention ? "After C<span class=\"dead\">l</span>ass" : "After Class"}</h1>
-        <p class="title-sub">${sub}</p>
-        <div class="title-buttons">${buttons}</div>
+        <p class="title-sub">${escapeHTML(sub)}</p>
+        <div class="title-buttons">${continueButton}${buttons}</div>
       </div>
       ${door}
       <p class="title-foot">${foot}</p>
@@ -304,6 +346,7 @@ export class Game {
 
     if (detention || (term2 && last === "retention")) this.meta.mood("red");
     if (term2) this.meta.console("sayo", "we told you not to come back. ...hi. it's good to see you anyway.");
+    else if (rerun && P.erased === "sayo") this.meta.console("rei", "sayo's door still works. it's next to the menu.");
     else if (rerun) this.meta.console("sayo", "you came back. i knew you would. i drew you a door. it's next to the menu.");
 
     scr.querySelector(".title").addEventListener("click", e => {
@@ -314,6 +357,7 @@ export class Game {
       this.audio.sfx("click");
       if (t === "new") term2 ? this.start("a3_start") : this.askName();
       if (t === "load") this.openSaves("load", true);
+      if (t === "continue") this._loadSave(loadSlot(AUTO_SLOT));
       if (t === "book") this.openScrapbook(true);
       if (t === "settings") this.openSettings(true);
       if (t === "quit") this._quit();
@@ -428,8 +472,27 @@ export class Game {
     }
   }
 
-  /** Sayo's door: the menu swings open, and behind it is where they wait. */
+  _doorPhase() {
+    const P = persist.data;
+    return P.act3 ? "secondTerm" : P.erased ? "detention" : "rerun";
+  }
+
+  doorState() {
+    const phase = this._doorPhase();
+    return persist.data.doorVisits[phase] || { step: phase === "rerun" && persist.data.behind ? 1 : 0 };
+  }
+
+  recordDoorStep(step, note = this.doorState().note) {
+    persist.set("doorVisits", { ...persist.data.doorVisits, [this._doorPhase()]: { step, note } });
+  }
+
+  /** Sayo's door: a first visit, a note, and an answer. */
   async _openDoor() {
+    const { step } = this.doorState();
+    if (step === 3) {
+      this.audio.sfx("thud");
+      return;
+    }
     clearInterval(this._titleTimer);
     this.audio.sfx("door");
     const title = $(".title");
@@ -453,7 +516,7 @@ export class Game {
     requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add("open")));
     await sleep(2000);
     wrap.remove();
-    this.start("behind_title");
+    this.start(step === 1 ? "behind_note" : step === 2 ? "behind_answer" : "behind_title");
   }
 
   /** Shown once, before the first title screen. */
@@ -522,17 +585,17 @@ export class Game {
     this.closeScreen();
     this.audio.stop();
     await this.meta.blackout(1800);
-    this._screen(`<p class="quit-msg">Thanks for playing!<br><small>You can close this tab now.</small></p><button data-x>Back</button>`, "center")
-      .querySelector("[data-x]").addEventListener("click", () => this.title());
+    this._screen(`<p class="quit-msg">Thanks for playing!<br><small>You can close this tab now.</small></p><button data-a="back">Back</button>`, "center")
+      .querySelector("[data-a='back']").addEventListener("click", () => this.title());
   }
 
   _forget() {
     const p = this._screen(`<h2>Forget them?</h2><p>This erases every save and everything Hina, Rei and Sayo remember about you. You'll start again from the first Monday.</p>
       <p class="hint">Your scrapbook stays. It always does.</p>
-      <div class="row"><button data-a="yes">Forget</button><button data-a="no">Keep them</button></div>`, "center");
+      <div class="row"><button data-a="yes">Forget</button><button data-a="back">Keep them</button></div>`, "center");
     p.addEventListener("click", e => {
       if (e.target.dataset.a === "yes") { persist.forgetAll(); this.title(); }
-      if (e.target.dataset.a === "no") this.title();
+      if (e.target.dataset.a === "back") this.title();
     });
   }
 
@@ -540,19 +603,28 @@ export class Game {
     const prev = persist.data.name;
     const p = this._screen(`<h2>What's your name?</h2>
       <p class="hint">${persist.data.runs > 0 ? "They already know it." : "This is the name the girls will call you."}</p>
-      <input id="name-in" maxlength="16" autocomplete="off" spellcheck="false" value="${prev ? prev.replace(/"/g, "") : ""}">
+      <input id="name-in" maxlength="16" autocomplete="off" spellcheck="false">
       <div class="row"><button data-a="ok">Begin</button><button data-a="back">Back</button></div>`, "center");
     const input = $("#name-in", p);
+    input.value = prev;
     input.focus();
     const go = () => {
       const name = input.value.trim().slice(0, 16);
       if (!name) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 400); return; }
+      // They remember what you were called last time. r_start mentions it once.
+      // A name that was typed and then turned away (K, a girl's name) doesn't replace the one they remember.
+      const was = persist.data.wasName || prev;
+      persist.set("wasName", was && was.toLowerCase() !== name.toLowerCase() ? was : "");
       persist.set("name", name);
       this.closeScreen();
       const special = { K: "named_k", HINA: "named_girl", REI: "named_girl", SAYO: "named_girl", OFFICE: "named_office", "THE OFFICE": "named_office" }[name.toUpperCase()];
       this.start(special || "start");
     };
-    input.addEventListener("keydown", e => { if (e.key === "Enter") go(); e.stopPropagation(); });
+    input.addEventListener("keydown", e => {
+      if (e.key === "Escape") return;
+      e.stopPropagation();
+      if (e.key === "Enter") go();
+    });
     p.addEventListener("click", e => {
       if (e.target.dataset.a === "ok") go();
       if (e.target.dataset.a === "back") this.title();
@@ -612,24 +684,29 @@ export class Game {
   }
 
   openSaves(mode, fromTitle = false) {
+    this.meta.refreshOtherApp();
     const slots = listSlots();
     const P = persist.data;
     const kNote = P.runs > 0 ? K_SLOT.note : "corrupted";
+    const autosave = mode === "load" ? loadSlot(AUTO_SLOT) : null;
+    const savedWhen = d => `${d.dayLabel || "Day " + d.v.day} · ${new Date(d.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
     const rows = slots.map(s => {
       const d = s.data;
-      let label = d ? `${d.dayLabel || "Day " + d.v.day} · ${new Date(d.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "empty";
+      let label = d ? savedWhen(d) : "empty";
       if (this.v.sabotage && !d) label = ["DON'T", "PLEASE", "STAY", "SHE'S STILL IN HERE", "GO HOME", "K"][s.n - 1];
       if (P.wiped && !d && this.v.sabotage) label = "consolidated by the Office";
       // 2.2: after the Office wipes the saves, it fills the empty slots with its own. None of them are yours.
       if (P.wiped && !d && (this.v.sabotage || P.act3)) {
         const f = FAKE_SAVES[s.n - 1];
-        return `<button class="slot fake" data-fake="${s.n - 1}" style="background-image:linear-gradient(90deg, #1a1114 55%, rgba(26,17,20,.35)), url(${f.thumb})"><span class="slot-n">${s.n}</span><span>${this._fill(f.label)}</span></button>`;
+        const label = (this.meta.otherApp && f.labelApp) || f.label;
+        return `<button class="slot fake" data-fake="${s.n - 1}" style="background-image:linear-gradient(90deg, #1a1114 55%, rgba(26,17,20,.35)), url(${f.thumb})"><span class="slot-n">${s.n}</span><span>${this._fill(label)}</span></button>`;
       }
       const thumb = d && d.v && d.v.bg ? ` style="--thumb:url(assets/bg/${d.v.bg}.webp)"` : "";
       return `<button class="slot ${d ? "has-thumb" : "empty"}" data-n="${s.n}"${thumb}><span class="slot-n">${s.n}</span><span>${label}</span></button>`;
     }).join("");
     const p = this._screen(`<h2>${mode === "save" ? "Save" : "Load"}</h2>
       <div class="slots">
+        ${autosave ? `<button class="slot" data-n="${AUTO_SLOT}"><span class="slot-n">A</span><span>Autosave · ${escapeHTML(savedWhen(autosave))}</span></button>` : ""}
         <button class="slot k" data-n="K"><span class="slot-n">K</span><span>${K_SLOT.day} · ${K_SLOT.playtime} · <i>${kNote}</i></span></button>
         ${rows}
       </div>
@@ -662,18 +739,22 @@ export class Game {
         this.meta.toast("Saved.", 1500);
         this.closeScreen();
       } else {
-        const d = loadSlot(n);
-        if (!d) return;
-        persist.set("loads", (persist.data.loads || 0) + 1);
-        // Choices made since that save, in this same week, are the ones the load just took back.
-        const now = (this.frames.length && this.v.choiceLog) || [];
-        const then = (d.v && d.v.choiceLog) || [];
-        const undone = now.length > then.length && then.every((c, i) => now[i] === c) ? now.slice(then.length) : [];
-        this.closeScreen();
-        this._pendingUndo = undone.length ? undone : null;
-        this._restore(d);
+        this._loadSave(loadSlot(n));
       }
     });
+  }
+
+  _loadSave(d) {
+    if (!d) return;
+    persist.set("loads", (persist.data.loads || 0) + 1);
+    // Choices made since that save, in this same week, are the ones the load just took back.
+    const now = (this.frames.length && this.v.choiceLog) || [];
+    const then = d.v.choiceLog || [];
+    const undone = now.length > then.length && then.every((c, i) => now[i] === c) ? now.slice(then.length) : [];
+    this._setMode(null);
+    this.closeScreen();
+    this._pendingUndo = undone.length ? undone : null;
+    this._restore(d);
   }
 
   /**
@@ -698,11 +779,12 @@ export class Game {
       <label>Sound &amp; voices <input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-s="sfx"></label>
       <label class="check"><input type="checkbox" ${s.voice ? "checked" : ""} data-s="voice"> Character voices and announcements</label>
       <label class="check"><input type="checkbox" ${s.gore !== false ? "checked" : ""} data-s="gore"> Graphic horror (blood, jumpscares, disturbing images)</label>
+      ${this.meta.native ? `<label class="check"><input type="checkbox" ${s.notice !== false ? "checked" : ""} data-s="notice"> Let the game notice other open programs <small>names of well-known apps only · never leaves this computer</small></label>` : ""}
       <label class="check"><input type="checkbox" ${s.ai ? "checked" : ""} data-s="ai"> Enhanced pack <small>on-device models · ${DOWNLOAD_SIZE} once · runs only on this computer · <span class="ai-state">${{ off: "off", loading: "downloading…", ready: "ready", failed: "couldn't load" }[ai.state]}</span></small></label>
       ${Object.keys(this.dread.sabotaged).length ? `<div class="sabotaged">${Object.entries(this.dread.sabotaged).map(([k, val]) => `<label class="check off"><input type="checkbox" checked disabled> ${{ music: "Music", sfx: "Sound &amp; voices", flip: "Screen", mouse: "Mouse" }[k] || k}: <b>${val}</b></label>`).join("")}</div>` : ""}
       ${this.meta.native ? `<div class="row left"><button data-a="full">Toggle fullscreen</button><button data-a="folder">Open the game folder</button></div>` : ""}
       ${fromTitle && persist.data.runs > 0 ? `<div class="row left"><button data-a="restart">Start over from the first week</button></div>` : ""}
-      <p class="keys">Space / Enter: next &middot; 1&ndash;9: choose &middot; H: hide text box &middot; Esc: close menus</p>
+      <p class="keys">Space / Enter: next &middot; Hold Ctrl: skip &middot; Scroll up: backlog &middot; 1&ndash;9: choose &middot; H: hide text box &middot; Esc: close menus</p>
       <div class="row"><button data-a="close">Close</button></div>`);
     p.addEventListener("input", e => {
       const k = e.target.dataset.s;
@@ -721,7 +803,8 @@ export class Game {
       persist.save();
       this.audio.applyVolumes();
       if (k === "ai" && val) ai.init();
-      if (k === "gore") this.meta.blood(!!this.v.blood);
+      if (k === "gore") this.meta.syncGraphicHorror();
+      if (k === "notice") this.meta.refreshOtherApp();
     });
     p.addEventListener("click", e => {
       const a = e.target.dataset.a;
@@ -732,30 +815,88 @@ export class Game {
     });
   }
 
-  openHistory() {
-    const items = this.history.slice(-60).map(h => `<div class="log-line${h.ghost ? " ghost" : ""}"><b>${h.who || ""}</b> ${h.deleted ? `<s>${h.deleted}</s> ` : ""}${h.text}</div>`);
+  openHistory({ scrollBack = false } = {}) {
+    this._setMode(null);
+    const items = this.history.map(h => `<div class="log-line${h.ghost ? " ghost" : ""}"><b>${escapeHTML(h.who)}</b> ${h.deleted ? `<s>${escapeHTML(h.deleted)}</s> ` : ""}${escapeHTML(h.text)}</div>`);
     if (persist.data.runs > 0) items.splice(Math.max(0, items.length - 3), 0, `<div class="log-line k"><b>K</b> i'm still here. i never left. please don't let them rewind me again</div>`);
-    const p = this._screen(`<h2>Backlog</h2><div class="log">${items.join("")}</div><div class="row"><button data-a="close">Close</button></div>`);
+    const p = this._screen(`<h2>Backlog</h2><div class="log" tabindex="0" role="region" aria-label="Dialogue history">${items.join("") || "<p>No dialogue yet.</p>"}</div><div class="row"><button data-a="close">Close</button></div>`, "pause-panel");
     const log = $(".log", p);
     log.scrollTop = log.scrollHeight;
+    if (scrollBack) log.scrollTop -= 96;
+    log.focus({ preventScroll: true });
     p.addEventListener("click", e => { if (e.target.dataset.a === "close") this.closeScreen(); });
+  }
+
+  openReturnToTitle() {
+    this._setMode(null);
+    const p = this._screen(`<h2>Return to the main menu?</h2>
+      <p>You can use Continue to resume from your last autosave.</p>
+      <div class="row"><button data-a="back">Keep playing</button><button data-a="title">Main Menu</button></div>`, "center pause-panel");
+    $("[data-a='back']", p).focus();
+    p.addEventListener("click", e => {
+      if (e.target.dataset.a === "back") this.closeScreen();
+      if (e.target.dataset.a === "title") {
+        // A fresh renderer releases timers, audio and any in-progress scripted effects.
+        this._returningToTitle = true;
+        location.reload();
+      }
+    });
   }
 
   /* =================== save state =================== */
 
   _snapshot() {
+    const speaker = $("#say-name");
     return {
+      rev: SAVE_REV,
       v: JSON.parse(JSON.stringify(this.v)),
       frames: this.frames.map(f => ({ id: f.id, i: Math.max(0, f.i - (f === this.frames[this.frames.length - 1] ? 1 : 0)), call: f.call })),
-      dayLabel: this._dayLabel
+      dayLabel: this._dayLabel,
+      noskip: this._noskip,
+      watch: { ...this.meta.watch },
+      dialogue: {
+        text: $("#say-text").textContent,
+        speaker: speaker.textContent,
+        color: speaker.style.getPropertyValue("--who"),
+        classes: $("#say").className
+      }
     };
   }
 
+  _autosave() {
+    if (!this.frames.length || this._inDelete || this.v._stash || this.senses.cameraOn) return;
+    if (this.dread.forced || this.dread.root.classList.contains("lights-out") || Object.keys(this.dread.sabotaged).length) return;
+    if (this.frames.some(f => /^(k_save$|behind_|a3_behind$|d_fake_save$|d_after_crash$|d_quit_menu$)/.test(f.id))) return;
+    saveSlot(AUTO_SLOT, this._snapshot());
+  }
+
   _restore(d) {
+    const rewritten = d.rev == null || d.rev < SAVE_REV;
+    if (rewritten) {
+      // Day labels are display text. Only named SCRIPT entries survive block renumbering.
+      const label = (d.frames || []).find(f => Object.hasOwn(SCRIPT, f.id))?.id || "start";
+      const v = { ...d.v };
+      for (const key of ["_stash", "delFiles", "haunt", "clipped", "bg", "music", "shown", "cg", "mood", "blood"]) delete v[key];
+      d = { v, frames: [{ id: label, i: 0 }], dayLabel: d.dayLabel, watch: {} };
+      this._pendingUndo = null;
+      $("#say-text").textContent = "";
+      $("#say-name").textContent = "";
+    }
     this.dread.reset();
     this.v = { ...this._freshVars(), ...d.v };
     this.frames = d.frames.map(f => ({ ...f }));
     this._dayLabel = d.dayLabel;
+    this._noskip = !!d.noskip;
+    if (d.dialogue) {
+      const { text, speaker, color, classes } = d.dialogue;
+      $("#say-text").textContent = text;
+      const name = $("#say-name");
+      name.textContent = speaker;
+      name.style.display = speaker ? "" : "none";
+      name.style.setProperty("--who", color);
+      $("#say").className = classes;
+      $("#say").classList.remove("ready");
+    }
     if (this._pendingUndo) { this._noticeUndo(this._pendingUndo); this._pendingUndo = null; }
     this.showUI(true);
     const shown = this.v.shown || {};
@@ -763,14 +904,16 @@ export class Game {
     if (this.v.bg) this._setBg(this.v.bg);
     Object.entries(shown).forEach(([who, s]) => this._show(who, s.expr, s.pos, true));
     if (this.v.music) this.audio.play(this.v.music);
+    else this.audio.stop();
     this.meta.mood(this.v.mood || null);
     this.meta.cg(this.v.cg || null, { fade: false });
     this.meta.blood(!!this.v.blood);
     this._inDelete = false;
-    this.meta.setWatch("tab", !!this.v.sabotage);
-    this.meta.setWatch("idle", !!this.v.sabotage);
-    this.meta.setWatch("context", !!this.v.sabotage);
+    for (const name of ["tab", "idle", "context", "cursor"]) {
+      this.meta.setWatch(name, d.watch ? !!d.watch[name] : name !== "cursor" && !!this.v.sabotage);
+    }
     this._interrupt();
+    if (rewritten) this.meta.toast("The week was rewritten while you were away. Today starts over.", 4000);
     this._run();
   }
 
@@ -784,16 +927,19 @@ export class Game {
   /* =================== script runner =================== */
 
   start(label) {
+    this._stopCtrlSkip();
     // The free demo ends after the first ending: the rerun, K's save and summer are in the full game.
     if (IS_DEMO && (/^(r_|a3_|k_save|visit|reunion)/.test(label) || (label === "start" && persist.data.runs > 0))) return this._demoEnd();
     this.v = this._freshVars();
+    this._noskip = false;
+    this._dayLabel = null;
     this.meta.mood(null);
     this.meta.cg(null);
     this.meta.blood(false);
     this.dread.reset();
     this._inDelete = false;
     this._portrait(null);
-    if (label !== "behind_title") this.audio.muffle(false);
+    if (!label.startsWith("behind_")) this.audio.muffle(false);
     this.history = [];
     this.closeScreen();
     this.showUI(true);
@@ -874,7 +1020,7 @@ export class Game {
       case "title": this.frames = []; this.audio.stop(); return this.title();
       case "ui": return this.showUI(c.on);
       case "noskip": this._noskip = c.on; if (c.on && this.mode === "skip") this._setMode(null); return;
-      case "cg": return this.meta.cg(c.id);
+      case "cg": return this.meta.nextCG(c.id);
       case "aisay": return this._aiSay(c);
     }
   }
@@ -935,19 +1081,28 @@ export class Game {
 
     const text = this._fill(c.text);
     const entry = { who: display, text };
+    const frames = this.frames;
     if (c.voice && info) this.audio.speak(text, { pitch: info.pitch || 1, rate: info.rate || 1 });
 
-    await this._type(textEl, text, who, c);
-    if (c.rewrite) {
-      await sleep(this.mode === "skip" ? 80 : 900);
-      await this._erase(textEl);
-      const re = this._fill(c.rewrite);
-      entry.deleted = text;
-      entry.text = re;
-      await this._type(textEl, re, who, c);
+    this._lineNoSkip = !!c.noskip;
+    try {
+      await this._type(textEl, text, who, c);
+      if (frames !== this.frames) return;
+      if (c.rewrite) {
+        await sleep(this.mode === "skip" ? 80 : 900);
+        if (frames !== this.frames) return;
+        await this._erase(textEl);
+        if (frames !== this.frames) return;
+        entry.deleted = text;
+        entry.text = this._fill(c.rewrite);
+        await this._type(textEl, entry.text, who, c);
+        if (frames !== this.frames) return;
+      }
+      this.history.push(entry);
+      await this._waitAdvance(c);
+    } finally {
+      this._lineNoSkip = false;
     }
-    this.history.push(entry);
-    await this._waitAdvance(c);
   }
 
   async _type(el, text, who, c) {
@@ -976,12 +1131,14 @@ export class Game {
 
   _waitAdvance(c) {
     $("#say").classList.add("ready");
+    this._autosave();
     const shownAt = Date.now();
     const awayBefore = this.v.sceneAway || 0;
     return new Promise(resolve => {
       const done = () => {
         $("#say").classList.remove("ready");
         clearTimeout(this._modeTimer);
+        clearTimeout(this._forcedAdvanceTimer);
         this.dread.wrongClear();
         this.dread.noteAdvance();
         // 2.2: how long the player looked at this one line (time spent in another window doesn't count).
@@ -989,9 +1146,9 @@ export class Game {
         resolve();
       };
       this._waitingClick = done;
-      if (this.dread.forced) this._modeTimer = setTimeout(() => this._advanceClick(true), this.dread.forced + $("#say-text").textContent.length * 22);
-      if (this.mode === "skip" && !c.noskip) this._modeTimer = setTimeout(() => this._advanceClick(true), 70);
-      if (this.mode === "auto") this._modeTimer = setTimeout(() => this._advanceClick(true), 1400 + $("#say-text").textContent.length * 35);
+      if (this.dread.forced) this._forcedAdvanceTimer = setTimeout(() => this._advanceClick(true), this.dread.forced + $("#say-text").textContent.length * 22);
+      else if (this.mode === "skip" && !c.noskip) this._modeTimer = setTimeout(() => this._advanceClick(true), 70);
+      else if (this.mode === "auto") this._modeTimer = setTimeout(() => this._advanceClick(true), 1400 + $("#say-text").textContent.length * 35);
     });
   }
 
@@ -999,6 +1156,7 @@ export class Game {
 
   _menu(c) {
     if (this.mode === "skip") this._setMode(null);
+    if (!c.timeout) this._autosave();
     const wrap = $("#choices");
     const items = c.items.filter(it => !it.if || it.if(this.v, persist.data, this));
     wrap.innerHTML = "";
@@ -1031,6 +1189,7 @@ export class Game {
         b.addEventListener("pointerleave", () => { if (b._enter) b._hover += performance.now() - b._enter; b._enter = 0; });
         b.addEventListener("click", async e => {
           e.stopPropagation();
+          if ($("#screen > .pause-panel")) return;
           // 2.2: an option somebody has crossed out. You can see it. You can't have it.
           if (it.crossed) {
             this.audio.sfx("error");
@@ -1048,6 +1207,8 @@ export class Game {
             wrap.querySelectorAll(".choice-text").forEach(x => { x.textContent = this._fill(c.hijack); x.parentElement.classList.add("hijacked"); });
             await this.meta.glitch(400);
             await sleep(700);
+            // Loading a save can dismiss this menu while the animation is running.
+            if (!wrap.contains(b)) return;
           }
           // 2.2: a choice that changed its words while you hovered is recorded by what it said when you clicked.
           const picked = b.querySelector(".choice-text").textContent;
@@ -1114,10 +1275,14 @@ export class Game {
         bar.innerHTML = `<span></span><small>${this._fill(c.timerLabel || "")}</small>`;
         wrap.appendChild(bar);
         const fill = bar.querySelector("span");
-        const t0 = Date.now();
+        let lastTick = Date.now();
+        let remaining = c.timeout;
         const tick = setInterval(() => {
           if (wrap._picked === token || !wrap.contains(bar)) return clearInterval(tick);
-          const left = 1 - (Date.now() - t0) / c.timeout;
+          const now = Date.now();
+          if (!$("#screen > .pause-panel")) remaining -= now - lastTick;
+          lastTick = now;
+          const left = remaining / c.timeout;
           fill.style.width = Math.max(0, left * 100) + "%";
           if (left > 0) return;
           clearInterval(tick);
@@ -1240,20 +1405,23 @@ export class Game {
     return ["center", "left", "right"].find(p => !used.includes(p)) || "center";
   }
 
-  /** 2.3: the girls blink (neutral face only, cute scenes only). Hand-placed frames, so nothing here is random meta-horror. */
+  /** 2.3: the girls blink (calm faces only, cute scenes only). Hand-placed frames, so nothing here is random meta-horror. */
   _startBlink() {
     if (this._blinkOn) return;
     this._blinkOn = true;
-    const WHO = ["hina", "rei", "sayo"];
-    WHO.forEach(w => { const i = new Image(); i.src = `assets/sprites/${w}/blink.webp`; });
+    // neutral uses blink.webp; the other calm faces use blink_<expr>.webp (the same face with the eyes closed).
+    const BLINK = { hina: ["neutral", "happy", "worried"], rei: ["neutral", "soft", "annoyed", "photo"], sayo: ["neutral", "happy", "draw", "draw_happy"] };
+    const file = (who, expr) => `assets/sprites/${who}/${expr === "neutral" ? "blink" : "blink_" + expr}.webp`;
+    Object.entries(BLINK).forEach(([w, es]) => es.forEach(e => { const i = new Image(); i.src = file(w, e); }));
     const tick = () => {
       const g = document.getElementById("game");
       const calm = g && !g.classList.contains("uncanny") && !g.classList.contains("mood-still");
-      if (calm) for (const who of WHO) {
+      if (calm) for (const who of Object.keys(BLINK)) {
         const el = this.sprites[who];
-        if (!el || el.dataset.expr !== "neutral" || Math.random() > 0.5) continue;
-        el.src = `assets/sprites/${who}/blink.webp`;
-        setTimeout(() => { if (el.dataset.expr === "neutral") el.src = `assets/sprites/${who}/neutral.webp`; }, 140);
+        const expr = el && el.dataset.expr;
+        if (!el || !BLINK[who].includes(expr) || Math.random() > 0.5) continue;
+        el.src = file(who, expr);
+        setTimeout(() => { if (el.dataset.expr === expr) el.src = `assets/sprites/${who}/${expr}.webp`; }, 140);
       }
       setTimeout(tick, 2600 + Math.random() * 3200);
     };
@@ -1271,6 +1439,9 @@ export class Game {
       el.className = "sprite";
       el.alt = who;
       el.dataset.who = who;
+      el.addEventListener("load", () => {
+        if (el.naturalHeight) el.style.setProperty("--sprite-ratio", el.naturalWidth / el.naturalHeight);
+      });
       layer.appendChild(el);
       this.sprites[who] = el;
       if (!instant) { el.classList.add("enter"); requestAnimationFrame(() => el.classList.remove("enter")); }
@@ -1278,12 +1449,14 @@ export class Game {
     const changed = !prev || prev.expr !== expr;
     el.src = `assets/sprites/${who}/${expr}.webp`;
     el.dataset.expr = expr;
+    el.dataset.pos = pos;
     this._startBlink();
     el.style.left = POS[pos] + "%";
     if (changed && !instant) this._emote(el, expr);
     el.classList.toggle("is-corrupt", expr === "corrupt");
     el.classList.toggle("pose-close", CLOSE.includes(expr));
     el.classList.toggle("pose-wide", WIDE.includes(expr));
+    el.classList.toggle("pose-full", FULL.includes(expr));
     el.classList.toggle("is-office", !!(CAST[who] || {}).office);
     el.classList.toggle("is-minor", !!(CAST[who] || {}).minor);
     el.classList.toggle("is-ghost", !!(CAST[who] || {}).ghost);
@@ -1394,6 +1567,7 @@ export class Game {
   }
 
   async _ending(c) {
+    clearSlot(AUTO_SLOT);
     this.dread.noteRun(c.id);
     persist.addEnding(c.id);
     this._checkNotes(true);

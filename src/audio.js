@@ -235,6 +235,9 @@ export class AudioSys {
     this.sfxDuck.gain.setTargetAtTime(sfx, this.ctx.currentTime, 0.05);
   }
 
+  /** 2.3: the music drops out for the beat before a jumpscare, and comes back after it. Sound effects stay. */
+  scareSilence(on) { this.duck(on ? 0 : 1, 1); }
+
   /** 2.2: play raw microphone samples back (reversed, slowed) through a whispery room. Memory only. */
   playSamples(samples, sampleRate, { reverse = true, rate = 0.75 } = {}) {
     if (!this.ctx || !samples || !samples.length) return Promise.resolve();

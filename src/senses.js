@@ -111,7 +111,7 @@ export const senses = {
 
   /** The current frame, mirrored like a selfie, as a canvas. */
   snapshot(w = 640, h = 480) {
-    if (!this.video) return null;
+    if (!this.video || this.video.readyState < 2) return null;
     const c = Object.assign(document.createElement("canvas"), { width: w, height: h });
     const ctx = c.getContext("2d");
     ctx.translate(w, 0); ctx.scale(-1, 1);
